@@ -1,0 +1,41 @@
+[data-theme="dark"] {
+  /* 背景 */
+  --bg-void: #08080A;
+  --bg-base: #0E0E12;
+  --bg-surface: #16161C;
+  --bg-elevated: #1E1E26;
+  --bg-overlay: #262630;
+
+  /* 金色 */
+  --gold-dim: #8B7355;
+  --gold-muted: #C9A227;
+  --gold-bright: #E8C547;
+  --gold-glow: #FFD966;
+
+  /* 语义色 */
+  --crimson: #C94040;
+  --crimson-bg: rgba(201, 64, 64, 0.12);
+  --emerald: #3DAA6A;
+  --emerald-bg: rgba(61, 170, 106, 0.12);
+  --sapphire: #4A8FCC;
+  --sapphire-bg: rgba(74, 143, 204, 0.12);
+  --amethyst: #8B6FCC;
+  --amethyst-bg: rgba(139, 111, 204, 0.12);
+
+  /* 文字 */
+  --text-bright: #F5F5F7;
+  --text-base: #C8C8D0;
+  --text-muted: #7A7A88;
+  --text-faint: #4A4A55;
+
+  /* 边框 */
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  /* 阴影 */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-gold: 0 0 24px rgba(232, 197, 71, 0.25);
+}

@@ -1,0 +1,35 @@
+[data-theme="light"] {
+  --bg-void: #F0F0F2;
+  --bg-base: #F5F5F7;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #ECECEF;
+  --bg-overlay: #E4E4E8;
+
+  --gold-dim: #A08040;
+  --gold-muted: #C9A227;
+  --gold-bright: #B8860B;
+  --gold-glow: #8B6914;
+
+  --crimson: #B83030;
+  --crimson-bg: rgba(184, 48, 48, 0.1);
+  --emerald: #2D8A50;
+  --emerald-bg: rgba(45, 138, 80, 0.1);
+  --sapphire: #3870A8;
+  --sapphire-bg: rgba(56, 112, 168, 0.1);
+  --amethyst: #6B50CC;
+  --amethyst-bg: rgba(107, 80, 204, 0.1);
+
+  --text-bright: #18181B;
+  --text-base: #3D3D45;
+  --text-muted: #6E6E78;
+  --text-faint: #AEAEB2;
+
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-default: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.18);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --shadow-gold: 0 0 24px rgba(184, 134, 11, 0.2);
+}
