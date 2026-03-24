@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏰 Idle Empire v2.0 - 测试页面</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0C0C0E;
+            color: white;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { color: #FFD700; }
+        .status { padding: 20px; background: #1C1C21; border-radius: 8px; margin: 20px 0; }
+        .success { border-left: 4px solid #22C55E; }
+        .error { border-left: 4px solid #EF4444; }
+        .info { border-left: 4px solid #3B82F6; }
+        pre { background: #000; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .test-item { margin: 10px 0; padding: 10px; background: #252529; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🏰 Idle Empire v2.0 - 系统测试</h1>
+    
+    <div id="test-results"></div>
+    
+    <script>
+        const results = [];
+        
+        function test(name, fn) {
+            try {
+                const result = fn();
+                results.push({ name, status: 'success', result });
+            } catch (e) {
+                results.push({ name, status: 'error', error: e.message });
+            }
+        }
+        
+        // 测试 1: 检查全局变量
+        test('全局变量 G', () => {
+            if (typeof G === 'undefined') throw new Error('G 未定义');
+            return '✓ G 已定义';
+        });
+        
+        // 测试 2: 检查建筑数据
+        test('建筑数据', () => {
+            if (typeof BUILDINGS === 'undefined') throw new Error('BUILDINGS 未定义');
+            return `✓ 加载了 ${BUILDINGS.length} 个建筑`;
+        });
+        
+        // 测试 3: 检查 Boss 数据
+        test('Boss 数据', () => {
+            if (typeof BOSSES === 'undefined') throw new Error('BOSSES 未定义');
+            return `✓ 加载了 ${BOSSES.length} 个 Boss`;
+        });
+        
+        // 测试 4: 检查升级数据
+        test('升级数据', () => {
+            if (typeof UPGRADES === 'undefined') throw new Error('UPGRADES 未定义');
+            return `✓ 加载了 ${UPGRADES.length} 个升级`;
+        });
+        
+        // 测试 5: 检查成就数据
+        test('成就数据', () => {
+            if (typeof ACHIEVEMENTS === 'undefined') throw new Error('ACHIEVEMENTS 未定义');
+            return `✓ 加载了 ${ACHIEVEMENTS.length} 个成就`;
+        });
+        
+        // 测试 6: 检查神器数据
+        test('神器数据', () => {
+            if (typeof ARTIFACTS === 'undefined') throw new Error('ARTIFACTS 未定义');
+            return `✓ 加载了 ${ARTIFACTS.length} 个神器`;
+        });
+        
+        // 测试 7: 检查转生系统
+        test('转生系统', () => {
+            if (typeof REBIRTH_CONFIG === 'undefined') throw new Error('REBIRTH_CONFIG 未定义');
+            return '✓ 转生配置已加载';
+        });
+        
+        // 测试 8: 检查 v2 函数
+        test('v2 初始化函数', () => {
+            if (typeof initV2Systems !== 'function') throw new Error('initV2Systems 未定义');
+            return '✓ initV2Systems 可用';
+        });
+        
+        // 测试 9: 检查神器函数
+        test('神器函数', () => {
+            if (typeof checkArtifactUnlocks !== 'function') throw new Error('checkArtifactUnlocks 未定义');
+            if (typeof getArtifactBonus !== 'function') throw new Error('getArtifactBonus 未定义');
+            if (typeof renderArtifactsPanel !== 'function') throw new Error('renderArtifactsPanel 未定义');
+            return '✓ 神器系统函数可用';
+        });
+        
+        // 测试 10: 检查转生函数
+        test('转生函数', () => {
+            if (typeof canRebirth !== 'function') throw new Error('canRebirth 未定义');
+            if (typeof doRebirth !== 'function') throw new Error('doRebirth 未定义');
+            if (typeof renderRebirthPanel !== 'function') throw new Error('renderRebirthPanel 未定义');
+            return '✓ 转生系统函数可用';
+        });
+        
+        // 测试 11: 检查升级函数
+        test('升级函数', () => {
+            if (typeof canBuyUpgrade !== 'function') throw new Error('canBuyUpgrade 未定义');
+            if (typeof buyUpgrade !== 'function') throw new Error('buyUpgrade 未定义');
+            if (typeof renderUpgradesPanel !== 'function') throw new Error('renderUpgradesPanel 未定义');
+            return '✓ 升级系统函数可用';
+        });
+        
+        // 测试 12: 检查成就函数
+        test('成就函数', () => {
+            if (typeof checkAchievements !== 'function') throw new Error('checkAchievements 未定义');
+            if (typeof renderAchievementsPanel !== 'function') throw new Error('renderAchievementsPanel 未定义');
+            return '✓ 成就系统函数可用';
+        });
+        
+        // 显示结果
+        const container = document.getElementById('test-results');
+        let html = '<div class="status ' + (results.every(r => r.status === 'success') ? 'success' : 'error') + '">';
+        html += '<h2>测试结果：' + (results.every(r => r.status === 'success') ? '全部通过 ✓' : '部分失败 ✗') + '</h2>';
+        html += '<p>通过：' + results.filter(r => r.status === 'success').length + '/' + results.length + '</p></div>';
+        
+        results.forEach(r => {
+            html += '<div class="test-item ' + r.status + '">';
+            html += '<strong>' + (r.status === 'success' ? '✓' : '✗') + ' ' + r.name + '</strong><br>';
+            html += r.status === 'success' ? r.result : '<span style="color: #EF4444">' + r.error + '</span>';
+            html += '</div>';
+        });
+        
+        // 显示游戏状态
+        if (typeof G !== 'undefined') {
+            html += '<div class="status info"><h3>游戏状态</h3><pre>' + JSON.stringify({
+                gold: G.gold,
+                rebirths: G.rebirths,
+                artifacts: Object.keys(G.artifacts || {}).length,
+                upgrades: Object.keys(G.upgrades || {}).length,
+                achievements: Object.keys(G.achievements || {}).length
+            }, null, 2) + '</pre></div>';
+        }
+        
+        container.innerHTML = html;
+        
+        // 自动运行 v2 初始化
+        setTimeout(() => {
+            if (typeof G !== 'undefined' && typeof initV2Systems === 'function') {
+                initV2Systems();
+                console.log('[v2.0] 自动初始化完成');
+            }
+        }, 1000);
+    </script>
+    
+    <!-- 加载游戏脚本 -->
+    <script src="js/particles.js"></script>
+    <script src="js/buildings.js"></script>
+    <script src="js/boss.js"></script>
+    <script src="js/upgrades.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/artifacts.js"></script>
+    <script src="js/rebirth.js"></script>
+    <script src="js/save.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/quests.js"></script>
+    <script src="js/collectibles.js"></script>
+    <script src="js/milestones.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/v2_patch.js"></script>
+</body>
+</html>
