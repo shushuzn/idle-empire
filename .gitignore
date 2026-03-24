@@ -1,2 +1,5 @@
-# Idle Empire - Git Ignore
+node_modules/
+dist/
+.env
 *.log
+.DS_Store
