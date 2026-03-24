@@ -24,3 +24,37 @@ function formatNumber(num) {
 export function canAfford(cost) {
   return derived(goldStore, ($gold) => $gold >= cost);
 }
+
+// 数字动画辅助 - 创建一个平滑过渡的响应式数值
+export function createAnimatedNumber(store, duration = 300) {
+  let current = 0;
+  let animValue = $state(0);
+
+  store.subscribe(v => {
+    animateTo(v);
+  });
+
+  function animateTo(target) {
+    const start = current;
+    const diff = target - start;
+    const startTime = performance.now();
+
+    function tick(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out 缓动
+      const eased = 1 - Math.pow(1 - progress, 3);
+      current = start + diff * eased;
+      animValue = current;
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  return {
+    get value() { return animValue; }
+  };
+}
