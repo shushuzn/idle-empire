@@ -7,5 +7,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    lib: {
+      entry: 'src/main.js',
+      formats: ['iife'],
+      name: 'IdleEmpire',
+      fileName: () => 'game.js',
+    },
+    rollupOptions: {
+      output: {
+        inlineDynamicImports: true,
+      },
+    },
   },
 });
