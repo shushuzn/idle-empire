@@ -11,10 +11,26 @@
   import RebirthTab from './components/RebirthTab.svelte';
   import Toast from './components/Toast.svelte';
   import Settings from './components/Settings.svelte';
-
+  import Tutorial from './components/Tutorial.svelte';
+  import AiAdvisorPanel from './components/AiAdvisorPanel.svelte';
   let activeTab = $state('buildings');
   let settingsOpen = $state(false);
+  let aiPanelOpen = $state(false);
   let theme = $state('dark');
+  let tutorialDone = $state(false);
+
+  const STORAGE_KEY = 'idle_empire_tutorial_done';
+
+  function handleTutorialComplete() {
+    tutorialDone = true;
+  }
+
+  // Check tutorial state on mount
+  $effect(() => {
+    if (typeof window !== 'undefined') {
+      tutorialDone = !!localStorage.getItem(STORAGE_KEY);
+    }
+  });
 
   function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark';
@@ -64,6 +80,7 @@
       <div class="logo-actions">
         <button class="icon-btn" onclick={toggleTheme}>🌙</button>
         <button class="icon-btn" onclick={() => settingsOpen = true}>⚙️</button>
+      <button class="icon-btn ai-btn" onclick={() => aiPanelOpen = !aiPanelOpen}>🤖</button>
       </div>
     </div>
 
@@ -82,6 +99,10 @@
         if (confirm('确定重置？所有进度丢失！')) window.resetGame?.();
       }}>🔄 重置</button>
     </div>
+
+    {#if aiPanelOpen}
+      <AiAdvisorPanel />
+    {/if}
   </aside>
 
   <main class="content">
@@ -105,6 +126,9 @@
 
 <Toast />
 <Settings open={settingsOpen} onclose={() => settingsOpen = false} />
+{#if !tutorialDone}
+  <Tutorial onComplete={handleTutorialComplete} />
+{/if}
 
 <style>
   .app-layout {
@@ -192,6 +216,11 @@
   .icon-btn:hover {
     background: var(--bg-elevated);
     border-color: var(--border-default);
+  }
+
+  .ai-btn:hover {
+    background: rgba(74, 222, 128, 0.15);
+    border-color: #4ade80;
   }
 
   .boss-mini {
