@@ -1,0 +1,25 @@
+name: Publish to itch.io
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: npm ci && npm run build
+
+      - name: Prepare HTML
+        run: |
+          cp dist-upload/index.html dist/index.html
+          cp -r dist-upload/assets/* dist/assets/
+
+      - name: Push to itch.io
+        env:
+          ITCH_API_KEY: ${{ secrets.ITCH_API_KEY }}
+        run: butler push dist shushuzn/idle-empire-premium-idle-game:html
