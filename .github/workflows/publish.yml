@@ -34,9 +34,7 @@ jobs:
 
       - name: Install butler
         run: |
-          curl -L -o butler.zip "https://github.com/itchio/butler/releases/download/v15.26.1/butler-linux-amd64.zip"
-          python3 -c "import zipfile; zipfile.ZipFile('butler.zip').extractall()"
-          mv butler-linux-amd64 butler
+          curl -LsSf https://butler.itch.io/get -o butler
           chmod +x butler
 
       - name: Push to itch.io
