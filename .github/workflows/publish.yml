@@ -34,10 +34,12 @@ jobs:
 
       - name: Install butler
         run: |
-          curl -L https://broth.itch.ovh/butler/linux-amd64/latest --output butler
-          chmod +x butler
+          mkdir -p ~/bin
+          curl -L https://broth.itch.ovh/butler/linux-amd64/HEAD/linux-amd64 --output ~/bin/butler
+          chmod +x ~/bin/butler
+          echo "~/.bin" >> $GITHUB_PATH
 
       - name: Push to itch.io
         env:
           ITCH_API_KEY: ${{ secrets.ITCH_API_KEY }}
-        run: ./butler push dist shushuzn/idle-empire-premium-idle-game:html
+        run: butler push dist shushuzn/idle-empire-premium-idle-game:html
