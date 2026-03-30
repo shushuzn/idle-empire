@@ -34,9 +34,11 @@ jobs:
 
       - name: Install butler
         run: |
-          sudo curl -L "https://github.com/itchio/butler/releases/download/v1.0.0/butler-linux-amd64" -o /usr/local/bin/butler
-          sudo chmod +x /usr/local/bin/butler
+          curl -L "https://github.com/itchio/butler/releases/download/v15.26.1/butler-linux-amd64.zip" -o butler.zip
+          unzip -o butler.zip butler-linux-amd64
+          mv butler-linux-amd64 butler
+          chmod +x butler
 
       - name: Push to itch.io
         run: |
-          butler push --credentials-key "${{ secrets.ITCH_API_KEY }}" dist shushuzn/idle-empire-premium-idle-game:html
+          ./butler push --credentials-key "${{ secrets.ITCH_API_KEY }}" dist shushuzn/idle-empire-premium-idle-game:html
