@@ -165,8 +165,8 @@
     },
     {
       "path": "src\\gameAdapter.js",
-      "accessCount": 16,
-      "lastAccessed": 1774836538918,
+      "accessCount": 17,
+      "lastAccessed": 1774837056200,
       "type": "file"
     },
     {
@@ -197,6 +197,12 @@
       "path": "src\\components\\Tutorial.svelte",
       "accessCount": 6,
       "lastAccessed": 1774784051894,
+      "type": "file"
+    },
+    {
+      "path": "src\\aiAdvisor.js",
+      "accessCount": 6,
+      "lastAccessed": 1774837216044,
       "type": "file"
     },
     {
@@ -338,9 +344,15 @@
       "type": "file"
     },
     {
-      "path": "src\\aiAdvisor.js",
+      "path": "C:\\Users\\adm\\AppData\\Local\\Temp\\claude\\D--OpenClaw-workspace\\29bbb31f-6453-49c7-9461-25ea3fd12309\\tasks\\b4u55ja98.output",
       "accessCount": 1,
-      "lastAccessed": 1774836590548,
+      "lastAccessed": 1774836957681,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\AiAdvisorPanel.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1774837208884,
       "type": "file"
     }
   ],

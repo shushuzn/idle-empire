@@ -100,19 +100,18 @@ function analyzeUpgrades(upgrades, gold, currentGps) {
 
   const purchased = (typeof window !== 'undefined' && window.G?.upgrades) || upgrades || {};
 
-  // 从 window.UPGRADES_DATA 动态获取已购买升级的反推乘数
+  // 从 window.UPGRADES_DATA 动态获取已购买升级的反推乘数（仅影响GPS的升级）
   let globalMultiplier = 1.0;
   data.forEach(u => {
     if (purchased[u.id]) {
-      // 从 desc 解析百分比
       const pctMatch = u.desc.match(/(\+?\d+)%/);
       if (pctMatch) {
         const pct = parseInt(pctMatch[1]) / 100;
-        if (u.desc.includes('建筑产出')) {
-          globalMultiplier += pct;
-        } else if (u.desc.includes('全局') || u.desc.includes('帝国')) {
+        // 只有建筑产出和全局收益升级才计入GPS乘数
+        if (u.desc.includes('建筑产出') || u.desc.includes('全局') || u.desc.includes('帝国')) {
           globalMultiplier += pct;
         }
+        // click_power 和 boss_damage 不影响GPS，不计入
       }
     }
   });
@@ -199,11 +198,11 @@ function analyzeRebirth(G) {
   const prestigeShards = G._prestigeShards || 0;
   const rebirths = G._rebirths || 0;
 
-  // 金币超过 1T 且转生次数 > 0 时建议转生
-  if (gold > 1e12 && rebirths > 0) {
+  // 金币超过 1T 且王朝等级 > 1（已进行过转生）时建议转生
+  if (gold > 1e12 && dynastyLevel > 1) {
     return {
       action: 'rebirth',
-      reason: `当前王朝等级 ${dynastyLevel}，${prestigeShards} 碎片，建议转生获取更高加成`,
+      reason: `王朝等级 ${dynastyLevel}，${prestigeShards} 碎片，建议转生获取更高加成`,
       confidence: 'medium',
     };
   }
@@ -276,10 +275,6 @@ export function analyzeGameState(G) {
   }
 
   if (topBuilding) {
-    const buyMode = topBuilding.buyMode;
-    let buyCount = topBuilding.maxBuy || 1;
-    // 显示购买模式
-    const modeLabel = buyMode === 'x100' ? 'x100' : buyMode === 'x10' ? 'x10' : 'x1';
     return {
       type: 'building',
       target: topBuilding,

@@ -105,7 +105,7 @@
         </div>
       {/if}
 
-      {#if advice.type === 'boss' && advice.targetGold}
+      {#if advice.type === 'boss' && advice.targetGold && advice.targetGold > 0}
         <div class="advice-detail">
           <div class="detail-row">
             <span class="detail-label">目标金币</span>
