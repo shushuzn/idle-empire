@@ -39,6 +39,6 @@ jobs:
 
       - name: Push to itch.io
         env:
-          BUTLER_API_KEY: ${{ secrets.ITCH_API_KEY }}
+          BUTLER_CREDENTIALS_KEY: ${{ secrets.ITCH_API_KEY }}
         run: |
           ./butler push dist shushuzn/idle-empire-premium-idle-game:html
