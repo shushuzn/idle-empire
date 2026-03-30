@@ -32,11 +32,10 @@ jobs:
           </html>
           HTMLEOF
 
-      - name: Install butler
-        run: |
-          sudo apt-get update && sudo apt-get install -y butler
-
       - name: Push to itch.io
-        env:
-          ITCH_API_KEY: ${{ secrets.ITCH_API_KEY }}
-        run: butler push dist shushuzn/idle-empire-premium-idle-game:html
+        uses: itchio/butler-push@v2
+        with:
+          folder: dist
+          game: shushuzn/idle-empire-premium-idle-game
+          channel: html
+          butler_api_key: ${{ secrets.ITCH_API_KEY }}
