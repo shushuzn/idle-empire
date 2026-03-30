@@ -41,4 +41,5 @@ jobs:
         env:
           BUTLER_CREDENTIALS_KEY: ${{ secrets.ITCH_API_KEY }}
         run: |
+          ./butler login "$BUTLER_CREDENTIALS_KEY"
           ./butler push dist shushuzn/idle-empire-premium-idle-game:html
