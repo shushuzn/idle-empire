@@ -34,10 +34,7 @@ jobs:
 
       - name: Install butler
         run: |
-          mkdir -p ~/bin
-          curl -L https://broth.itch.ovh/butler/linux-amd64/HEAD/linux-amd64 --output ~/bin/butler
-          chmod +x ~/bin/butler
-          echo "~/.bin" >> $GITHUB_PATH
+          sudo apt-get update && sudo apt-get install -y butler
 
       - name: Push to itch.io
         env:
