@@ -34,50 +34,38 @@ jobs:
 
       - name: Upload to itch.io via API
         run: |
+          set -x
           DIST_DIR="dist"
           GAME="shushuzn/idle-empire-premium-idle-game"
           API_KEY="${{ secrets.ITCH_API_KEY }}"
+
+          echo "Testing API connectivity..."
+          curl -v --max-time 10 "https://itch.io/api/1/me" -H "Authorization: Bearer $API_KEY" 2>&1 | tail -20
 
           echo "Fetching game record..."
           GAME_RESP=$(curl -s -w "\n%{http_code}" "https://itch.io/api/1/games/${GAME}")
           HTTP_CODE=$(echo "$GAME_RESP" | tail -1)
           BODY=$(echo "$GAME_RESP" | sed '$d')
-
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "Failed to fetch game: HTTP $HTTP_CODE"
-            echo "$BODY"
-            exit 1
-          fi
+          echo "Game record HTTP: $HTTP_CODE"
+          echo "Body: $BODY"
 
           GAME_ID=$(echo "$BODY" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
           echo "Game ID: $GAME_ID"
 
           if [ -z "$GAME_ID" ]; then
-            echo "Could not parse game ID from response"
-            echo "$BODY"
+            echo "Could not parse game ID"
             exit 1
           fi
 
-          echo "Fetching upload URL..."
-          UPLOAD_RESP=$(curl -s -w "\n%{http_code}" -H "Authorization: Bearer $API_KEY" "https://itch.io/api/1/games/${GAME_ID}/edit")
-          HTTP_CODE=$(echo "$UPLOAD_RESP" | tail -1)
-
-          echo "Upload endpoint response: HTTP $HTTP_CODE"
-
-          echo "Uploading files..."
-          for file in "$DIST_DIR"/*; do
-            if [ -f "$file" ]; then
-              FNAME=$(basename "$file")
-              echo "Uploading $FNAME..."
-              UPLOAD=$(curl -s -w "\n%{http_code}" -X POST \
-                -H "Authorization: Bearer $API_KEY" \
-                -H "Accept: application/json" \
-                "https://itch.io/api/1/games/${GAME_ID}/uploads")
-              HTTP_CODE=$(echo "$UPLOAD" | tail -1)
-              echo "Upload response for $FNAME: HTTP $HTTP_CODE"
-              echo "$UPLOAD" | sed '$d' | head -c 200
-              echo
-            fi
-          done
+          echo "Creating upload..."
+          UPLOAD=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer $API_KEY" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "game_id=${GAME_ID}&channel=html&filename=game.zip" \
+            "https://itch.io/api/1/games/${GAME_ID}/uploads")
+          HTTP_CODE=$(echo "$UPLOAD" | tail -1)
+          echo "Create upload HTTP: $HTTP_CODE"
+          echo "$UPLOAD" | sed '$d'
 
           echo "Done!"
