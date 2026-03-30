@@ -34,9 +34,8 @@ jobs:
 
       - name: Install butler
         run: |
-          curl -LsSf https://butler.itch.io/get --output butler
+          curl -L "https://github.com/itchio/butler/releases/download/v1.0.0/butler-linux-amd64" -o butler
           chmod +x butler
-        shell: bash
 
       - name: Push to itch.io
         env:
