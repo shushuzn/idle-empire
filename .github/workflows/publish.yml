@@ -32,7 +32,12 @@ jobs:
           </html>
           HTMLEOF
 
+      - name: Install butler
+        run: |
+          curl -L https://broth.itch.ovh/butler/linux-amd64/latest --output butler
+          chmod +x butler
+
       - name: Push to itch.io
         env:
           ITCH_API_KEY: ${{ secrets.ITCH_API_KEY }}
-        run: butler push dist shushuzn/idle-empire-premium-idle-game:html
+        run: ./butler push dist shushuzn/idle-empire-premium-idle-game:html
