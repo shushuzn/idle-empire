@@ -38,8 +38,5 @@ jobs:
           chmod +x butler
 
       - name: Push to itch.io
-        env:
-          BUTLER_CREDENTIALS_KEY: ${{ secrets.ITCH_API_KEY }}
         run: |
-          ./butler login "$BUTLER_CREDENTIALS_KEY"
-          ./butler push dist shushuzn/idle-empire-premium-idle-game:html
+          ./butler push --credentials-key "${{ secrets.ITCH_API_KEY }}" dist shushuzn/idle-empire-premium-idle-game:html
