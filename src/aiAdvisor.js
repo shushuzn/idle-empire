@@ -196,7 +196,6 @@ function analyzeRebirth(G) {
   const gold = G.gold || 0;
   const dynastyLevel = G._dynastyLevel || 1;
   const prestigeShards = G._prestigeShards || 0;
-  const rebirths = G._rebirths || 0;
 
   // 金币超过 1T 且王朝等级 > 1（已进行过转生）时建议转生
   if (gold > 1e12 && dynastyLevel > 1) {
@@ -281,8 +280,8 @@ export function analyzeGameState(G) {
       upgrade: topUpgrade,
       reason: `「${topBuilding.icon} ${topBuilding.name}」复合分数最优（+${topBuilding.marginalGps.toFixed(2)} GPS/个）`,
       confidence: topBuilding.count === 0 ? 'high' : 'medium',
-      buyMode,
-      buyCount: Math.min(buyCount, 100),
+      buyMode: topBuilding.buyMode,
+      buyCount: Math.min(topBuilding.maxBuy || 1, 100),
     };
   }
 

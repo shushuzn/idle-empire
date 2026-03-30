@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd /d/OpenClaw/workspace && git add 80-PROJECTS/idle-empire/src/aiAdvisor.js 80-PROJECTS/idle-empire/src/components/AiAdvisorPanel.svelte 80-PROJECTS/idle-empire/src/App.svelte && git stat...",
-  "error": "Exit code 128\nfatal: Pathspec '80-PROJECTS/idle-empire/src/aiAdvisor.js' is in submodule '80-PROJECTS/idle-empire'",
-  "timestamp": "2026-03-30T01:59:42.633Z",
+  "tool_input_preview": "{\"command\":\"butler push dist shushuzn/idle-empire-premium-idle-game:html 2>&1\",\"timeout\":90000,\"description\":\"Push build to itch.io\"}",
+  "error": "Exit code 1\nnode:events:486\r\n      throw er; // Unhandled 'error' event\r\n      ^\r\n\r\nError: listen EADDRINUSE: address already in use 0.0.0.0:8000\r\n    at Server.setupListenHandle [as _listen2] (node:net:1948:16)\r\n    at listenInCluster (node:net:2005:12)\r\n    at node:net:2214:7\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)\r\nEmitted 'error' event on Server instance at:\r\n    at emitErrorNT (node:net:1984:8)\r\n    at process.processTicksAndRejections (node:inter...",
+  "timestamp": "2026-03-30T02:20:45.936Z",
   "retry_count": 1
 }

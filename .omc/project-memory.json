@@ -158,16 +158,16 @@
       "type": "file"
     },
     {
+      "path": "src\\gameAdapter.js",
+      "accessCount": 18,
+      "lastAccessed": 1774838039919,
+      "type": "file"
+    },
+    {
       "path": "js",
       "accessCount": 17,
       "lastAccessed": 1774790392786,
       "type": "directory"
-    },
-    {
-      "path": "src\\gameAdapter.js",
-      "accessCount": 17,
-      "lastAccessed": 1774837056200,
-      "type": "file"
     },
     {
       "path": "",
@@ -188,6 +188,12 @@
       "type": "file"
     },
     {
+      "path": "src\\aiAdvisor.js",
+      "accessCount": 9,
+      "lastAccessed": 1774838114817,
+      "type": "file"
+    },
+    {
       "path": "src\\components\\BuildingTab.svelte",
       "accessCount": 7,
       "lastAccessed": 1774792888408,
@@ -200,12 +206,6 @@
       "type": "file"
     },
     {
-      "path": "src\\aiAdvisor.js",
-      "accessCount": 6,
-      "lastAccessed": 1774837216044,
-      "type": "file"
-    },
-    {
       "path": "js\\v2_patch.js",
       "accessCount": 5,
       "lastAccessed": 1774784733442,
@@ -215,6 +215,12 @@
       "path": "C:\\Users\\adm\\.claude\\projects\\D--OpenClaw-workspace\\memory\\MEMORY.md",
       "accessCount": 4,
       "lastAccessed": 1774786105095,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\AiAdvisorPanel.svelte",
+      "accessCount": 4,
+      "lastAccessed": 1774838137010,
       "type": "file"
     },
     {
@@ -347,12 +353,6 @@
       "path": "C:\\Users\\adm\\AppData\\Local\\Temp\\claude\\D--OpenClaw-workspace\\29bbb31f-6453-49c7-9461-25ea3fd12309\\tasks\\b4u55ja98.output",
       "accessCount": 1,
       "lastAccessed": 1774836957681,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\AiAdvisorPanel.svelte",
-      "accessCount": 1,
-      "lastAccessed": 1774837208884,
       "type": "file"
     }
   ],
