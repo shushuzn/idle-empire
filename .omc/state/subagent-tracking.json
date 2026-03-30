@@ -1,0 +1,17 @@
+{
+  "agents": [
+    {
+      "agent_id": "afa28bd514a1811a5",
+      "agent_type": "coder",
+      "started_at": "2026-03-29T11:29:07.669Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-03-29T11:30:56.503Z",
+      "duration_ms": 108834
+    }
+  ],
+  "total_spawned": 1,
+  "total_completed": 1,
+  "total_failed": 0,
+  "last_updated": "2026-03-30T02:05:26.178Z"
+}

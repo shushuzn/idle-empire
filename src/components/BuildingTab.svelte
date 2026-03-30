@@ -10,7 +10,12 @@
   let buyMode = $state('x1');
 
   onMount(() => {
+    // Immediate read in case data is already available
     buildings = window.BUILDINGS_DATA || [];
+    const poll = setInterval(() => {
+      buildings = window.BUILDINGS_DATA || [];
+    }, 100);
+    return () => clearInterval(poll);
   });
 
   function handleBuy(building) {

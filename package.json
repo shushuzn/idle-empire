@@ -2,7 +2,10 @@
   "name": "idle-empire",
   "private": true,
   "version": "2.2.0",
+  "description": "Premium idle incremental game built with Svelte 5",
   "type": "module",
+  "repository": "https://github.com/shushuzn/idle-empire.git",
+  "keywords": ["idle", "game", "incremental", "svelte", "svelte5"],
   "scripts": {
     "dev": "vite",
     "build": "vite build",

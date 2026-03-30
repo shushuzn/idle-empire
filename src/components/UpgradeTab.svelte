@@ -5,7 +5,13 @@
   let upgrades = $state([]);
 
   onMount(() => {
-    upgrades = window.UPGRADES_DATA || [];
+    const poll = setInterval(() => {
+      if (window.UPGRADES_DATA?.length > 0) {
+        upgrades = window.UPGRADES_DATA;
+        clearInterval(poll);
+      }
+    }, 50);
+    return () => clearInterval(poll);
   });
 
   function handleBuy(upgrade) {

@@ -5,7 +5,13 @@
   let achievements = $state([]);
 
   onMount(() => {
-    achievements = window.ACHIEVEMENTS_DATA || [];
+    const poll = setInterval(() => {
+      if (window.ACHIEVEMENTS_DATA?.length > 0) {
+        achievements = window.ACHIEVEMENTS_DATA;
+        clearInterval(poll);
+      }
+    }, 50);
+    return () => clearInterval(poll);
   });
 </script>
 
