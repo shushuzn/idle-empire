@@ -32,10 +32,14 @@ jobs:
           </html>
           HTMLEOF
 
+      - name: Install butler
+        run: |
+          curl -LsSf https://butler.itch.io/get --output butler
+          chmod +x butler
+        shell: bash
+
       - name: Push to itch.io
-        uses: itchio/butler-push@v2
-        with:
-          folder: dist
-          game: shushuzn/idle-empire-premium-idle-game
-          channel: html
-          butler_api_key: ${{ secrets.ITCH_API_KEY }}
+        env:
+          BUTLER_API_KEY: ${{ secrets.ITCH_API_KEY }}
+        run: |
+          ./butler push dist shushuzn/idle-empire-premium-idle-game:html
