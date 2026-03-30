@@ -16,8 +16,8 @@
 
   onMount(() => {
     refreshAdvice();
-    // 每 2 秒刷新一次
-    const interval = setInterval(refreshAdvice, 2000);
+    // 每 5 秒刷新一次（降低频率）
+    const interval = setInterval(refreshAdvice, 5000);
     return () => clearInterval(interval);
   });
 
@@ -38,27 +38,21 @@
   </div>
 
   {#if advice}
-    <div class="advice-card" style="border-color: {confidenceColor(advice.confidence)}22">
+    <div class="advice-card" style="border-color: {confidenceColor(advice.confidence)}33">
       <div class="advice-type">
-        {#if advice.type === 'building'}
-          🏗️ 建筑推荐
-        {:else if advice.type === 'upgrade'}
-          ⬆️ 升级推荐
-        {:else if advice.type === 'click_farm'}
-          👆 点击积累
-        {:else if advice.type === 'wait'}
-          ⏳ 等待中
-        {:else}
-          💡 建议
-        {/if}
+        {#if advice.type === 'building'}🏗️ 建筑推荐
+        {:else if advice.type === 'upgrade'}⬆️ 升级推荐
+        {:else if advice.type === 'boss'}👹 Boss 战斗
+        {:else if advice.type === 'rebirth'}👑 转生建议
+        {:else if advice.type === 'click_farm'}👆 点击积累
+        {:else if advice.type === 'wait'}⏳ 等待中
+        {:else}💡 建议{/if}
         <span class="confidence" style="color: {confidenceColor(advice.confidence)}">
           {advice.confidence === 'high' ? '● 高置信' : advice.confidence === 'medium' ? '◐ 中置信' : '○ 低置信'}
         </span>
       </div>
 
-      <div class="advice-content">
-        {advice.reason}
-      </div>
+      <div class="advice-content">{advice.reason}</div>
 
       {#if advice.type === 'building' && advice.target}
         <div class="advice-detail">
@@ -72,20 +66,20 @@
           </div>
           <div class="detail-row">
             <span class="detail-label">边际 GPS</span>
-            <span class="detail-value">+{advice.target.marginalGps.toFixed(2)}/s</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">每金币回报</span>
-            <span class="detail-value gps">{advice.target.gpsPerGold.toExponential(2)} GPS/💰</span>
+            <span class="detail-value gps">+{advice.target.marginalGps.toFixed(2)}/s</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">已拥有</span>
             <span class="detail-value">{advice.target.count}</span>
           </div>
-          {#if advice.target.count === 0}
-            <div class="action-hint">💡 优先购买第一个，性价比最高！</div>
-          {:else if advice.buyMode}
-            <div class="action-hint">📌 建议模式：{advice.buyMode === 'x10' ? '批量 x10' : '单个 x1'}</div>
+          {#if advice.buyCount && advice.buyCount > 1}
+            <div class="detail-row">
+              <span class="detail-label">建议购买</span>
+              <span class="detail-value gold">{advice.buyCount} 个</span>
+            </div>
+            <div class="action-hint">📌 批量购买更划算（x{advice.buyCount >= 10 ? '10' : advice.buyCount}）</div>
+          {:else if advice.target.count === 0}
+            <div class="action-hint">💡 第一个建筑，性价比最高！</div>
           {/if}
         </div>
       {/if}
@@ -104,40 +98,76 @@
             <span class="detail-label">价格</span>
             <span class="detail-value">{advice.target.cost.toLocaleString()} 💰</span>
           </div>
+          <div class="detail-row">
+            <span class="detail-label">收益提升</span>
+            <span class="detail-value gps">+{Math.floor(advice.target.gpsGain)}/s</span>
+          </div>
         </div>
       {/if}
 
-      {#if advice.type === 'wait' && advice.waitGold}
+      {#if advice.type === 'boss' && advice.targetGold}
         <div class="advice-detail">
           <div class="detail-row">
             <span class="detail-label">目标金币</span>
-            <span class="detail-value">{advice.waitGold.toLocaleString()} 💰</span>
+            <span class="detail-value">{Math.floor(advice.targetGold).toLocaleString()} 💰</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">当前金币</span>
             <span class="detail-value">{Math.floor($goldStore).toLocaleString()} 💰</span>
           </div>
           <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" style="width: {Math.min(100, ($goldStore / advice.waitGold) * 100)}%"></div>
+            <div
+              class="progress-bar-fill boss"
+              style="width: {Math.min(100, ($goldStore / advice.targetGold) * 100)}%"
+            ></div>
+          </div>
+        </div>
+      {/if}
+
+      {#if advice.type === 'rebirth'}
+        <div class="advice-detail">
+          <button class="btn btn-purple" onclick={() => window.performPrestige?.()}>
+            👑 立即转生
+          </button>
+        </div>
+      {/if}
+
+      {#if advice.type === 'wait' && advice.nextCost}
+        <div class="advice-detail">
+          <div class="detail-row">
+            <span class="detail-label">当前金币</span>
+            <span class="detail-value">{Math.floor($goldStore).toLocaleString()} 💰</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">目标</span>
+            <span class="detail-value">{Math.floor(advice.nextCost).toLocaleString()} 💰</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div
+              class="progress-bar-fill wait"
+              style="width: {Math.min(100, ($goldStore / advice.nextCost) * 100)}%"
+            ></div>
           </div>
         </div>
       {/if}
     </div>
 
-    <div class="sub-advice">
-      {#if advice.type === 'building' && advice.upgrade}
+    {#if advice.upgrade && advice.type === 'building'}
+      <div class="sub-advice">
         <div class="sub-item">
-          <span class="sub-label">💡 也可考虑</span>
-          <span class="sub-value">{advice.upgrade.id}（{advice.upgrade.desc}）</span>
+          <span class="sub-label">💡 次选升级</span>
+          <span class="sub-value">{advice.upgrade.id}（+{Math.floor(advice.upgrade.gpsGain)} GPS）</span>
         </div>
-      {/if}
-      {#if advice.type === 'upgrade' && advice.building}
+      </div>
+    {/if}
+    {#if advice.building && advice.type === 'upgrade'}
+      <div class="sub-advice">
         <div class="sub-item">
-          <span class="sub-label">🏗️ 其次推荐</span>
-          <span class="sub-value">{advice.building.name}（每金币 {advice.building.gpsPerGold.toExponential(2)} GPS）</span>
+          <span class="sub-label">🏗️ 次选建筑</span>
+          <span class="sub-value">{advice.building.name}（+{advice.building.marginalGps.toFixed(2)} GPS）</span>
         </div>
-      {/if}
-    </div>
+      </div>
+    {/if}
   {:else}
     <div class="loading">⏳ 分析中...</div>
   {/if}
@@ -152,7 +182,7 @@
     background: var(--bg-surface, #1e1e2e);
     border: 1px solid var(--border-default, #3a3a5c);
     border-radius: 12px;
-    padding: 16px;
+    padding: 14px;
     margin-top: 8px;
   }
 
@@ -163,9 +193,7 @@
     margin-bottom: 12px;
   }
 
-  .panel-icon {
-    font-size: 18px;
-  }
+  .panel-icon { font-size: 18px; }
 
   .panel-title {
     font-size: 14px;
@@ -211,10 +239,7 @@
     align-items: center;
   }
 
-  .confidence {
-    font-size: 10px;
-    font-weight: 400;
-  }
+  .confidence { font-size: 10px; font-weight: 400; }
 
   .advice-content {
     font-size: 13px;
@@ -226,7 +251,7 @@
   .advice-detail {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
   }
 
   .detail-row {
@@ -235,22 +260,11 @@
     font-size: 11px;
   }
 
-  .detail-label {
-    color: var(--text-muted, #64748b);
-  }
-
-  .detail-value {
-    color: var(--text-secondary, #cbd5e1);
-    font-weight: 500;
-  }
-
-  .detail-value.gps {
-    color: #4ade80;
-  }
-
-  .building-name, .upgrade-name {
-    color: #fbbf24;
-  }
+  .detail-label { color: var(--text-muted, #64748b); }
+  .detail-value { color: var(--text-secondary, #cbd5e1); font-weight: 500; }
+  .detail-value.gps { color: #4ade80; }
+  .detail-value.gold { color: #fbbf24; }
+  .building-name, .upgrade-name { color: #fbbf24; }
 
   .action-hint {
     font-size: 11px;
@@ -271,9 +285,16 @@
 
   .progress-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #4ade80, #22d3ee);
     border-radius: 2px;
     transition: width 0.3s ease;
+  }
+
+  .progress-bar-fill.boss {
+    background: linear-gradient(90deg, #f87171, #fb923c);
+  }
+
+  .progress-bar-fill.wait {
+    background: linear-gradient(90deg, #4ade80, #22d3ee);
   }
 
   .sub-advice {
@@ -289,14 +310,8 @@
     font-size: 11px;
   }
 
-  .sub-label {
-    color: #fbbf24;
-    white-space: nowrap;
-  }
-
-  .sub-value {
-    color: var(--text-muted, #94a3b8);
-  }
+  .sub-label { color: #fbbf24; white-space: nowrap; }
+  .sub-value { color: var(--text-muted, #94a3b8); }
 
   .loading {
     text-align: center;
@@ -310,5 +325,26 @@
     color: var(--text-faint, #475569);
     text-align: center;
     margin-top: 8px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+
+  .btn-purple {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: #fff;
+  }
+
+  .btn-purple:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 16px rgba(139, 92, 246, 0.5);
   }
 </style>
