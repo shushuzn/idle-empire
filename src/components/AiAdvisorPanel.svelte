@@ -160,14 +160,6 @@
         </div>
       </div>
     {/if}
-    {#if advice.building && advice.type === 'upgrade'}
-      <div class="sub-advice">
-        <div class="sub-item">
-          <span class="sub-label">🏗️ 次选建筑</span>
-          <span class="sub-value">{advice.building.name}（+{advice.building.marginalGps.toFixed(2)} GPS）</span>
-        </div>
-      </div>
-    {/if}
   {:else}
     <div class="loading">⏳ 分析中...</div>
   {/if}

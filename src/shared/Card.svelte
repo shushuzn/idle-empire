@@ -6,19 +6,24 @@
     onclick,
     children
   } = $props();
+
+  function handleKeydown(e) {
+    if ((e.key === 'Enter' || e.key === ' ') && clickable) {
+      e.preventDefault();
+      onclick?.();
+    }
+  }
 </script>
 
-<div
-  class="card"
-  class:clickable
-  class:affordable
-  class:locked
-  role={clickable ? 'button' : undefined}
-  tabindex={clickable ? 0 : undefined}
-  {onclick}
->
-  {@render children()}
-</div>
+{#if clickable}
+  <button class="card clickable" class:affordable class:locked {onclick} onkeydown={handleKeydown}>
+    {@render children()}
+  </button>
+{:else}
+  <div class="card" class:affordable class:locked>
+    {@render children()}
+  </div>
+{/if}
 
 <style>
   .card {
@@ -27,6 +32,8 @@
     border-radius: 12px;
     padding: 18px;
     transition: all 0.2s ease;
+    text-align: left;
+    width: 100%;
   }
 
   .card.clickable {

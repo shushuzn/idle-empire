@@ -35,7 +35,7 @@ function loadGame() {
             if (!data.totalEarned) data.totalEarned = 0;
             if (!data.buildings) data.buildings = {};
             if (!data.achievements) data.achievements = [];
-            if (!data.upgrades) data.upgrades = [];
+            if (!data.upgrades) data.upgrades = {};
             if (!data.buyMode) data.buyMode = 'x1';
             if (!data.dynastyLevel) data.dynastyLevel = 1;
             if (data.dynastyPoints === undefined) data.dynastyPoints = Math.max(0, data.dynastyLevel - 1);

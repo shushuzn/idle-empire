@@ -18,10 +18,17 @@
   function handleClick() {
     window.clickGold?.();
   }
+
+  function handleKeydown(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      window.clickGold?.();
+    }
+  }
 </script>
 
 <div class="resource-bar">
-  <div class="gold-card" onclick={handleClick} role="button" tabindex="0">
+  <div class="gold-card" onclick={handleClick} onkeydown={handleKeydown} role="button" tabindex="0">
     <div class="gold-icon">💰</div>
     <div class="gold-info">
       <span class="label">当前金币</span>

@@ -1,70 +1,65 @@
 /**
  * aiAdvisor.js
- * 本地 AI 策略顾问 v3 — 基于规则的优化算法
+ * 本地 AI 策略顾问 v4 — 使用真实 game multiplier stack
  *
  * 数据源：window.BUILDINGS_DATA, window.UPGRADES_DATA, window.G
  * 由 gameAdapter.js 同步维护，确保单一数据源
+ * multiplier 使用 window.__gameBridge（真实 js/ 函数）
  */
 
+// 复合分数权重：平衡ROI与绝对增益
+const SCORE_WEIGHT = 0.3;
+
 /**
- * 计算复合推荐分数 = 总GPS增益/价格 * (1 + log10(绝对增益+1))
- * 早期：比率主导；后期：绝对值也参与权衡
+ * 复合推荐分数 = roi * (1 + SCORE_WEIGHT * log10(gpsAfter+1))
+ * 早期：ROI 主导；后期：绝对值也参与权衡
  */
 function compositeScore(gpsAfter, cost) {
   if (cost <= 0 || gpsAfter <= 0) return 0;
   const roi = gpsAfter / cost;
   const absBonus = Math.log10(gpsAfter + 1);
-  return roi * (1 + 0.3 * absBonus);
+  return roi * (1 + SCORE_WEIGHT * absBonus);
 }
 
 /**
- * 几何级数：买 n 个的总成本
- * 建筑价格公式：baseCost * 1.15^count
+ * 计算建筑边际收益，使用真实的 multiplier stack：
+ * gpsAfter = baseProduction * buildingMultiplier * dynastyMultiplier * prestigeMultiplier
+ * marginalGps = baseProduction * 0.1 * buildingMultiplier * dynastyMultiplier * prestigeMultiplier
  */
-function geometricSum(baseCost, count) {
-  if (count <= 0) return 0;
-  // 实际使用整数计算
-  let total = 0;
-  for (let i = 0; i < count; i++) {
-    total += Math.floor(baseCost * Math.pow(1.15, i));
-  }
-  return total;
-}
-
-/**
- * 计算建筑边际收益（复用 gameAdapter.js 同步后的 window.BUILDINGS_DATA）
- */
-function analyzeBuildings(buildings, gold) {
+function analyzeBuildings(gold, bridge) {
   const data = (typeof window !== 'undefined' && window.BUILDINGS_DATA) || [];
   if (!data || data.length === 0) return [];
 
-  const owned = (typeof window !== 'undefined' && window.G?.buildings) || buildings || {};
+  const owned = (typeof window !== 'undefined' && window.G?.buildings) || {};
 
-  const scored = data.map(b => {
+  const scored = data
+    .filter(b => b.unlocked !== false)  // 过滤未解锁建筑（unlockAt/rebirthRequired 条件未满足）
+    .map(b => {
     const count = owned[b.id] || 0;
     const costMult = Math.pow(1.15, count);
     const nextCost = Math.floor(b.baseCost * costMult);
-    // 总产出 = baseProduction * (1 + count * 0.1)
-    const gpsAfter = b.baseProduction * (1 + (count + 1) * 0.1);
-    const gpsBefore = b.baseProduction * (1 + count * 0.1);
-    // 边际产出
-    const marginalGps = gpsAfter - gpsBefore;
-    const affordable = gold >= nextCost;
-    // 复合分数基于总产出而非边际
-    const score = affordable ? compositeScore(gpsAfter, nextCost) : 0;
 
-    // 批量购买计算：当前金币能买几个
-    const costFor10 = geometricSum(b.baseCost, 10);
-    const costFor100 = geometricSum(b.baseCost, 100);
-    const canBuy10 = gold >= costFor10;
-    const canBuy100 = gold >= costFor100;
+    // 真实 multiplier 计算（与 js/game.js 一致）
+    const buildingMult = bridge?.getBuildingMultiplier?.(window.G, b.id) ?? 1.0;
+    const dynastyMult  = bridge?.getDynastyMultiplier?.(window.G) ?? 1.0;
+    const prestigeMult = bridge?.getPrestigeMultiplier?.(window.G) ?? 1.0;
+    const totalMult = buildingMult * dynastyMult * prestigeMult;
+
+    // 购买第 (count+1) 个后的总 GPS（用于计算边际 ROI）
+    const gpsAfter = b.baseProduction * (1 + (count + 1) * 0.1) * totalMult;
+    // 边际 GPS = 买一个新增的产出
+    const marginalGps = b.baseProduction * 0.1 * totalMult;
+    const affordable = gold >= nextCost;
+    const score = affordable ? compositeScore(gpsAfter, nextCost) : 0;
 
     // 计算最大可买数量（不超过100）
     let maxBuy = 0;
     let remaining = gold;
+    let loopMult = Math.pow(1.15, count);
     let testCount = 0;
     while (testCount < 100) {
-      const c = Math.floor(b.baseCost * Math.pow(1.15, count + testCount));
+      loopMult *= 1.15;
+      const c = Math.floor(b.baseCost * loopMult);
       if (c > remaining) break;
       remaining -= c;
       testCount++;
@@ -76,13 +71,9 @@ function analyzeBuildings(buildings, gold) {
       count,
       nextCost,
       marginalGps,
-      gpsAfter,
       affordable,
       score,
-      gpsPerGold: marginalGps / nextCost,
-      buyMode: canBuy100 ? 'x100' : canBuy10 ? 'x10' : 'x1',
       maxBuy,
-      gpsAccumulation: marginalGps * 3600, // 每小时增益
     };
   });
 
@@ -90,56 +81,37 @@ function analyzeBuildings(buildings, gold) {
 }
 
 /**
- * 升级 ROI 分析（基于 window.UPGRADES_DATA）
+ * 升级 ROI 分析，使用 window.__gameBridge.getUpgradeBonus
+ * G.upgrades 是 ID 数组（js/game.js 的真实格式）
  */
-function analyzeUpgrades(upgrades, gold, currentGps) {
+function analyzeUpgrades(gold, currentGps, bridge) {
   if (!currentGps || currentGps <= 0) return [];
 
   const data = (typeof window !== 'undefined' && window.UPGRADES_DATA) || [];
   if (!data || data.length === 0) return [];
 
-  const purchased = (typeof window !== 'undefined' && window.G?.upgrades) || upgrades || {};
-
-  // 从 window.UPGRADES_DATA 动态获取已购买升级的反推乘数（仅影响GPS的升级）
-  let globalMultiplier = 1.0;
-  data.forEach(u => {
-    if (purchased[u.id]) {
-      const pctMatch = u.desc.match(/(\+?\d+)%/);
-      if (pctMatch) {
-        const pct = parseInt(pctMatch[1]) / 100;
-        // 只有建筑产出和全局收益升级才计入GPS乘数
-        if (u.desc.includes('建筑产出') || u.desc.includes('全局') || u.desc.includes('帝国')) {
-          globalMultiplier += pct;
-        }
-        // click_power 和 boss_damage 不影响GPS，不计入
-      }
-    }
-  });
-
   const scored = data
-    .filter(u => !purchased[u.id])
+    .filter(u => !u.purchased)  // use synced UPGRADES_DATA flag, not raw G.upgrades array
     .map(u => {
-      const pctMatch = u.desc.match(/(\+?\d+)%/);
-      if (!pctMatch) return { ...u, gpsGain: 0, roi: 0 };
-      const pct = parseInt(pctMatch[1]) / 100;
-
-      let gpsGain;
-      if (u.desc.includes('建筑产出')) {
-        // 建筑产出升级：加回乘数前
-        gpsGain = (currentGps / globalMultiplier) * pct;
-      } else if (u.desc.includes('全局') || u.desc.includes('帝国')) {
-        // 全局升级直接乘
-        gpsGain = currentGps * pct;
-      } else {
-        gpsGain = 0; // 点击/Boss 暂不优化
+      // 从 UPGRADES[i].effect.type/value 计算 gpsGain（与 js/upgrades.js 一致）
+      let gpsGain = 0;
+      if (u.effect?.type === 'building') {
+        const buildingBonus = bridge?.getUpgradeBonus?.('building') ?? 0;
+        // dynastyMult already in currentGps; effect applies to building component only
+        gpsGain = currentGps * u.effect.value / (1 + buildingBonus);
+      } else if (u.effect?.type === 'global' || u.effect?.type === 'empire') {
+        gpsGain = currentGps * u.effect.value;
       }
+      // click/boss/artifact/rebirth/season 类型 gpsGain = 0
 
       const roi = gpsGain / u.cost;
       return { ...u, gpsGain, roi, affordable: gold >= u.cost };
     })
     .filter(u => u.roi > 0 && gold >= u.cost);
 
-  return scored.sort((a, b) => b.roi - a.roi);
+  // O(n) 取 max 而非全量排序 O(n log n)
+  const best = scored.reduce((max, u) => u.roi > max.roi ? u : max, scored[0]);
+  return best ? [best] : [];
 }
 
 /**
@@ -147,23 +119,20 @@ function analyzeUpgrades(upgrades, gold, currentGps) {
  */
 function analyzeBoss(G) {
   if (!G) return null;
-  // 使用 gameAdapter 同步后的字段
   const bossHp = G._bossHp || 0;
   const bossMaxHp = G._bossMaxHp || 1;
   const currentBoss = G._currentBoss;
   const clickDamage = G.clickDamage || 1;
   const gold = G.gold || 0;
-  const gps = G.goldPerSecond || 0;
 
-  if (!currentBoss) return null; // 没有激活的Boss
+  if (!currentBoss) return null;
 
   const hpPercent = bossMaxHp > 0 ? bossHp / bossMaxHp : 1;
-  const goldPerSecond = gps || 0;
+  if (hpPercent <= 0 || hpPercent >= 1) return null;
 
-  // 如果 Boss 血量低于 20%，有实力可以打掉
   if (hpPercent < 0.2) {
     const timeToKill = bossHp / Math.max(1, clickDamage);
-    if (timeToKill < 30 || goldPerSecond > 0) {
+    if (timeToKill < 30) {
       return {
         action: 'attack',
         reason: `Boss 血量 ${Math.floor(hpPercent * 100)}%，可以击杀！`,
@@ -172,7 +141,6 @@ function analyzeBoss(G) {
     }
   }
 
-  // Boss 血量高于 80%，且金币不足时建议刷钱
   if (hpPercent > 0.8) {
     const targetGold = bossMaxHp * 3;
     if (gold < targetGold) {
@@ -185,25 +153,50 @@ function analyzeBoss(G) {
     }
   }
 
-  return null; // Boss 不是当前瓶颈
+  return null;
 }
 
 /**
  * 转生时机分析
+ * 使用 G.totalEarned（而非 gold）判断是否满足转生门槛
  */
-function analyzeRebirth(G) {
+function analyzeRebirth(G, bridge) {
   if (!G) return null;
-  const gold = G.gold || 0;
   const dynastyLevel = G._dynastyLevel || 1;
-  const prestigeShards = G._prestigeShards || 0;
+  const totalEarned = G.totalEarned || 0;
+  const requirement = bridge?.getRebirthRequirement?.(G) ?? Infinity;
 
-  // 金币超过 1T 且王朝等级 > 1（已进行过转生）时建议转生
-  if (gold > 1e12 && dynastyLevel > 1) {
+  if (totalEarned >= requirement && dynastyLevel > 1) {
     return {
       action: 'rebirth',
-      reason: `王朝等级 ${dynastyLevel}，${prestigeShards} 碎片，建议转生获取更高加成`,
-      confidence: 'medium',
+      reason: `累计 ${(totalEarned / 1e9).toFixed(1)}B 金币已达到转生门槛，建议转生获取灵魂宝石`,
+      confidence: 'high',
     };
+  }
+  return null;
+}
+
+/**
+ * Prestige 时机分析
+ */
+function analyzePrestige(G, bridge) {
+  if (!G) return null;
+  const totalEarned = G.totalEarned || 0;
+  const prestigeShards = G._prestigeShards || 0;
+  const nextGain = bridge?.getPrestigeGain?.(G) ?? 0;
+  const dynastyLevel = G._dynastyLevel || 1;
+
+  // 累计金币高但 prestige gain 很小时，说明需要 prestige
+  if (totalEarned > 1e9 && nextGain >= 1) {
+    const efficiency = nextGain / Math.max(1, totalEarned);
+    if (efficiency < 1e-6 || prestigeShards < 10) {
+      return {
+        action: 'prestige',
+        reason: `累计 ${(totalEarned / 1e9).toFixed(1)}B 金币，prestige 可得 +${nextGain} 碎片（王朝 Lv${dynastyLevel}）`,
+        confidence: 'medium',
+        nextGain,
+      };
+    }
   }
   return null;
 }
@@ -216,9 +209,8 @@ export function analyzeGameState(G) {
 
   const gold = G.gold || 0;
   const gps = G.goldPerSecond || 0;
-  const buildings = G.buildings || {};
+  const bridge = window.__gameBridge;
 
-  // === 早期：金币极少，提示点击 ===
   if (gps === 0 && gold < 50) {
     return {
       type: 'click_farm',
@@ -227,27 +219,19 @@ export function analyzeGameState(G) {
     };
   }
 
-  // === Boss 分析 ===
   const bossHint = analyzeBoss(G);
-  if (bossHint) {
-    return { type: 'boss', ...bossHint };
-  }
+  if (bossHint) return { type: 'boss', ...bossHint };
 
-  // === 转生分析 ===
-  const rebirthHint = analyzeRebirth(G);
-  if (rebirthHint) {
-    return { type: 'rebirth', ...rebirthHint };
-  }
+  const rebirthHint = analyzeRebirth(G, bridge);
+  if (rebirthHint) return { type: 'rebirth', ...rebirthHint };
 
-  // === 建筑分析 ===
-  const buildingScores = analyzeBuildings(buildings, gold);
+  const prestigeHint = analyzePrestige(G, bridge);
+  if (prestigeHint) return { type: 'prestige', ...prestigeHint };
+
+  const buildingScores = analyzeBuildings(gold, bridge);
   const topBuilding = buildingScores.find(b => b.affordable) || null;
+  const topUpgrade = analyzeUpgrades(gold, gps, bridge)[0] || null;
 
-  // === 升级分析 ===
-  const upgradeScores = analyzeUpgrades({}, gold, gps);
-  const topUpgrade = upgradeScores[0] || null;
-
-  // === 复合决策 ===
   if (!topBuilding && !topUpgrade) {
     return {
       type: 'wait',
@@ -267,7 +251,7 @@ export function analyzeGameState(G) {
         type: 'upgrade',
         target: topUpgrade,
         building: topBuilding,
-        reason: `升级「${topUpgrade.id}」${UPGRADE_HOURS}小时回本（+${Math.floor(topUpgrade.gpsGain)} GPS），优先于建筑`,
+        reason: `升级「${topUpgrade.name}」${UPGRADE_HOURS}小时回本（+${Math.floor(topUpgrade.gpsGain)} GPS），优先于建筑`,
         confidence: 'medium',
       };
     }
@@ -280,7 +264,7 @@ export function analyzeGameState(G) {
       upgrade: topUpgrade,
       reason: `「${topBuilding.icon} ${topBuilding.name}」复合分数最优（+${topBuilding.marginalGps.toFixed(2)} GPS/个）`,
       confidence: topBuilding.count === 0 ? 'high' : 'medium',
-      buyMode: topBuilding.buyMode,
+      buyMode: topBuilding.maxBuy >= 100 ? 'x100' : topBuilding.maxBuy >= 10 ? 'x10' : 'x1',
       buyCount: Math.min(topBuilding.maxBuy || 1, 100),
     };
   }
@@ -298,16 +282,17 @@ export function analyzeGameState(G) {
 export function getAdviceText(G) {
   const advice = analyzeGameState(G);
   if (!advice) return '加载中...';
-  const gold = G?.gold || 0;
 
   switch (advice.type) {
     case 'building':
       return `建议 ${advice.buyMode === 'x100' ? 'x100' : advice.buyMode === 'x10' ? '批量 x10' : '单个'}购买：${advice.target.name}`;
     case 'upgrade':
-      return `建议升级：${advice.target.id}（+${Math.floor(advice.target.gpsGain)} GPS）`;
+      return `建议升级：${advice.target.name}（+${Math.floor(advice.target.gpsGain)} GPS）`;
     case 'boss':
       return advice.reason;
     case 'rebirth':
+      return advice.reason;
+    case 'prestige':
       return advice.reason;
     case 'click_farm':
       return '点击积累金币购买第一个建筑';

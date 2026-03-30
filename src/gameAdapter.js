@@ -4,7 +4,7 @@
  * 策略：100ms 轮询 window.G，最小化改动
  */
 
-import { readable, writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 
 // 成就数据（从 achievements.js 复制）
 const ACHIEVEMENTS_DATA = [
@@ -41,63 +41,50 @@ const ACHIEVEMENTS_DATA = [
   { id: 'void_2', name: '时空旅者', desc: '累计获得 1Qa 金币', icon: '⏳', reward: '10 碎片' },
 ];
 
-// 建筑数据（从 buildings.js 复制）
+// 建筑数据（从 js/buildings.js 完整复制，含 unlockAt/rebirthRequired/hidden/color）
 const BUILDINGS_DATA_SRC = [
-  { id: 'mine', name: '金矿', desc: '开采珍贵的金矿', baseCost: 10, baseProduction: 1.5, icon: '⛏️' },
-  { id: 'lumber', name: '伐木场', desc: '砍伐木材出售', baseCost: 100, baseProduction: 6, icon: '🪓' },
-  { id: 'farm', name: '农场', desc: '种植农作物', baseCost: 500, baseProduction: 22, icon: '🌾' },
-  { id: 'factory', name: '工厂', desc: '批量生产商品', baseCost: 3000, baseProduction: 100, icon: '🏭' },
-  { id: 'bank', name: '银行', desc: '钱生钱的秘诀', baseCost: 50000, baseProduction: 500, icon: '🏦' },
-  { id: 'castle', name: '城堡', desc: '帝国的心脏', baseCost: 500000, baseProduction: 2500, icon: '🏰' },
-  { id: 'temple', name: '神殿', desc: '祈福带来财富', baseCost: 5000000, baseProduction: 15000, icon: '🛕' },
-  { id: 'spaceship', name: '太空站', desc: '星际贸易帝国', baseCost: 50000000, baseProduction: 100000, icon: '🚀' },
-  { id: 'quantum_lab', name: '量子实验室', desc: '量子技术驱动收益爆发', baseCost: 800000000, baseProduction: 1200000, icon: '⚛️' },
-  { id: 'dyson_ring', name: '戴森环', desc: '围绕恒星收集能量', baseCost: 12000000000, baseProduction: 15000000, icon: '☀️' },
-  { id: 'time_machine', name: '时间机器', desc: '穿越时空获取财富', baseCost: 200000000000, baseProduction: 200000000, icon: '⏰' },
-  { id: 'multiverse', name: '多元宇宙门户', desc: '跨维度能量收集', baseCost: 3000000000000, baseProduction: 3000000000, icon: '🌀' },
-  { id: 'research_lab', name: '研究院', desc: '研究前沿科技提升效率', baseCost: 50000000000000, baseProduction: 50000000, icon: '🔬' },
-  { id: 'stargate', name: '星际之门', desc: '连接遥远星系的通道', baseCost: 500000000000000, baseProduction: 200000000, icon: '🌠' },
-  { id: 'dark_matter', name: '暗能量采集器', desc: '收集宇宙暗能量', baseCost: 800000000000000, baseProduction: 800000000, icon: '🌑' },
-  { id: 'time_rift', name: '时空裂隙', desc: '连接不同时空的裂隙', baseCost: 5000000000000000, baseProduction: 5000000000, icon: '⏳' },
-  { id: 'reality_warp', name: '现实扭曲器', desc: '改写物理法则获取财富', baseCost: 50000000000000000, baseProduction: 50000000000, icon: '🔮' },
-  { id: 'infinity_engine', name: '无限引擎', desc: '驱动无限可能的终极装置', baseCost: 500000000000000000, baseProduction: 500000000000, icon: '♾️' },
-  { id: 'void_citadel', name: '虚空要塞', desc: '屹立于虚空的神秘城堡', baseCost: 5000000000000000000, baseProduction: 5000000000000, icon: '🏛️' },
+  { id: 'mine',         name: '金矿',           desc: '开采珍贵的金矿',        baseCost: 10,            baseProduction: 1.5,         icon: '⛏️',  color: '#ffd700' },
+  { id: 'lumber',       name: '伐木场',         desc: '砍伐木材出售',          baseCost: 100,           baseProduction: 6,           icon: '🪓',   color: '#8b4513',   unlockAt: 100 },
+  { id: 'farm',         name: '农场',           desc: '种植农作物',            baseCost: 500,           baseProduction: 22,          icon: '🌾',   color: '#90ee90',   unlockAt: 500 },
+  { id: 'factory',      name: '工厂',           desc: '批量生产商品',          baseCost: 3000,          baseProduction: 100,         icon: '🏭',   color: '#808080',   unlockAt: 3000 },
+  { id: 'bank',         name: '银行',           desc: '钱生钱的秘诀',          baseCost: 50000,         baseProduction: 500,         icon: '🏦',   color: '#4169e1',   unlockAt: 50000 },
+  { id: 'castle',       name: '城堡',           desc: '帝国的心脏',            baseCost: 500000,        baseProduction: 2500,        icon: '🏰',   color: '#9370db',   unlockAt: 500000 },
+  { id: 'temple',       name: '神殿',           desc: '祈福带来财富',          baseCost: 5000000,       baseProduction: 15000,      icon: '🛕',   color: '#ffdab9',   unlockAt: 5000000 },
+  { id: 'spaceship',    name: '太空站',         desc: '星际贸易帝国',          baseCost: 50000000,      baseProduction: 100000,     icon: '🚀',   color: '#00ffff',   unlockAt: 50000000 },
+  { id: 'quantum_lab',  name: '量子实验室',     desc: '量子技术驱动收益爆发',   baseCost: 800000000,     baseProduction: 1200000,    icon: '⚛️',   color: '#7c3aed',   unlockAt: 500000000 },
+  { id: 'dyson_ring',   name: '戴森环',         desc: '围绕恒星收集能量',      baseCost: 12000000000,   baseProduction: 15000000,   icon: '☀️',   color: '#f59e0b',   unlockAt: 8000000000 },
+  { id: 'time_machine', name: '时间机器',       desc: '穿越时空获取财富',      baseCost: 200000000000,  baseProduction: 200000000,  icon: '⏰',   color: '#9f7aea',   unlockAt: 80000000000 },
+  { id: 'multiverse',   name: '多元宇宙门户',    desc: '跨维度能量收集',        baseCost: 3000000000000, baseProduction: 3000000000, icon: '🌀',   color: '#667eea',   unlockAt: 2000000000000 },
+  { id: 'research_lab', name: '研究院',         desc: '研究前沿科技提升效率',   baseCost: 50000000000000,baseProduction: 50000000,  icon: '🔬',   color: '#0ea5e9',   unlockAt: 10000000000000 },
+  { id: 'stargate',     name: '星际之门',       desc: '连接遥远星系的通道',    baseCost: 500000000000000,baseProduction: 200000000, icon: '🌠',   color: '#8b5cf6',   unlockAt: 100000000000000 },
+  { id: 'dark_matter',  name: '暗能量采集器',    desc: '收集宇宙暗能量',        baseCost: 800000000000000,baseProduction: 800000000, icon: '🌑',   color: '#1a1a2e',   unlockAt: 500000000000000 },
+  { id: 'time_rift',    name: '时空裂隙',        desc: '连接不同时空的裂隙',     baseCost: 5000000000000000,baseProduction: 5000000000, icon: '⏳', color: '#e94560',  unlockAt: 3000000000000000 },
+  { id: 'reality_warp', name: '现实扭曲器',     desc: '改写物理法则获取财富',  baseCost: 50000000000000000,baseProduction: 50000000000, icon: '🔮', color: '#533483', unlockAt: 20000000000000000 },
+  { id: 'infinity_engine', name: '无限引擎',    desc: '驱动无限可能的终极装置',baseCost: 500000000000000000,baseProduction: 500000000000, icon: '♾️', color: '#ef4444', rebirthRequired: true },
+  { id: 'void_citadel', name: '虚空要塞',       desc: '屹立于虚空的神秘城堡',  baseCost: 5000000000000000000,baseProduction: 5000000000000, icon: '🏛️', color: '#2d3436', unlockAt: 1000000000000000000, rebirthRequired: true, hidden: true },
 ];
 
-// 升级数据（从 upgrades.js 复制）
+// 升级数据（适配 js/upgrades.js 的 effect 格式）
 const UPGRADES_DATA_SRC = [
-  { id: 'click_power_1', name: '点击强化 I', desc: '点击伤害 +20%', icon: '👆', cost: 500 },
-  { id: 'click_power_2', name: '点击强化 II', desc: '点击伤害 +30%', icon: '👆', cost: 5000 },
-  { id: 'click_power_3', name: '点击强化 III', desc: '点击伤害 +40%', icon: '👆', cost: 50000 },
-  { id: 'click_power_4', name: '点击强化 IV', desc: '点击伤害 +50%', icon: '👆', cost: 500000 },
-  { id: 'click_power_5', name: '点击强化 V', desc: '点击伤害 +100%', icon: '👆', cost: 5000000 },
-  { id: 'building_speed_1', name: '建筑加速 I', desc: '建筑产出 +15%', icon: '🏗️', cost: 1000 },
-  { id: 'building_speed_2', name: '建筑加速 II', desc: '建筑产出 +25%', icon: '🏗️', cost: 10000 },
-  { id: 'building_speed_3', name: '建筑加速 III', desc: '建筑产出 +35%', icon: '🏗️', cost: 100000 },
-  { id: 'building_speed_4', name: '建筑加速 IV', desc: '建筑产出 +50%', icon: '🏗️', cost: 1000000 },
-  { id: 'building_speed_5', name: '建筑加速 V', desc: '建筑产出 +100%', icon: '🏗️', cost: 10000000 },
-  { id: 'boss_damage_1', name: '屠戮者 I', desc: 'Boss 伤害 +25%', icon: '⚔️', cost: 2000 },
-  { id: 'boss_damage_2', name: '屠戮者 II', desc: 'Boss 伤害 +40%', icon: '⚔️', cost: 20000 },
-  { id: 'boss_damage_3', name: '屠戮者 III', desc: 'Boss 伤害 +60%', icon: '⚔️', cost: 200000 },
-  { id: 'boss_damage_4', name: '屠戮者 IV', desc: 'Boss 伤害 +100%', icon: '⚔️', cost: 2000000 },
-  { id: 'global_boost_1', name: '帝国荣耀 I', desc: '全局收益 +10%', icon: '👑', cost: 5000000 },
-  { id: 'global_boost_2', name: '帝国荣耀 II', desc: '全局收益 +20%', icon: '👑', cost: 50000000 },
-  { id: 'global_boost_3', name: '帝国荣耀 III', desc: '全局收益 +30%', icon: '👑', cost: 500000000 },
+  { id: 'click_power_1', name: '点击强化 I', effect: { type: 'click', value: 0.20 }, icon: '👆', cost: 500 },
+  { id: 'click_power_2', name: '点击强化 II', effect: { type: 'click', value: 0.30 }, icon: '👆', cost: 5000 },
+  { id: 'click_power_3', name: '点击强化 III', effect: { type: 'click', value: 0.40 }, icon: '👆', cost: 50000 },
+  { id: 'click_power_4', name: '点击强化 IV', effect: { type: 'click', value: 0.50 }, icon: '👆', cost: 500000 },
+  { id: 'click_power_5', name: '点击强化 V', effect: { type: 'click', value: 1.00 }, icon: '👆', cost: 5000000 },
+  { id: 'building_speed_1', name: '建筑加速 I', effect: { type: 'building', value: 0.15 }, icon: '🏗️', cost: 1000 },
+  { id: 'building_speed_2', name: '建筑加速 II', effect: { type: 'building', value: 0.25 }, icon: '🏗️', cost: 10000 },
+  { id: 'building_speed_3', name: '建筑加速 III', effect: { type: 'building', value: 0.35 }, icon: '🏗️', cost: 100000 },
+  { id: 'building_speed_4', name: '建筑加速 IV', effect: { type: 'building', value: 0.50 }, icon: '🏗️', cost: 1000000 },
+  { id: 'building_speed_5', name: '建筑加速 V', effect: { type: 'building', value: 1.00 }, icon: '🏗️', cost: 10000000 },
+  { id: 'boss_damage_1', name: '屠戮者 I', effect: { type: 'boss', value: 0.25 }, icon: '⚔️', cost: 2000 },
+  { id: 'boss_damage_2', name: '屠戮者 II', effect: { type: 'boss', value: 0.40 }, icon: '⚔️', cost: 20000 },
+  { id: 'boss_damage_3', name: '屠戮者 III', effect: { type: 'boss', value: 0.60 }, icon: '⚔️', cost: 200000 },
+  { id: 'boss_damage_4', name: '屠戮者 IV', effect: { type: 'boss', value: 1.00 }, icon: '⚔️', cost: 2000000 },
+  { id: 'global_boost_1', name: '帝国荣耀 I', effect: { type: 'global', value: 0.10 }, icon: '👑', cost: 5000000 },
+  { id: 'global_boost_2', name: '帝国荣耀 II', effect: { type: 'global', value: 0.20 }, icon: '👑', cost: 50000000 },
+  { id: 'global_boost_3', name: '帝国荣耀 III', effect: { type: 'global', value: 0.30 }, icon: '👑', cost: 500000000 },
 ];
 
-// 轮询辅助函数
-function poll(fn, interval = 100) {
-  return readable(null, (set) => {
-    fn(set);
-    const id = setInterval(() => fn(set), interval);
-    return () => clearInterval(id);
-  });
-}
-
-// 核心资源 store - 读取现有全局状态 G
-export const gameState = poll((set) => {
-  set(window.G || {});
-});
 
 // 单独暴露常用字段
 export const goldStore = writable(0);
@@ -125,28 +112,41 @@ export function syncAchievements() {
 export function syncBuildings() {
   if (!window.G) return;
   const owned = window.G.buildings || {};
-  const gps = window.G.goldPerSecond || 0;
+  const totalEarned = window.G.totalEarned || 0;
+  const rebirths = window.G.rebirths || 0;
+
   window.BUILDINGS_DATA = BUILDINGS_DATA_SRC.map(b => {
     const count = owned[b.id] || 0;
-    // 动态计算当前价格和产出
     const costMultiplier = Math.pow(1.15, count);
     const cost = Math.floor(b.baseCost * costMultiplier);
     const gpsEach = b.baseProduction * (1 + count * 0.1);
+
+    // 解锁逻辑与 js/buildings.js 的 isBuildingUnlocked 一致
+    const unlocked = isBuildingUnlocked(b, totalEarned, rebirths);
+
     return {
       ...b,
       count,
       cost,
       gps: gpsEach,
+      unlocked,
     };
   });
 }
 
+function isBuildingUnlocked(b, totalEarned, rebirths) {
+  if (b.unlockAt && totalEarned < b.unlockAt) return false;
+  if (b.rebirthRequired && rebirths < 1) return false;
+  return true;
+}
+
 export function syncUpgrades() {
   if (!window.G) return;
-  const purchased = window.G.upgrades || {};
+  // G.upgrades 是 ID 数组（js/game.js 的真实格式），不是对象
+  const purchased = Array.isArray(window.G.upgrades) ? window.G.upgrades : [];
   window.UPGRADES_DATA = UPGRADES_DATA_SRC.map(u => ({
     ...u,
-    purchased: !!purchased[u.id]
+    purchased: purchased.includes(u.id)
   }));
 }
 
@@ -166,14 +166,7 @@ export function syncBossAndPrestige() {
 // 每 100ms 同步一次
 let syncInterval;
 export function startSync() {
-  syncStores();
   syncInterval = setInterval(syncStores, 100);
-
-  // 初始化 window 数据
-  syncAchievements();
-  syncBuildings();
-  syncUpgrades();
-  syncBossAndPrestige();
 
   // 成就点击处理
   window.selectAchievement = (id) => {

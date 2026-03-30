@@ -13,7 +13,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
-  <div class="modal-backdrop" onclick={handleBackdrop} role="dialog">
+  <div class="modal-backdrop" onclick={handleBackdrop} onkeydown={handleKeydown} role="dialog" tabindex="-1">
     <div class="modal-panel">
       <div class="modal-header">
         <h3>{title}</h3>

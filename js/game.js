@@ -366,7 +366,7 @@ function performPrestige() {
     G.gold = 0;
     G.totalEarned = 0;
     G.buildings = {};
-    G.upgrades = [];
+    G.upgrades = {};
     G.currentBoss = null;
     G.bossHp = 0;
     G.bossMaxHp = 0;
@@ -1099,3 +1099,25 @@ function toggleSettings() {
         panel.style.display = 'none';
     }
 }
+
+// ── Svelte bridge: expose real multiplier stack ──────────────────────────────
+window.__gameBridge = {
+  getBuildingMultiplier: (state, buildingId) => getBuildingMultiplier(state, buildingId),
+  getUpgradeBonus:       (type)            => getUpgradeBonus(type),
+  getDynastyMultiplier:  (state)           => getDynastyMultiplier(state),
+  getPrestigeMultiplier: (state)           => getPrestigeMultiplier(state),
+  getPrestigeShopBonus:   (state)           => getPrestigeShopBonus(state),
+  // 转生 & prestige 分析
+  getRebirthRequirement: (state) => {
+    const REBIRTH_BASE = 1e9;
+    const REBIRTH_MULT = 10;
+    const rebirths = state?.rebirths || 0;
+    return REBIRTH_BASE * Math.pow(REBIRTH_MULT, rebirths);
+  },
+  getPrestigeGain: (state) => {
+    if (!state) return 0;
+    const earned = state.totalEarned || 0;
+    if (earned < 1e6) return 0;
+    return Math.max(1, Math.floor(Math.sqrt(earned / 1e6)));
+  },
+};
