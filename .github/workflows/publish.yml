@@ -35,7 +35,7 @@ jobs:
       - name: Install butler
         run: |
           curl -L "https://github.com/itchio/butler/releases/download/v15.26.1/butler-linux-amd64.zip" -o butler.zip
-          unzip -o butler.zip butler-linux-amd64
+          python3 -c "import zipfile; zipfile.ZipFile('butler.zip').extractall()"
           mv butler-linux-amd64 butler
           chmod +x butler
 
