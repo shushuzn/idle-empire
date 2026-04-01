@@ -1101,6 +1101,9 @@ function toggleSettings() {
 }
 
 // ── Svelte bridge: expose real multiplier stack ──────────────────────────────
+window.exportSave = () => exportSave(G);
+window.importSave = importSave;
+
 window.__gameBridge = {
   getBuildingMultiplier: (state, buildingId) => getBuildingMultiplier(state, buildingId),
   getUpgradeBonus:       (type)            => getUpgradeBonus(type),

@@ -47,6 +47,8 @@
         <span>自动保存</span>
         <input type="checkbox" bind:checked={autoSave} />
       </label>
+      <button class="btn-outline" onclick={() => window.exportSave?.()}>📤 导出存档</button>
+      <button class="btn-outline" onclick={() => window.importSave?.()}>📥 导入存档</button>
     </div>
   </div>
 </Modal>
@@ -101,5 +103,23 @@
     height: 18px;
     accent-color: var(--gold-bright);
     cursor: pointer;
+  }
+
+  .btn-outline {
+    padding: 10px 12px;
+    background: transparent;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    color: var(--text-base);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+
+  .btn-outline:hover {
+    background: var(--bg-elevated);
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
   }
 </style>
