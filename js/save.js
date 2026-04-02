@@ -99,6 +99,23 @@ function exportSave(gameState) {
     showMessage('存档已导出！', 'success');
 }
 
+/**
+ * 验证存档数据，返回具体错误信息；通过返回 null
+ * @param {object} data
+ * @returns {string|null}
+ */
+function validateSaveData(data) {
+    if (!data || typeof data !== 'object') return '存档格式无效（非对象）';
+    if (typeof data.gold !== 'number' || !isFinite(data.gold)) return 'gold 字段缺失或不是有效数字';
+    if (typeof data.buildings !== 'object' || data.buildings === null) return 'buildings 字段缺失或无效';
+    if (!Array.isArray(data.upgrades)) return 'upgrades 字段不是数组';
+    if (!Array.isArray(data.achievements)) return 'achievements 字段不是数组';
+    if (typeof data.dynastyTalents !== 'object' || !data.dynastyTalents) return 'dynastyTalents 字段缺失或无效';
+    if (typeof data.prestigeShop !== 'object' || !data.prestigeShop) return 'prestigeShop 字段缺失或无效';
+    if (typeof data.lastSave !== 'number') return 'lastSave 字段缺失或不是时间戳';
+    return null;
+}
+
 function importSave() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -108,20 +125,27 @@ function importSave() {
         if (file) {
             const reader = new FileReader();
             reader.onload = function(event) {
+                let importedData;
                 try {
-                    const importedData = JSON.parse(event.target.result);
-                    // 验证存档格式
-                    if (importedData && typeof importedData.gold === 'number') {
-                        if (confirm('确定要导入存档吗？当前进度将被覆盖！')) {
-                            localStorage.setItem(SAVE_KEY, JSON.stringify(importedData));
-                            showMessage('存档导入成功！正在重新加载...', 'success');
-                            setTimeout(function() { location.reload(); }, 1500);
-                        }
-                    } else {
-                        showMessage('无效的存档文件！', 'error');
-                    }
+                    importedData = JSON.parse(event.target.result);
                 } catch (e) {
-                    showMessage('存档解析失败！', 'error');
+                    showMessage('存档解析失败：文件不是有效的 JSON', 'error');
+                    return;
+                }
+                const validationError = validateSaveData(importedData);
+                if (validationError) {
+                    showMessage('无效存档：' + validationError, 'error');
+                    return;
+                }
+                // 备份当前存档
+                const currentSave = localStorage.getItem(SAVE_KEY);
+                if (currentSave) {
+                    localStorage.setItem(SAVE_KEY + '_backup', currentSave);
+                }
+                if (confirm('确定要导入存档吗？当前进度将被覆盖（已自动备份）。')) {
+                    localStorage.setItem(SAVE_KEY, JSON.stringify(importedData));
+                    showMessage('存档导入成功！正在重新加载...', 'success');
+                    setTimeout(function() { location.reload(); }, 1500);
                 }
             };
             reader.readAsText(file);
