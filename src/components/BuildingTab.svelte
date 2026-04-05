@@ -52,7 +52,7 @@
       locked={gold < (b.cost || 0)}
       onclick={() => handleBuy(b)}
     >
-      <div class="building-card">
+      <div class="building-card rarity-{b.rarity || 'common'}">
         <div class="b-icon">{b.icon || '🏗️'}</div>
         <div class="b-info">
           <div class="b-name">{b.name || '未知建筑'}</div>
@@ -127,6 +127,15 @@
     display: flex;
     align-items: center;
     gap: 12px;
+  }
+
+  .building-card.rarity-common { border-left: 3px solid #9ca3af; }
+  .building-card.rarity-uncommon { border-left: 3px solid #22c55e; }
+  .building-card.rarity-rare { border-left: 3px solid #3b82f6; }
+  .building-card.rarity-epic { border-left: 3px solid #a855f7; }
+  .building-card.rarity-legendary {
+    border-left: 3px solid #f59e0b;
+    background: linear-gradient(90deg, rgba(245,158,11,0.08) 0%, transparent 60%);
   }
 
   .b-icon {

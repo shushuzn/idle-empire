@@ -3,9 +3,33 @@
 const SAVE_KEY = 'idle_empire_save';
 const THEME_KEY = 'idle_empire_theme';
 const AUTO_SAVE_INTERVAL = 30000;
+const SAVE_OBFUSCATE_KEY = 'idle_empire_v2'; // Changes when save format changes
 
 let autoSaveTimer;
 let lastSaveTime = Date.now();
+
+function xorObfuscate(str) {
+    const key = SAVE_OBFUSCATE_KEY;
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+        result += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return btoa(result);
+}
+
+function xorDeobfuscate(str) {
+    try {
+        const decoded = atob(str);
+        const key = SAVE_OBFUSCATE_KEY;
+        let result = '';
+        for (let i = 0; i < decoded.length; i++) {
+            result += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+        }
+        return result;
+    } catch (e) {
+        return null; // Invalid obfuscated data
+    }
+}
 
 function createNewGame() {
     return {
@@ -31,7 +55,15 @@ function loadGame() {
     const saved = localStorage.getItem(SAVE_KEY);
     if (saved) {
         try {
-            const data = JSON.parse(saved);
+            // Try obfuscated format first
+            let plain = xorDeobfuscate(saved);
+            let data;
+            if (plain !== null) {
+                data = JSON.parse(plain);
+            } else {
+                // Fallback to plain JSON (old saves)
+                data = JSON.parse(saved);
+            }
             if (!data.totalEarned) data.totalEarned = 0;
             if (!data.buildings) data.buildings = {};
             if (!data.achievements) data.achievements = [];
@@ -76,7 +108,9 @@ function saveGame(gameState) {
     gameState.lastSave = Date.now();
     lastSaveTime = Date.now();
     try {
-        localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+        const plain = JSON.stringify(gameState);
+        const obfuscated = xorObfuscate(plain);
+        localStorage.setItem(SAVE_KEY, obfuscated);
         return true;
     } catch (e) {
         console.error('保存失败:', e);
