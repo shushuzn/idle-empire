@@ -141,8 +141,8 @@
   "hotPaths": [
     {
       "path": "js\\game.js",
-      "accessCount": 57,
-      "lastAccessed": 1774845224614,
+      "accessCount": 67,
+      "lastAccessed": 1775360970887,
       "type": "file"
     },
     {
@@ -224,6 +224,12 @@
       "type": "file"
     },
     {
+      "path": "js\\save.js",
+      "accessCount": 7,
+      "lastAccessed": 1775360867677,
+      "type": "file"
+    },
+    {
       "path": "src\\components\\Tutorial.svelte",
       "accessCount": 6,
       "lastAccessed": 1774784051894,
@@ -263,12 +269,6 @@
       "path": "package.json",
       "accessCount": 3,
       "lastAccessed": 1774841414279,
-      "type": "file"
-    },
-    {
-      "path": "js\\save.js",
-      "accessCount": 3,
-      "lastAccessed": 1774843293236,
       "type": "file"
     },
     {
@@ -432,6 +432,12 @@
       "accessCount": 1,
       "lastAccessed": 1774849318007,
       "type": "file"
+    },
+    {
+      "path": "css\\style.css",
+      "accessCount": 1,
+      "lastAccessed": 1775360905735,
+      "type": "directory"
     }
   ],
   "userDirectives": []

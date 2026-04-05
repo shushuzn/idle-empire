@@ -46,6 +46,7 @@ function createNewGame() {
         achievements: [],
         startTime: Date.now(),
         lastSave: Date.now(),
+        lastLogin: null,
         totalClicks: 0,
         lastClickTime: 0
     };
@@ -94,7 +95,27 @@ function loadGame() {
                 data.totalEarned += offlineEarnings;
                 showOfflineEarnings(offlineTime, offlineEarnings);
             }
-            
+
+            // 每日首次登录奖励
+            const today = new Date().toDateString();
+            if (data.lastLogin !== today) {
+                const rewards = [
+                    { type: 'gold', amount: 1000, label: '1000 金币' },
+                    { type: 'gold', amount: 5000, label: '5000 金币' },
+                    { type: 'gold', amount: 10000, label: '10000 金币' },
+                    { type: 'collectible', amount: 1, label: '收藏品碎片 x1' }
+                ];
+                const reward = rewards[Math.floor(Math.random() * rewards.length)];
+                if (reward.type === 'gold') {
+                    data.gold += reward.amount;
+                    data.totalEarned += reward.amount;
+                }
+                data.lastLogin = today;
+                setTimeout(function() {
+                    showMsg('🎁 每日登录奖励：' + reward.label, 'success');
+                }, 1000);
+            }
+
             lastSaveTime = data.lastSave || Date.now();
             return data;
         } catch (e) {

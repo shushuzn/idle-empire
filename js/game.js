@@ -683,6 +683,14 @@ function buyBuilding(b) {
         invalidateDerivedData();
         requestUiUpdate({ heavy: true });
         updateStats();
+        // Bounce animation on the building card
+        var card = buildingCardRefs[b.id];
+        if (card) {
+            card.classList.remove('bounce-purchase');
+            void card.offsetWidth; // reflow to restart animation
+            card.classList.add('bounce-purchase');
+            setTimeout(function() { card.classList.remove('bounce-purchase'); }, 400);
+        }
     }
 }
 
@@ -768,7 +776,55 @@ function renderStats() {
         '<div class="stat-card dynasty-talent-card">' +
             '<div class="stat-card-icon">🛡️</div><div class="stat-card-value">战斗核心 Lv' + shop.bossCore + '</div><div class="stat-card-label">每级 +10% Boss伤害（重铸商店）</div>' +
             '<button class="dynasty-btn" onclick="buyPrestigeUpgrade(\'bossCore\')">购买(' + bossCoreCost + ')</button>' +
-        '</div>';
+        '</div>' +
+        '<div class="stat-card"><button class="dynasty-btn" onclick="exportStatsCSV()">📥 导出CSV</button></div>';
+}
+
+function exportStatsCSV() {
+    if (!G) return;
+    var gps = getCurrentGps();
+    var total = getTotalBuildings(G);
+    var time = Math.floor((Date.now() - G.startTime) / 1000);
+    var achs = G.achievements ? Object.keys(G.achievements).length : 0;
+    var bosses = G.bossesDefeated || 0;
+    var dynasty = G.dynastyLevel || 1;
+    var prestigeShards = G.prestigeShards || 0;
+    var prestigeResets = G.prestigeResets || 0;
+    var talents = G.dynastyTalents || { idle: 0, click: 0, boss: 0 };
+    var shop = G.prestigeShop || { idleCore: 0, clickCore: 0, bossCore: 0 };
+
+    var rows = [
+        ['指标', '数值'],
+        ['当前金币', G.gold],
+        ['产量/秒 (GPS)', gps],
+        ['累计收益', G.totalEarned],
+        ['游戏时间（秒）', time],
+        ['建筑总数', total],
+        ['成就解锁', achs + '/' + ACHIEVEMENTS.length],
+        ['Boss击杀', bosses],
+        ['王朝等级', dynasty],
+        ['重铸碎片', prestigeShards],
+        ['重铸次数', prestigeResets],
+        ['天赋-挂机专精', talents.idle],
+        ['天赋-点击专精', talents.click],
+        ['天赋-战斗专精', talents.boss],
+        ['商店-挂机核心', shop.idleCore],
+        ['商店-点击核心', shop.clickCore],
+        ['商店-战斗核心', shop.bossCore],
+        ['总点击次数', G.totalClicks || 0]
+    ];
+
+    var csv = rows.map(function(r) { return r.join('\t'); }).join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'idle-empire-stats-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showMsg('📊 统计数据已导出', 'success');
 }
 
 function renderBossList() {
@@ -943,10 +999,14 @@ function showMsg(text, type) {
         el.className = 'message ' + type;
         el.textContent = text;
         document.body.appendChild(el);
-        setTimeout(function() { if(el.parentNode) el.parentNode.removeChild(el); }, 3000);
+        if (type === 'achievement') {
+            el.addEventListener('click', function() { if(el.parentNode) el.parentNode.removeChild(el); });
+        } else {
+            setTimeout(function() { if(el.parentNode) el.parentNode.removeChild(el); }, 3000);
+        }
         return;
     }
-    
+
     var icons = {
         'success': '✓',
         'error': '✗',
@@ -954,15 +1014,19 @@ function showMsg(text, type) {
         'info': 'ℹ',
         'achievement': '🏆'
     };
-    
+
     var toast = document.createElement('div');
     toast.className = 'toast ' + type;
     toast.innerHTML = '<span class="toast-icon">' + (icons[type] || '') + '</span><span>' + text + '</span>';
     container.appendChild(toast);
-    
-    setTimeout(function() {
-        if(toast.parentNode) toast.parentNode.removeChild(toast);
-    }, 3000);
+
+    if (type === 'achievement') {
+        toast.addEventListener('click', function() { if(toast.parentNode) toast.parentNode.removeChild(toast); });
+    } else {
+        setTimeout(function() {
+            if(toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 3000);
+    }
 }
 
 function checkAchievements() {

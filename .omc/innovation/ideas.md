@@ -15,3 +15,12 @@
 
 - [2026-04-05] 📦 建筑等级/品质皮肤 — 给建筑加稀有度颜色边框（白/绿/蓝/紫/橙），可视化升级路径 | expected_benefit: 视觉反馈更丰富，长期目标感更强 | reason: 建筑数据已有rarity字段，只需在UI渲染层加CSS样式 | score: 2x3=6 | [brainstorm] | status: shipped
   - approach: buildings.js每建筑加rarity字段（common/rare/epic/legendary），CSS加边框颜色，App.svelte渲染时应用class
+
+- [2026-04-05] 📦 每日首次登录奖励 — 每天第一次打开游戏时发放随机小奖励（金币/收藏品碎片）| expected_benefit: 提升回访率，给玩家每日登录的理由 | reason: 存档已有lastLogin字段，init()比对日期后发放，奖励池5-6种 | score: 2x3=6 | [brainstorm] | status: shipped
+  - approach: init()检查lastLogin是否是今天，不是则发奖励并更新lastLogin，showMsg提示获得内容
+
+- [2026-04-05] 📦 建筑动画特效 — 购买/升级建筑时播放微缩动画（缩放弹跳+光效），增强升级反馈 | expected_benefit: 让每次购买更有成就感，减少刷建筑的枯燥感 | reason: CSS animation 3行，game.js触发时加class，building-card已有DOM结构 | score: 2x3=6 | [brainstorm] | status: shipped
+  - approach: CSS加@keyframes bouncePurchase，buyBuilding成功时给对应card加bounce类，200ms后移除
+
+- [2026-04-05] 📦 统计面板导出CSV — 统计标签页加导出按钮，把建筑数量/GPS/成就等导出为CSV | expected_benefit: 方便玩家分析进度，做游戏外记录 | reason: 游戏已有stats数据结构，生成CSV字符串用Blob下载，5行代码 | score: 2x2=4 | [brainstorm] | status: shipped
+  - approach: stats标签加导出按钮，generateCSV()读取G状态，拼接Tab分隔字符串，Blob下载
