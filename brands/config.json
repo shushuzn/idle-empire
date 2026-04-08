@@ -1,0 +1,23 @@
+{
+  "sponsored_events": [
+    {
+      "id": "brand_tech新品发布",
+      "brand": "科技星",
+      "name": "科技星新品发布",
+      "description": "某科技公司新品发布直播",
+      "coin_reward": 5000,
+      "duration_seconds": 120,
+      "active": false,
+      "campaign_start": "2026-04-01T00:00:00Z",
+      "campaign_end": "2026-12-31T23:59:59Z"
+    }
+  ],
+  "brands": [
+    {
+      "id": "tech_star",
+      "name": "科技星",
+      "contact": "bd@techstar.example",
+      "campaigns": ["brand_tech新品发布"]
+    }
+  ]
+}

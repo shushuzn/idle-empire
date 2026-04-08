@@ -6,6 +6,57 @@
 
 import { writable } from 'svelte/store';
 
+// 成就稀有度映射（基于成就难度）
+const ACHIEVEMENT_RARITIES = {
+  // common: 早期/简单成就
+  builder_1: 'common', builder_2: 'common',
+  slayer_1: 'common',
+  gold_1: 'common', gold_2: 'common',
+  clicker_1: 'common', clicker_2: 'common',
+  rebirth_1: 'common',
+  artifact_1: 'common',
+  collectible_1: 'common',
+  milestone_1: 'common',
+  // uncommon: 中期成就
+  builder_3: 'uncommon', builder_4: 'uncommon',
+  slayer_2: 'uncommon',
+  gold_3: 'uncommon',
+  clicker_3: 'uncommon',
+  rebirth_2: 'uncommon',
+  artifact_2: 'uncommon',
+  collectible_2: 'uncommon',
+  milestone_2: 'uncommon',
+  // rare: 后期成就
+  slayer_3: 'rare',
+  gold_4: 'rare',
+  rebirth_3: 'rare',
+  season_1: 'rare',
+  collectible_3: 'rare',
+  milestone_3: 'rare',
+  // epic: 硬核成就
+  slayer_4: 'epic',
+  season_2: 'epic',
+  artifact_2: 'epic',
+  // legendary: 终极成就
+  season_3: 'legendary',
+  void_1: 'legendary',
+  void_2: 'legendary',
+};
+
+const RARITY_LABELS = {
+  common: '普通',
+  uncommon: '稀有',
+  rare: '史诗',
+  legendary: '传说',
+};
+
+const RARITY_COLORS = {
+  common: '#9ca3af',
+  uncommon: '#22c55e',
+  rare: '#3b82f6',
+  legendary: '#f59e0b',
+};
+
 // 成就数据（从 achievements.js 复制）
 const ACHIEVEMENTS_DATA = [
   { id: 'builder_1', name: '初露锋芒', desc: '拥有 10 个建筑', icon: '🏗️', reward: '1,000 金币' },
@@ -64,6 +115,67 @@ const BUILDINGS_DATA_SRC = [
   { id: 'void_citadel', name: '虚空要塞',       desc: '屹立于虚空的神秘城堡',  baseCost: 5000000000000000000,baseProduction: 5000000000000, icon: '🏛️', color: '#2d3436', unlockAt: 1000000000000000000, rebirthRequired: true, hidden: true },
 ];
 
+// 建筑皮肤数据
+const BUILDING_SKINS = {
+  mine: [
+    { id: 'default', icon: '⛏️', name: '默认' },
+    { id: 'golden', icon: '🔨', name: '黄金镐' },
+    { id: 'diamond', icon: '💎', name: '钻石镐' },
+  ],
+  lumber: [
+    { id: 'default', icon: '🪓', name: '默认' },
+    { id: 'chainsaw', icon: '🪚', name: '电锯' },
+    { id: 'golden', icon: '⚒️', name: '黄金斧' },
+  ],
+  farm: [
+    { id: 'default', icon: '🌾', name: '默认' },
+    { id: 'greenhouse', icon: '🏡', name: '温室' },
+    { id: 'mega', icon: '🌻', name: '向日葵' },
+  ],
+  factory: [
+    { id: 'default', icon: '🏭', name: '默认' },
+    { id: 'robot', icon: '🤖', name: '机器人' },
+    { id: 'quantum', icon: '⚙️', name: '量子工厂' },
+  ],
+  bank: [
+    { id: 'default', icon: '🏦', name: '默认' },
+    { id: 'golden', icon: '🏛️', name: '黄金银行' },
+    { id: 'digital', icon: '💳', name: '数字银行' },
+  ],
+};
+
+export function getAvailableSkins(buildingId) {
+  return BUILDING_SKINS[buildingId] || [{ id: 'default', icon: '🏗️', name: '默认' }];
+}
+
+export function getSelectedSkin(buildingId, owned) {
+  if (!window.G?.buildings) return 'default';
+  const skinId = window.G.buildings[`${buildingId}_skin`];
+  const skins = getAvailableSkins(buildingId);
+  return skins.find(s => s.id === skinId) ? skinId : 'default';
+}
+
+export function syncBuildingSkins() {
+  if (!window.G) return;
+  // no-op: skins are read at render time
+}
+
+// 收藏品数据（从 js/collectibles.js 复制）
+const COLLECTIBLES_DATA_SRC = [
+  { id: 'artifact_gold_coin', name: '黄金硬币', desc: '一枚古老的金币，散发着神秘的光芒', icon: '🪙', rarity: 'common', effect: { type: 'gold', value: 0.05 }, unlock: { type: 'gold', target: 100000 } },
+  { id: 'artifact_diamond', name: '钻石', desc: '纯净的钻石，象征着财富与权力', icon: '💎', rarity: 'rare', effect: { type: 'global', value: 0.1 }, unlock: { type: 'gold', target: 1000000 } },
+  { id: 'artifact_crown', name: '王者皇冠', desc: '象征统治与权威的皇冠', icon: '👑', rarity: 'epic', effect: { type: 'dynasty', value: 0.2 }, unlock: { type: 'dynasty', target: 5 } },
+  { id: 'artifact_sword', name: '勇者之剑', desc: '能够轻易斩杀Boss的传奇武器', icon: '⚔️', rarity: 'rare', effect: { type: 'boss', value: 0.25 }, unlock: { type: 'boss', target: 20 } },
+  { id: 'artifact_wand', name: '魔法杖', desc: '蕴含强大魔法力量的法杖', icon: '🪄', rarity: 'epic', effect: { type: 'click', value: 0.3 }, unlock: { type: 'click', target: 10000 } },
+  { id: 'artifact_book', name: '知识之书', desc: '记载着古老智慧的魔法书', icon: '📚', rarity: 'common', effect: { type: 'upgrade', value: 0.15 }, unlock: { type: 'upgrade', target: 10 } },
+  { id: 'artifact_ring', name: '命运之戒', desc: '能够改变命运的神奇戒指', icon: '💍', rarity: 'legendary', effect: { type: 'all', value: 0.15 }, unlock: { type: 'gold', target: 1000000000 } },
+  { id: 'artifact_potion', name: '生命药水', desc: '能够恢复生命力的神奇药水', icon: '🧪', rarity: 'common', effect: { type: 'offline', value: 0.2 }, unlock: { type: 'gold', target: 500000 } },
+  { id: 'artifact_scroll', name: '远古卷轴', desc: '记载着古老咒语的神秘卷轴', icon: '📜', rarity: 'rare', effect: { type: 'event', value: 0.3 }, unlock: { type: 'gold', target: 5000000 } },
+  { id: 'artifact_gem', name: '能量宝石', desc: '蕴含强大能量的神秘宝石', icon: '💠', rarity: 'epic', effect: { type: 'gps', value: 0.2 }, unlock: { type: 'gps', target: 100000 } },
+  { id: 'artifact_amulet', name: '守护符', desc: '能够带来好运的神秘护身符', icon: '🧿', rarity: 'legendary', effect: { type: 'lucky', value: 0.4 }, unlock: { type: 'gold', target: 5000000000 } },
+  { id: 'artifact_map', name: '藏宝图', desc: '指引财富所在地的古老地图', icon: '🗺️', rarity: 'rare', effect: { type: 'gold', value: 0.1 }, unlock: { type: 'building', target: 100 } },
+];
+
 // 升级数据（适配 js/upgrades.js 的 effect 格式）
 const UPGRADES_DATA_SRC = [
   { id: 'click_power_1', name: '点击强化 I', effect: { type: 'click', value: 0.20 }, icon: '👆', cost: 500 },
@@ -98,6 +210,7 @@ export function syncStores() {
   syncBuildings();
   syncUpgrades();
   syncBossAndPrestige();
+  syncCollectibles();
 }
 
 export function syncAchievements() {
@@ -105,7 +218,8 @@ export function syncAchievements() {
   const unlocked = window.G.achievements || {};
   window.ACHIEVEMENTS_DATA = ACHIEVEMENTS_DATA.map(a => ({
     ...a,
-    unlocked: !!unlocked[a.id]
+    unlocked: !!unlocked[a.id],
+    rarity: ACHIEVEMENT_RARITIES[a.id] || 'common',
   }));
 }
 
@@ -161,6 +275,17 @@ export function syncBossAndPrestige() {
   window.G._prestigeShards = window.G.prestigeShards || 0;
   window.G._prestigeResets = window.G.prestigeResets || 0;
   window.G._rebirths = window.G.rebirths || 0;
+}
+
+export function syncCollectibles() {
+  if (!window.G) return;
+  const raw = localStorage.getItem('idle_empire_collectibles');
+  const collected = raw ? JSON.parse(raw) : [];
+  const collectedIds = collected.map(c => c.id);
+  window.COLLECTIBLES_DATA = COLLECTIBLES_DATA_SRC.map(c => ({
+    ...c,
+    collected: collectedIds.includes(c.id)
+  }));
 }
 
 // 每 100ms 同步一次

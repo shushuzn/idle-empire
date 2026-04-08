@@ -1,4 +1,6 @@
 <script>
+  import { onMount } from 'svelte';
+
   let { activeTab = $bindable('buildings') } = $props();
 
   const tabs = [
@@ -6,10 +8,28 @@
     { id: 'upgrades', icon: '⬆️', label: '升级' },
     { id: 'bosses', icon: '👹', label: 'Boss' },
     { id: 'artifacts', icon: '💠', label: '神器' },
+    { id: 'collectibles', icon: '📦', label: '收藏' },
+    { id: 'milestones', icon: '🎯', label: '成就' },
     { id: 'rebirth', icon: '🔄', label: '转生' },
-    { id: 'achievements', icon: '🏆', label: '成就' },
+    { id: 'reputation', icon: '⭐', label: '声望' },
+    { id: 'season', icon: '🏆', label: '赛季' },
+    { id: 'achievements', icon: '🏅', label: '荣誉' },
     { id: 'stats', icon: '📊', label: '统计' },
   ];
+
+  let buildingBadge = $state('');
+
+  onMount(() => {
+    const updateBadge = () => {
+      const data = window.BUILDINGS_DATA || [];
+      const owned = data.filter(b => (window.G?.buildings?.[b.id] || 0) > 0).length;
+      const total = data.length;
+      buildingBadge = owned < total ? `${owned}/${total}` : '✓';
+    };
+    updateBadge();
+    const interval = setInterval(updateBadge, 500);
+    return () => clearInterval(interval);
+  });
 </script>
 
 <nav class="nav">
@@ -17,10 +37,14 @@
     <button
       class="nav-tab"
       class:active={activeTab === tab.id}
+      data-tab={tab.id}
       onclick={() => activeTab = tab.id}
     >
       <span class="tab-icon">{tab.icon}</span>
       <span class="tab-label">{tab.label}</span>
+      {#if tab.id === 'buildings' && buildingBadge}
+        <span class="tab-badge">{buildingBadge}</span>
+      {/if}
     </button>
   {/each}
 </nav>
@@ -68,5 +92,21 @@
 
   .tab-label {
     flex: 1;
+  }
+
+  .tab-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--gold-muted);
+    color: var(--gold-bright);
+    border-radius: 999px;
+    padding: 1px 6px;
+    min-width: 28px;
+    text-align: center;
+  }
+
+  .nav-tab.active .tab-badge {
+    background: rgba(24, 24, 27, 0.3);
+    color: #18181B;
   }
 </style>

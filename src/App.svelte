@@ -8,14 +8,21 @@
   import AchievementTab from './components/AchievementTab.svelte';
   import StatsTab from './components/StatsTab.svelte';
   import ArtifactTab from './components/ArtifactTab.svelte';
+  import CollectiblesTab from './components/CollectiblesTab.svelte';
+  import MilestoneTab from './components/MilestoneTab.svelte';
   import RebirthTab from './components/RebirthTab.svelte';
+  import ReputationTab from './components/ReputationTab.svelte';
+  import SeasonTab from './components/SeasonTab.svelte';
   import Toast from './components/Toast.svelte';
   import Settings from './components/Settings.svelte';
   import Tutorial from './components/Tutorial.svelte';
   import AiAdvisorPanel from './components/AiAdvisorPanel.svelte';
+  import EventBuffs from './components/EventBuffs.svelte';
+  import PrestigePreview from './components/PrestigePreview.svelte';
   let activeTab = $state('buildings');
   let settingsOpen = $state(false);
   let aiPanelOpen = $state(false);
+  let prestigePreviewOpen = $state(false);
   let theme = $state('dark');
   let tutorialDone = $state(false);
 
@@ -29,6 +36,19 @@
   $effect(() => {
     if (typeof window !== 'undefined') {
       tutorialDone = !!localStorage.getItem(STORAGE_KEY);
+    }
+  });
+
+  // 监听转生预览触发
+  $effect(() => {
+    if (typeof window !== 'undefined') {
+      const check = setInterval(() => {
+        if (window.__prestigePreviewOpen) {
+          prestigePreviewOpen = true;
+          window.__prestigePreviewOpen = false;
+        }
+      }, 100);
+      return () => clearInterval(check);
     }
   });
 
@@ -86,6 +106,8 @@
 
     <ResourceBar />
 
+    <EventBuffs />
+
     <div class="boss-mini">
       <BossPanel />
     </div>
@@ -114,18 +136,39 @@
       <BossTab />
     {:else if activeTab === 'artifacts'}
       <ArtifactTab />
+    {:else if activeTab === 'collectibles'}
+      <CollectiblesTab />
+    {:else if activeTab === 'milestones'}
+      <MilestoneTab />
     {:else if activeTab === 'rebirth'}
       <RebirthTab />
+    {:else if activeTab === 'reputation'}
+      <ReputationTab />
+    {:else if activeTab === 'season'}
+      <SeasonTab />
     {:else if activeTab === 'achievements'}
       <AchievementTab />
     {:else if activeTab === 'stats'}
       <StatsTab />
     {/if}
   </main>
+
+  <nav class="mobile-nav">
+    <button class="mob-tab" class:active={activeTab === 'buildings'} onclick={() => activeTab = 'buildings'}>🏗️</button>
+    <button class="mob-tab" class:active={activeTab === 'upgrades'} onclick={() => activeTab = 'upgrades'}>⬆️</button>
+    <button class="mob-tab" class:active={activeTab === 'bosses'} onclick={() => activeTab = 'bosses'}>👹</button>
+    <button class="mob-tab" class:active={activeTab === 'artifacts'} onclick={() => activeTab = 'artifacts'}>💠</button>
+    <button class="mob-tab" class:active={activeTab === 'collectibles'} onclick={() => activeTab = 'collectibles'}>📦</button>
+    <button class="mob-tab" class:active={activeTab === 'milestones' || activeTab === 'achievements'} onclick={() => activeTab = 'milestones'}>🎯</button>
+    <button class="mob-tab" class:active={activeTab === 'rebirth' || activeTab === 'reputation'} onclick={() => activeTab = 'rebirth'}>🔄</button>
+    <button class="mob-tab" class:active={activeTab === 'season'} onclick={() => activeTab = 'season'}>🏆</button>
+    <button class="mob-tab" class:active={activeTab === 'stats'} onclick={() => activeTab = 'stats'}>📊</button>
+  </nav>
 </div>
 
 <Toast />
 <Settings open={settingsOpen} onclose={() => settingsOpen = false} />
+<PrestigePreview open={prestigePreviewOpen} onclose={() => prestigePreviewOpen = false} />
 {#if !tutorialDone}
   <Tutorial onComplete={handleTutorialComplete} />
 {/if}
@@ -287,6 +330,7 @@
   @media (max-width: 768px) {
     .app-layout {
       grid-template-columns: 1fr;
+      grid-template-rows: 1fr auto;
     }
 
     .sidebar {
@@ -294,10 +338,55 @@
       position: relative;
       border-right: none;
       border-bottom: 1px solid var(--border-subtle);
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 16px;
     }
+
+    .logo-section { width: 100%; }
+    .resource-bar-wrap { display: none; }
+    .event-buffs-wrap { display: none; }
+    .boss-mini-wrap { display: none; }
+    .footer-actions { flex-direction: row; width: 100%; }
+    .footer-actions .btn { flex: 1; }
 
     .content {
       padding: 16px;
     }
+
+    .mobile-nav {
+      display: flex !important;
+    }
+  }
+
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
+    z-index: 100;
+    padding: 8px 0;
+    justify-content: space-around;
+  }
+
+  .mob-tab {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: all 0.15s;
+    opacity: 0.5;
+  }
+
+  .mob-tab.active {
+    opacity: 1;
+    background: var(--bg-elevated);
+    transform: scale(1.15);
   }
 </style>

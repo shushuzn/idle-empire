@@ -22,8 +22,73 @@ var uiTextCache = {};
 var progressCache = {
     visible: null,
     width: null,
-    targetText: ''
+    height: null,
+    x: null,
+    y: null,
+    active: false
 };
+
+// 音效系统
+var audioCtx = null;
+var soundMuted = false;
+
+function initSound() {
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) { /* audio not supported */ }
+}
+
+function playSound(type) {
+    if (soundMuted || !audioCtx) return;
+    try {
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        var now = audioCtx.currentTime;
+        switch (type) {
+            case 'click':
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+                break;
+            case 'buy':
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+                break;
+            case 'boss':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.3);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+                break;
+            case 'achievement':
+                osc.frequency.setValueAtTime(523, now);
+                osc.frequency.setValueAtTime(659, now + 0.1);
+                osc.frequency.setValueAtTime(784, now + 0.2);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+                break;
+        }
+    } catch (e) { /* ignore */ }
+}
+
+window.playSound = playSound;
+window.setSoundMuted = function(v) { soundMuted = v; };
+window.isSoundMuted = function() { return soundMuted; };
+
 var uiRafId = null;
 var pendingUiOptions = { heavy: false };
 var gameLoopTimer = null;
@@ -48,7 +113,11 @@ var KEY_SHORTCUTS = {
 
 function init() {
     initTheme();
+    initSound();
     G = loadGame();
+    ensureReputationState();
+    ensureSeasonState();
+    ensureChallengeState();
     ensureEventBuffsState();
     addQuestsTabToUI();
     initQuestSystem();
@@ -66,6 +135,7 @@ function init() {
     initTabs();
     initBossSystem();
     renderBossList();
+    calibrateTime(); // 启动时校准时间
     startGameLoop();
     startAutoSave(G);
     initKeyboardShortcuts();
@@ -117,6 +187,318 @@ function ensureDynastyState() {
     if (G.prestigeShop.bossCore === undefined) G.prestigeShop.bossCore = 0;
 }
 
+// 声望系统
+var DAILY_QUESTS = [
+    { id: 'daily_login', label: '每日登录', desc: '登录游戏', rep: 10, type: 'special' },
+    { id: 'daily_build', label: '建造者', desc: '购买5个建筑', rep: 15, type: 'build', target: 5 },
+    { id: 'daily_click', label: '点击者', desc: '点击100次', rep: 15, type: 'click', target: 100 },
+    { id: 'daily_boss', label: 'Boss猎人', desc: '击败3个Boss', rep: 20, type: 'boss', target: 3 },
+];
+var WEEKLY_QUESTS = [
+    { id: 'weekly_rebirth', label: '转生一次', desc: '完成一次转生', rep: 50, type: 'rebirth', target: 1 },
+    { id: 'weekly_earn', label: '财富积累', desc: '累计获得100M金币', rep: 60, type: 'earn', target: 1e8 },
+    { id: 'weekly_bosses', label: 'Boss大师', desc: '击败20个Boss', rep: 50, type: 'boss', target: 20 },
+];
+var REPUTATION_ITEMS = [
+    { id: 'frame_common', label: '朴素头像框', desc: '普通品质边框', rep: 50, type: 'frame', rarity: 'common' },
+    { id: 'frame_rare', label: '稀有头像框', desc: '稀有品质边框', rep: 150, type: 'frame', rarity: 'rare' },
+    { id: 'title_veteran', label: '老兵称号', desc: '显示为"老兵"', rep: 100, type: 'title', title: '老兵' },
+    { id: 'skin_golden', label: '黄金建筑特效', desc: '建筑金光闪烁', rep: 200, type: 'skin', skinId: 'golden' },
+];
+
+// 每日挑战系统
+var DAILY_CHALLENGES = [
+    { id: 'no_click_gold', name: '禁用点击金币', icon: '🚫', desc: '点击不获得金币', modifier: 'clickGold', value: 0 },
+    { id: 'building_cost_x3', name: '建筑价格三倍', icon: '📈', desc: '所有建筑价格x3', modifier: 'buildingCost', value: 3 },
+    { id: 'boss_hp_double', name: 'Boss血量翻倍', icon: '💪', desc: '所有Boss血量x2', modifier: 'bossHp', value: 2 },
+    { id: 'gps_halved', name: '产量减半', icon: '📉', desc: '所有产出减少50%', modifier: 'gps', value: 0.5 },
+    { id: 'click_gold_half', name: '点击金币减半', icon: '✂️', desc: '点击金币减少50%', modifier: 'clickGold', value: 0.5 },
+    { id: 'random_building_50', name: '随机建筑减半', icon: '🎲', desc: '随机建筑收益-50%', modifier: 'randomBuilding', value: 0.5 },
+];
+
+function ensureChallengeState() {
+    if (!G) return;
+    if (!G.challenge) G.challenge = null;
+    if (!G.challengeEndDate) G.challengeEndDate = null;
+    var today = new Date().toDateString();
+    if (G.challengeEndDate !== today) {
+        // 选择新挑战
+        var ch = DAILY_CHALLENGES[Math.floor(Math.random() * DAILY_CHALLENGES.length)];
+        G.challenge = ch;
+        G.challengeEndDate = today;
+        if (ch.id === 'random_building_50') {
+            var ownedBuildings = BUILDINGS.filter(function(b) { return (G.buildings[b.id] || 0) > 0; });
+            G.challengeTarget = ownedBuildings.length > 0 ? ownedBuildings[Math.floor(Math.random() * ownedBuildings.length)].id : null;
+        }
+        showMsg('🎯 每日挑战：' + ch.icon + ' ' + ch.name + '！' + ch.desc, 'info');
+    }
+}
+
+function getChallengeModifier(type, baseValue, targetId) {
+    if (!G || !G.challenge) return baseValue;
+    var ch = G.challenge;
+    if (ch.modifier === type) {
+        if (type === 'randomBuilding' && targetId && G.challengeTarget === targetId) {
+            return baseValue * ch.value;
+        }
+        if (type === 'clickGold') return baseValue * ch.value;
+        if (type === 'buildingCost') return baseValue * ch.value;
+        if (type === 'bossHp') return baseValue * ch.value;
+        if (type === 'gps') return baseValue * ch.value;
+    }
+    return baseValue;
+}
+
+function getChallengeClickValue(baseValue) {
+    if (!G || !G.challenge) return baseValue;
+    var ch = G.challenge;
+    if (ch.modifier === 'clickGold') return Math.floor(baseValue * ch.value);
+    return baseValue;
+}
+
+function getChallengeBuildingCost(building, owned) {
+    var base = Math.floor(building.baseCost * Math.pow(1.15, owned));
+    if (!G || !G.challenge) return base;
+    var ch = G.challenge;
+    if (ch.modifier === 'buildingCost') return Math.floor(base * ch.value);
+    return base;
+}
+
+function ensureReputationState() {
+    if (!G) return;
+    if (G.reputation === undefined) G.reputation = 0;
+    if (!G.dailyQuests) G.dailyQuests = {};
+    if (!G.weeklyQuests) G.weeklyQuests = {};
+    if (!G.reputationItems) G.reputationItems = {};
+    if (!G.lastDailyReset) G.lastDailyReset = null;
+    if (!G.lastWeeklyReset) G.lastWeeklyReset = null;
+    // 重置每日任务
+    var today = new Date().toDateString();
+    if (G.lastDailyReset !== today) {
+        G.dailyQuests = {};
+        G.lastDailyReset = today;
+    }
+    // 重置每周任务（每周一）
+    var weekKey = getWeekKey();
+    if (G.lastWeeklyReset !== weekKey) {
+        G.weeklyQuests = {};
+        G.lastWeeklyReset = weekKey;
+    }
+}
+
+function getWeekKey() {
+    var now = new Date();
+    var monday = new Date(now);
+    monday.setDate(now.getDate() - now.getDay() + 1);
+    return monday.toDateString();
+}
+
+function earnReputation(amount) {
+    if (!G) return;
+    ensureReputationState();
+    G.reputation = (G.reputation || 0) + amount;
+    requestUiUpdate({});
+}
+
+function completeQuest(quest) {
+    if (!G) return;
+    ensureReputationState();
+    var questMap = quest.type === 'daily' ? G.dailyQuests : G.weeklyQuests;
+    if (questMap[quest.id]) return; // 已完成
+    questMap[quest.id] = true;
+    earnReputation(quest.rep);
+    showMsg('🎯 任务完成：+' + quest.rep + ' 声望', 'success');
+    requestUiUpdate({});
+}
+
+function buyReputationItem(itemId) {
+    if (!G) return;
+    ensureReputationState();
+    var item = REPUTATION_ITEMS.find(function(i) { return i.id === itemId; });
+    if (!item) return;
+    if (G.reputationItems[itemId]) {
+        showMsg('已拥有此物品', 'warning');
+        return;
+    }
+    if ((G.reputation || 0) < item.rep) {
+        showMsg('声望不足', 'warning');
+        return;
+    }
+    G.reputation -= item.rep;
+    G.reputationItems[itemId] = true;
+    showMsg('🎁 声望物品解锁：' + item.label, 'success');
+    requestUiUpdate({});
+}
+
+function checkQuestProgress() {
+    if (!G) return;
+    ensureReputationState();
+    // 每日任务
+    DAILY_QUESTS.forEach(function(q) {
+        if (q.type === 'special' && q.id === 'daily_login') {
+            if (!G.dailyQuests[q.id]) completeQuest(q);
+        }
+        if (q.type === 'click') {
+            if (!G.dailyQuests[q.id] && (G.totalClicks || 0) >= q.target) completeQuest(q);
+        }
+        if (q.type === 'build') {
+            if (!G.dailyQuests[q.id]) {
+                var owned = Object.values(G.buildings || {}).reduce(function(a, b) { return a + b; }, 0);
+                if (owned >= q.target) completeQuest(q);
+            }
+        }
+    });
+    // 每周任务
+    WEEKLY_QUESTS.forEach(function(q) {
+        if (q.type === 'rebirth' && !G.weeklyQuests[q.id] && (G.rebirths || 0) >= q.target) {
+            completeQuest(q);
+        }
+        if (q.type === 'earn' && !G.weeklyQuests[q.id] && (G.totalEarned || 0) >= q.target) {
+            completeQuest(q);
+        }
+        if (q.type === 'boss' && !G.weeklyQuests[q.id] && (G.bossesDefeated || 0) >= q.target) {
+            completeQuest(q);
+        }
+    });
+}
+
+function getReputationData() {
+    if (!G) return null;
+    ensureReputationState();
+    return {
+        reputation: G.reputation || 0,
+        dailyQuests: DAILY_QUESTS.map(function(q) {
+            return { id: q.id, label: q.label, desc: q.desc, rep: q.rep, completed: !!G.dailyQuests[q.id] };
+        }),
+        weeklyQuests: WEEKLY_QUESTS.map(function(q) {
+            return { id: q.id, label: q.label, desc: q.desc, rep: q.rep, completed: !!G.weeklyQuests[q.id] };
+        }),
+        items: REPUTATION_ITEMS.map(function(i) {
+            return { id: i.id, label: i.label, desc: i.desc, rep: i.rep, owned: !!G.reputationItems[i.id] };
+        }),
+        lastDailyReset: G.lastDailyReset,
+        lastWeeklyReset: G.lastWeeklyReset
+    };
+}
+
+// === 赛季系统 ===
+var SEASONS = [
+    { id: 'season_1', name: '第一赛季', startDate: '2026-04-01', endDate: '2026-04-30', challenges: [
+        { id: 'sc_1', label: '累计金币', desc: '累计获得 100M 金币', type: 'earn', target: 1e8, reward: 50 },
+        { id: 'sc_2', label: 'Boss猎杀', desc: '击败 50 个Boss', type: 'boss', target: 50, reward: 50 },
+        { id: 'sc_3', label: '建筑收集', desc: '购买全部建筑', type: 'build_all', target: 1, reward: 100 },
+    ]},
+    { id: 'season_2', name: '第二赛季', startDate: '2026-05-01', endDate: '2026-05-31', challenges: [
+        { id: 'sc_4', label: '点击达人', desc: '累计点击 10,000 次', type: 'click', target: 10000, reward: 50 },
+        { id: 'sc_5', label: '声望冲刺', desc: '获得 500 声望', type: 'rep', target: 500, reward: 75 },
+        { id: 'sc_6', label: '转生挑战', desc: '完成 3 次转生', type: 'rebirth', target: 3, reward: 100 },
+    ]},
+];
+
+function ensureSeasonState() {
+    if (!G) return;
+    if (G.currentSeason === undefined) G.currentSeason = null;
+    if (G.seasonPoints === undefined) G.seasonPoints = 0;
+    if (G.seasonChallenges === undefined) G.seasonChallenges = {};
+    if (G.seasonRewards === undefined) G.seasonRewards = {};
+    if (G.seasonParticipants === undefined) G.seasonParticipants = Math.floor(Math.random() * 5000) + 1000;
+    // 检查赛季是否过期，自动切换
+    checkAndAdvanceSeason();
+}
+
+function checkAndAdvanceSeason() {
+    if (!G) return;
+    var now = new Date();
+    var active = SEASONS.find(function(s) {
+        return new Date(s.startDate) <= now && now <= new Date(s.endDate);
+    });
+    if (active) {
+        if (G.currentSeason !== active.id) {
+            G.currentSeason = active.id;
+            G.seasonChallenges = {};
+            G.seasonRewards = {};
+            showMsg('🏆 赛季开启：' + active.name + '！', 'success');
+        }
+    }
+}
+
+function getCurrentSeasonData() {
+    if (!G) return null;
+    ensureSeasonState();
+    var season = SEASONS.find(function(s) { return s.id === G.currentSeason; });
+    if (!season) return null;
+    return {
+        id: season.id,
+        name: season.name,
+        startDate: season.startDate,
+        endDate: season.endDate,
+        points: G.seasonPoints || 0,
+        participants: G.seasonParticipants || 1000,
+        challenges: season.challenges.map(function(c) {
+            return {
+                id: c.id,
+                label: c.label,
+                desc: c.desc,
+                reward: c.reward,
+                completed: !!(G.seasonChallenges && G.seasonChallenges[c.id]),
+                claimed: !!(G.seasonRewards && G.seasonRewards[c.id])
+            };
+        })
+    };
+}
+
+function checkSeasonProgress() {
+    if (!G || !G.currentSeason) return;
+    var season = SEASONS.find(function(s) { return s.id === G.currentSeason; });
+    if (!season) return;
+    season.challenges.forEach(function(c) {
+        if (G.seasonChallenges && G.seasonChallenges[c.id]) return;
+        var done = false;
+        switch (c.type) {
+            case 'earn': done = (G.totalEarned || 0) >= c.target; break;
+            case 'boss': done = (G.bossesDefeated || 0) >= c.target; break;
+            case 'build_all': done = (Object.values(G.buildings || {}).reduce(function(a, b) { return a + b; }, 0) >= (G.totalBuildings || BUILDINGS.length)); break;
+            case 'click': done = (G.totalClicks || 0) >= c.target; break;
+            case 'rep': done = (G.reputation || 0) >= c.target; break;
+            case 'rebirth': done = (G.rebirths || 0) >= c.target; break;
+        }
+        if (done) {
+            G.seasonChallenges = G.seasonChallenges || {};
+            G.seasonChallenges[c.id] = true;
+            showMsg('🏆 赛季挑战完成：' + c.label, 'success');
+            requestUiUpdate({});
+        }
+    });
+}
+
+function claimSeasonReward(challengeId) {
+    if (!G) return;
+    var season = SEASONS.find(function(s) { return s.id === G.currentSeason; });
+    if (!season) return;
+    var challenge = season.challenges.find(function(c) { return c.id === challengeId; });
+    if (!challenge) return;
+    if (!G.seasonChallenges || !G.seasonChallenges[challengeId]) {
+        showMsg('挑战未完成', 'warning');
+        return;
+    }
+    if (G.seasonRewards && G.seasonRewards[challengeId]) {
+        showMsg('奖励已领取', 'warning');
+        return;
+    }
+    G.seasonRewards = G.seasonRewards || {};
+    G.seasonRewards[challengeId] = true;
+    G.seasonPoints = (G.seasonPoints || 0) + challenge.reward;
+    G.seasonsParticipated = (G.seasonsParticipated || 0) + (G.seasonParticipatedThisSeason ? 0 : 1);
+    G.seasonParticipatedThisSeason = true;
+    showMsg('🎁 赛季奖励：+' + challenge.reward + ' 赛季点数', 'success');
+    checkAchievements();
+    requestUiUpdate({});
+}
+
+window.getCurrentSeasonData = getCurrentSeasonData;
+window.claimSeasonReward = claimSeasonReward;
+window.checkSeasonProgress = checkSeasonProgress;
+
 function updateTabCounts() {
     if (!uiElements) cacheUiElements();
     if (uiElements.tabBuildingsCount) uiElements.tabBuildingsCount.textContent = BUILDINGS.length;
@@ -154,7 +536,7 @@ function getBulkPurchaseInfo(building, state, mode) {
     
     // 对于x1和x10模式，直接计算
     if (normalizedMode === 'x1') {
-        var cost = Math.floor(building.baseCost * Math.pow(1.15, owned));
+        var cost = getChallengeBuildingCost(building, owned);
         return { count: state.gold >= cost ? 1 : 0, totalCost: cost };
     }
     
@@ -162,56 +544,56 @@ function getBulkPurchaseInfo(building, state, mode) {
         var count = 0;
         var totalCost = 0;
         var nextOwned = owned;
-        
+
         while (count < 10) {
-            var nextCost = Math.floor(building.baseCost * Math.pow(1.15, nextOwned));
+            var nextCost = getChallengeBuildingCost(building, nextOwned);
             if (state.gold < totalCost + nextCost) break;
             totalCost += nextCost;
             nextOwned += 1;
             count += 1;
         }
-        
+
         if (count === 0) {
-            return { count: 0, totalCost: Math.floor(building.baseCost * Math.pow(1.15, owned)) };
+            return { count: 0, totalCost: getChallengeBuildingCost(building, owned) };
         }
-        
+
         return { count: count, totalCost: totalCost };
     }
     
     // 对于max模式，使用二分查找优化
     if (normalizedMode === 'max') {
-        var currentCost = Math.floor(building.baseCost * Math.pow(1.15, owned));
+        var currentCost = getChallengeBuildingCost(building, owned);
         if (state.gold < currentCost) {
             return { count: 0, totalCost: currentCost };
         }
-        
+
         // 估算最大可能购买数量
         var maxPossible = 0;
         var tempCost = 0;
         var tempOwned = owned;
-        
+
         // 快速估算上限
         while (tempCost < state.gold && maxPossible < 1000) {
-            var cost = Math.floor(building.baseCost * Math.pow(1.15, tempOwned));
+            var cost = getChallengeBuildingCost(building, tempOwned);
             if (tempCost + cost > state.gold) break;
             tempCost += cost;
             tempOwned += 1;
             maxPossible += 1;
         }
-        
+
         // 精确计算
         var count = 0;
         var totalCost = 0;
         var nextOwned = owned;
-        
+
         while (count < maxPossible) {
-            var cost = Math.floor(building.baseCost * Math.pow(1.15, nextOwned));
+            var cost = getChallengeBuildingCost(building, nextOwned);
             if (totalCost + cost > state.gold) break;
             totalCost += cost;
             nextOwned += 1;
             count += 1;
         }
-        
+
         return { count: count, totalCost: totalCost };
     }
     
@@ -229,7 +611,11 @@ function getCurrentGps() {
         cachedGps = getTotalProduction(G);
         derivedDirty = false;
     }
-    return cachedGps;
+    var gps = cachedGps;
+    if (typeof window.getChallengeGpsModifier === 'function') {
+        gps = window.getChallengeGpsModifier(gps);
+    }
+    return gps;
 }
 
 function setTextIfChanged(el, key, value) {
@@ -357,6 +743,10 @@ function performPrestige() {
         return;
     }
 
+    // 打开 Svelte 预览面板
+    window.showPrestigePreview?.(gain);
+    return;
+
     var ok = confirm('重铸将重置建筑、升级、金币与Boss进度，但保留王朝与永久代币。\n本次可获得 ' + gain + ' 王朝碎片，确认执行吗？');
     if (!ok) return;
 
@@ -385,6 +775,32 @@ function performPrestige() {
     showMsg('✨ 王朝重铸成功! 获得 ' + gain + ' 碎片', 'achievement');
 }
 
+// 直接执行重铸（由预览面板调用）
+window.executePrestige = function() {
+    if (!G) return;
+    var gain = calculatePrestigeGain();
+    G.prestigeShards += gain;
+    G.prestigeResets += 1;
+    G.gold = 0;
+    G.totalEarned = 0;
+    G.buildings = {};
+    G.upgrades = {};
+    G.currentBoss = null;
+    G.bossHp = 0;
+    G.bossMaxHp = 0;
+    G.bossesDefeated = 0;
+    G.totalClicks = 0;
+    G.startTime = Date.now();
+    invalidateDerivedData();
+    renderSignatures.buildings = '';
+    renderSignatures.upgrades = '';
+    renderSignatures.bosses = '';
+    renderSignatures.stats = '';
+    initBossSystem();
+    requestUiUpdate({ heavy: true });
+    showMsg('✨ 王朝重铸成功! 获得 ' + gain + ' 碎片', 'achievement');
+};
+
 function upgradeDynastyTalent(talentId) {
     if (!G) return;
     ensureDynastyState();
@@ -404,10 +820,14 @@ function upgradeDynastyTalent(talentId) {
 }
 
 function clickGold(e) {
-    var v = Math.max(1, Math.floor(getClickMultiplier(G) * getDynastyMultiplier(G)));
+    var baseClick = Math.max(1, Math.floor(getClickMultiplier(G) * getDynastyMultiplier(G)));
+    var v = getChallengeClickValue(baseClick);
     G.gold += v;
     G.totalEarned += v;
     G.totalClicks = (G.totalClicks || 0) + 1;
+    checkQuestProgress();
+    checkSeasonProgress();
+    if (audioCtx && audioCtx.state === 'running') playSound('click');
     
     // Create floating number
     var el = document.createElement('div');
@@ -493,8 +913,7 @@ function initKeyboardShortcuts() {
                 }
             } else {
                 // Switch tabs
-                var tab = document.querySelector('.nav-tab[data-tab="' + action + '"]');
-                if (tab) tab.click();
+                window.setActiveTab?.(action);
             }
         }
     });
@@ -681,6 +1100,7 @@ function buyBuilding(b) {
         G.gold -= bulkInfo.totalCost;
         G.buildings[b.id] = owned + bulkInfo.count;
         invalidateDerivedData();
+        if (audioCtx && audioCtx.state === 'running') playSound('buy');
         requestUiUpdate({ heavy: true });
         updateStats();
         // Bounce animation on the building card
@@ -691,6 +1111,8 @@ function buyBuilding(b) {
             card.classList.add('bounce-purchase');
             setTimeout(function() { card.classList.remove('bounce-purchase'); }, 400);
         }
+        checkQuestProgress();
+        checkSeasonProgress();
     }
 }
 
@@ -957,6 +1379,11 @@ function gameLoop() {
     // 减少成就和里程碑的检查频率
     if (now - lastCheckTime >= CHECK_INTERVAL) {
         checkAchievements();
+        // 每5分钟自动校准一次时间
+        if (now - _lastAutoCalibrate >= CALIBRATE_INTERVAL) {
+            _lastAutoCalibrate = now;
+            calibrateTime();
+        }
         if (typeof updateMilestones === 'function') updateMilestones();
         lastCheckTime = now;
     }
@@ -1099,6 +1526,7 @@ function checkAchievements() {
     check('milestone_3', { type: 'milestones', target: 20 });
 
     if (newlyUnlocked.length > 0) {
+        if (audioCtx && audioCtx.state === 'running') playSound('achievement');
         var names = { builder_1:'初露锋芒', builder_2:'建筑大师', builder_3:'帝国建造者', builder_4:'建筑大亨', slayer_1:'新手猎人', slayer_2:'Boss杀手', slayer_3:'传奇屠戮者', slayer_4:'Boss终结者', gold_1:'小有积蓄', gold_2:'富翁', gold_3:'亿万富翁', gold_4:'财富传奇', clicker_1:'手指热身', clicker_2:'疯狂点击', clicker_3:'点击机器', rebirth_1:'轮回初体验', rebirth_2:'转生者', rebirth_3:'永恒轮回', artifact_1:'神器收藏家', artifact_2:'神器大师', season_1:'赛季参与者', season_2:'赛季老将', season_3:'赛季冠军', collectible_1:'收藏爱好者', collectible_2:'收藏家', collectible_3:'收藏大师', milestone_1:'里程碑新手', milestone_2:'里程碑大师', milestone_3:'里程碑传奇' };
         newlyUnlocked.forEach(function(id) {
             showMsg('🏆 解锁成就：' + (names[id] || id), 'achievement');
@@ -1167,6 +1595,150 @@ function toggleSettings() {
 // ── Svelte bridge: expose real multiplier stack ──────────────────────────────
 window.exportSave = () => exportSave(G);
 window.importSave = importSave;
+window.getSaveSlots = getSaveSlots;
+window.switchSaveSlot = switchSaveSlot;
+window.challengeWeeklyBoss = challengeWeeklyBoss;
+window.getWeeklyChallengeBoss = getWeeklyChallengeBoss;
+window.startBossRush = startBossRush;
+window.isBossRushActive = function() { return bossRushActive; };
+window.getChallengeBossHpModifier = function(hp) {
+    if (!G || !G.challenge) return hp;
+    var ch = G.challenge;
+    if (ch.modifier === 'bossHp') return Math.floor(hp * ch.value);
+    return hp;
+};
+window.getChallengeGpsModifier = function(baseGps) {
+    if (!G || !G.challenge) return baseGps;
+    var ch = G.challenge;
+    if (ch.modifier === 'gps') return baseGps * ch.value;
+    return baseGps;
+};
+
+// ── 时间校准 ────────────────────────────────────────────────────────────────
+// 使用多个公开 NTP 服务器校准时间，取中位数减少误差
+var _timeCalibrationRunning = false;
+
+window.calibrateTime = function() {
+    if (!G) return;
+    if (_timeCalibrationRunning) return;
+    _timeCalibrationRunning = true;
+
+    var servers = [
+        'https://time.google.com/generate_204',
+        'https://www.cloudflare.com/cdn-cgi/trace',
+    ];
+    var offsets = [];
+    var tried = 0;
+
+    servers.forEach(function(url) {
+        var t0 = Date.now();
+        var xhr = new XMLHttpRequest();
+        xhr.open('HEAD', url, true);
+        xhr.onload = function() {
+            tried++;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                var t1 = Date.now();
+                // 使用 Date.parse(headers['date']) 或依赖 XHR响应头
+                var dateHeader = xhr.getResponseHeader('date');
+                if (dateHeader) {
+                    var serverTime = Date.parse(dateHeader);
+                    if (!isNaN(serverTime)) {
+                        // 修正 RTT 后估算服务器时间
+                        var rtt = t1 - t0;
+                        var estimatedServerTime = serverTime + rtt / 2;
+                        offsets.push(estimatedServerTime - t1);
+                    }
+                }
+            } else {
+                tried++;
+            }
+            if (tried === servers.length && offsets.length > 0) {
+                // 取中位数偏移
+                offsets.sort(function(a, b) { return a - b; });
+                var median = offsets[Math.floor(offsets.length / 2)];
+                G.timeOffset = Math.round(median);
+                saveGame();
+                _timeCalibrationRunning = false;
+                console.log('[TimeSync] 校准完成，偏移量:', G.timeOffset, 'ms');
+            } else if (tried === servers.length) {
+                // 全部失败，使用本地时间
+                G.timeOffset = 0;
+                saveGame();
+                _timeCalibrationRunning = false;
+                console.warn('[TimeSync] 校准失败，使用本地时间');
+            }
+        };
+        xhr.onerror = function() {
+            tried++;
+            if (tried === servers.length && offsets.length > 0) {
+                offsets.sort(function(a, b) { return a - b; });
+                var median = offsets[Math.floor(offsets.length / 2)];
+                G.timeOffset = Math.round(median);
+                saveGame();
+                _timeCalibrationRunning = false;
+            } else if (tried === servers.length) {
+                G.timeOffset = 0;
+                saveGame();
+                _timeCalibrationRunning = false;
+            }
+        };
+        xhr.timeout = 3000;
+        xhr.ontimeout = function() {
+            tried++;
+            if (tried === servers.length && offsets.length > 0) {
+                offsets.sort(function(a, b) { return a - b; });
+                var median = offsets[Math.floor(offsets.length / 2)];
+                G.timeOffset = Math.round(median);
+                saveGame();
+                _timeCalibrationRunning = false;
+            } else if (tried === servers.length) {
+                G.timeOffset = 0;
+                saveGame();
+                _timeCalibrationRunning = false;
+            }
+        };
+        xhr.send(null);
+    });
+};
+
+// 获取校准后的当前时间（毫秒）
+window.getCalibratedTime = function() {
+    return Date.now() + (G ? (G.timeOffset || 0) : 0);
+};
+
+// 每 5 分钟自动校准一次
+var _lastAutoCalibrate = 0;
+var CALIBRATE_INTERVAL = 5 * 60 * 1000;
+
+window.getRebirthData = () => ({
+    currentPoints: G.rebirths || 0,
+    multiplier: 1 + (G.rebirths || 0) * 0.1,
+    nextCost: getRebirthRequirement(),
+    rebirthCount: G.rebirths || 0
+});
+window.updateRebirthUI = () => {};
+window.setActiveTab = (tab) => {
+    var el = document.querySelector('.nav-tab[data-tab="' + tab + '"]');
+    if (el) el.click();
+};
+
+window.setBuildingSkin = (buildingId, skinId) => {
+    G.buildings[buildingId + '_skin'] = skinId;
+    saveGame();
+};
+
+window.getReputationData = getReputationData;
+window.completeQuest = completeQuest;
+window.buyReputationItem = buyReputationItem;
+window.checkQuestProgress = checkQuestProgress;
+
+// 转生预览面板
+window.showPrestigePreview = function(gain) {
+    window.__prestigePreviewGain = gain;
+    window.__prestigePreviewOpen = true;
+    // 触发UI更新，组件会通过 window.__prestigePreviewOpen 感知
+    requestUiUpdate({ heavy: false });
+};
 
 window.__gameBridge = {
   getBuildingMultiplier: (state, buildingId) => getBuildingMultiplier(state, buildingId),

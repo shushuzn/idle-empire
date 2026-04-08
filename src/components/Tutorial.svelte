@@ -17,22 +17,47 @@
     },
     {
       selector: '.building-grid .building-card:first-child',
-      text: '金币用来购买建筑，建筑会自动产出金币',
+      text: '金币用来购买建筑，建筑会自动产出金币。越贵的建筑产出越多！',
+      action: null,
+    },
+    {
+      selector: '.buy-mode',
+      text: '这里切换购买模式：x1买一个，x10买十个，MAX买最大数量',
       action: null,
     },
     {
       selector: '.nav-tab:nth-child(2)',
-      text: '升级可以大幅提升产出效率',
+      text: '升级可以大幅提升点击伤害或建筑效率',
       action: 'goto-upgrades',
     },
     {
       selector: '.nav-tab:nth-child(3)',
-      text: '挑战Boss获得更多奖励',
+      text: '击败Boss获得大量金币和碎片奖励',
       action: 'goto-bosses',
     },
     {
+      selector: '.nav-tab:nth-child(4)',
+      text: '神器提供强大的全局增益，是后期的核心追求',
+      action: 'goto-artifacts',
+    },
+    {
+      selector: '.nav-tab:nth-child(5)',
+      text: '王朝系统让你转生后获得永久增益，合理规划转生时机很重要',
+      action: 'goto-rebirth',
+    },
+    {
+      selector: '.nav-tab:nth-child(6)',
+      text: '解锁成就获得奖励，还能看到稀有度标签',
+      action: 'goto-achievements',
+    },
+    {
+      selector: '.nav-tab:nth-child(7)',
+      text: '查看完整游戏数据统计，了解你的帝国规模',
+      action: 'goto-stats',
+    },
+    {
       selector: null,
-      text: '开始你的帝国之旅！',
+      text: '开始你的帝国之旅！记得每天回来领取登录奖励哦 🎁',
       action: 'complete',
     },
   ];
@@ -52,8 +77,8 @@
       const rect = el.getBoundingClientRect();
       highlightRect = { top: rect.top - 4, left: rect.left - 4, width: rect.width + 8, height: rect.height + 8 };
 
-      const tooltipW = 280;
-      const tooltipH = 100;
+      const tooltipW = 300;
+      const tooltipH = 120;
       const gap = 12;
       const arrowH = 10;
 
@@ -99,6 +124,14 @@
     } else if (step.action === 'goto-upgrades') {
       // Navigation updates activeTab via bind
     } else if (step.action === 'goto-bosses') {
+      // Navigation updates activeTab via bind
+    } else if (step.action === 'goto-artifacts') {
+      // Navigation updates activeTab via bind
+    } else if (step.action === 'goto-rebirth') {
+      // Navigation updates activeTab via bind
+    } else if (step.action === 'goto-achievements') {
+      // Navigation updates activeTab via bind
+    } else if (step.action === 'goto-stats') {
       // Navigation updates activeTab via bind
     } else if (step.action === 'complete') {
       localStorage.setItem(STORAGE_KEY, '1');

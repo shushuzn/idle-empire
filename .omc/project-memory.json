@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1774782055849,
+  "lastScanned": 1775361113372,
   "projectRoot": "D:\\OpenClaw\\workspace\\80-PROJECTS\\idle-empire",
   "techStack": {
     "languages": [
@@ -23,6 +23,11 @@
         "name": "vite",
         "version": "5.4.0",
         "category": "build"
+      },
+      {
+        "name": "vitest",
+        "version": "4.1.2",
+        "category": "testing"
       }
     ],
     "packageManager": "npm",
@@ -30,13 +35,15 @@
   },
   "build": {
     "buildCommand": "npm run build",
-    "testCommand": null,
+    "testCommand": "npm test",
     "lintCommand": null,
     "devCommand": "npm run dev",
     "scripts": {
       "dev": "vite",
-      "build": "vite build",
-      "preview": "vite preview"
+      "build": "vite build && node -e \"import('fs').then(fs=>fs.copyFileSync('index.html','dist/index.html'))\"",
+      "preview": "vite preview",
+      "test": "vitest",
+      "test:run": "vitest run"
     }
   },
   "conventions": {
@@ -50,7 +57,9 @@
     "workspaces": [],
     "mainDirectories": [
       "docs",
-      "src"
+      "scripts",
+      "src",
+      "tests"
     ],
     "gitBranches": null
   },
@@ -60,7 +69,7 @@
       "path": "css",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1774782055765,
+      "lastAccessed": 1775361113280,
       "keyFiles": [
         "style.css"
       ]
@@ -69,7 +78,7 @@
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 3,
-      "lastAccessed": 1774782055766,
+      "lastAccessed": 1775361113325,
       "keyFiles": [
         "game.js",
         "index.html",
@@ -80,7 +89,7 @@
       "path": "dist-upload",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1774782055810,
+      "lastAccessed": 1775361113326,
       "keyFiles": [
         "index.html"
       ]
@@ -89,14 +98,14 @@
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 0,
-      "lastAccessed": 1774782055810,
+      "lastAccessed": 1775361113327,
       "keyFiles": []
     },
     "js": {
       "path": "js",
       "purpose": null,
       "fileCount": 14,
-      "lastAccessed": 1774782055811,
+      "lastAccessed": 1775361113327,
       "keyFiles": [
         "achievements.js",
         "artifacts.js",
@@ -105,339 +114,310 @@
         "collectibles.js"
       ]
     },
+    "linux-amd64": {
+      "path": "linux-amd64",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1775361113328,
+      "keyFiles": [
+        "7z.so",
+        "libc7zip.so"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 1,
+      "lastAccessed": 1775361113328,
+      "keyFiles": [
+        "itch-upload.mjs"
+      ]
+    },
     "src": {
       "path": "src",
       "purpose": "Source code",
-      "fileCount": 3,
-      "lastAccessed": 1774782055812,
+      "fileCount": 4,
+      "lastAccessed": 1775361113328,
       "keyFiles": [
+        "aiAdvisor.js",
         "App.svelte",
         "gameAdapter.js",
         "main.js"
+      ]
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 3,
+      "lastAccessed": 1775361113329,
+      "keyFiles": [
+        "aiAdvisor.test.js",
+        "gameAdapter.test.js",
+        "setup.js"
       ]
     },
     "dist-upload\\assets": {
       "path": "dist-upload\\assets",
       "purpose": "Static assets",
       "fileCount": 2,
-      "lastAccessed": 1774782055813,
+      "lastAccessed": 1775361113330,
       "keyFiles": [
-        "index-5Ra1o_It.js",
-        "index-CfMABuvA.css"
+        "game.js",
+        "style.css"
       ]
     },
     "src\\components": {
       "path": "src\\components",
       "purpose": "UI components",
-      "fileCount": 12,
-      "lastAccessed": 1774782055815,
+      "fileCount": 14,
+      "lastAccessed": 1775361113332,
       "keyFiles": [
         "AchievementTab.svelte",
-        "ArtifactTab.svelte",
-        "BossPanel.svelte"
+        "AiAdvisorPanel.svelte",
+        "ArtifactTab.svelte"
       ]
     }
   },
   "hotPaths": [
     {
       "path": "js\\game.js",
-      "accessCount": 67,
-      "lastAccessed": 1775360970887,
-      "type": "file"
-    },
-    {
-      "path": "src\\aiAdvisor.js",
-      "accessCount": 47,
-      "lastAccessed": 1774845251544,
-      "type": "file"
-    },
-    {
-      "path": "src\\gameAdapter.js",
-      "accessCount": 44,
-      "lastAccessed": 1774842801209,
-      "type": "file"
-    },
-    {
-      "path": "js",
-      "accessCount": 27,
-      "lastAccessed": 1774845189527,
+      "accessCount": 174,
+      "lastAccessed": 1775367747422,
       "type": "directory"
     },
     {
-      "path": "",
-      "accessCount": 22,
-      "lastAccessed": 1774848784491,
-      "type": "directory"
-    },
-    {
-      "path": "src\\main.js",
-      "accessCount": 21,
-      "lastAccessed": 1774841163965,
+      "path": "js\\save.js",
+      "accessCount": 32,
+      "lastAccessed": 1775442926875,
       "type": "file"
     },
     {
       "path": "src\\App.svelte",
-      "accessCount": 18,
-      "lastAccessed": 1774788493302,
-      "type": "file"
-    },
-    {
-      "path": "tests\\aiAdvisor.test.js",
-      "accessCount": 14,
-      "lastAccessed": 1774845318028,
-      "type": "file"
-    },
-    {
-      "path": "src",
-      "accessCount": 12,
-      "lastAccessed": 1774839101983,
+      "accessCount": 26,
+      "lastAccessed": 1775365958250,
       "type": "directory"
     },
     {
-      "path": "src\\components\\AiAdvisorPanel.svelte",
-      "accessCount": 11,
-      "lastAccessed": 1774839528344,
+      "path": "js\\boss.js",
+      "accessCount": 26,
+      "lastAccessed": 1775367509626,
       "type": "file"
+    },
+    {
+      "path": "js",
+      "accessCount": 25,
+      "lastAccessed": 1775365724239,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\BuildingTab.svelte",
+      "accessCount": 16,
+      "lastAccessed": 1775364032471,
+      "type": "directory"
+    },
+    {
+      "path": "",
+      "accessCount": 16,
+      "lastAccessed": 1775442852157,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\Navigation.svelte",
+      "accessCount": 14,
+      "lastAccessed": 1775365964897,
+      "type": "directory"
+    },
+    {
+      "path": "src\\gameAdapter.js",
+      "accessCount": 12,
+      "lastAccessed": 1775442840109,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\StatsTab.svelte",
+      "accessCount": 11,
+      "lastAccessed": 1775365050183,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\Settings.svelte",
+      "accessCount": 11,
+      "lastAccessed": 1775366869575,
+      "type": "directory"
     },
     {
       "path": "js\\achievements.js",
       "accessCount": 9,
-      "lastAccessed": 1774790283882,
+      "lastAccessed": 1775363152789,
+      "type": "directory"
+    },
+    {
+      "path": "js\\collectibles.js",
+      "accessCount": 7,
+      "lastAccessed": 1775362185882,
+      "type": "directory"
+    },
+    {
+      "path": "src\\components\\AchievementTab.svelte",
+      "accessCount": 6,
+      "lastAccessed": 1775363526422,
       "type": "file"
     },
     {
-      "path": "src\\components\\BuildingTab.svelte",
-      "accessCount": 7,
-      "lastAccessed": 1774792888408,
+      "path": "src\\components\\RebirthTab.svelte",
+      "accessCount": 5,
+      "lastAccessed": 1775364291012,
       "type": "file"
     },
     {
-      "path": "js\\upgrades.js",
-      "accessCount": 7,
-      "lastAccessed": 1774843167233,
+      "path": "src\\components\\BossTab.svelte",
+      "accessCount": 5,
+      "lastAccessed": 1775364661485,
       "type": "file"
     },
     {
-      "path": "vite.config.js",
-      "accessCount": 7,
-      "lastAccessed": 1774846494371,
-      "type": "file"
-    },
-    {
-      "path": "js\\save.js",
-      "accessCount": 7,
-      "lastAccessed": 1775360867677,
+      "path": "src\\components\\BossPanel.svelte",
+      "accessCount": 4,
+      "lastAccessed": 1775361172005,
       "type": "file"
     },
     {
       "path": "src\\components\\Tutorial.svelte",
-      "accessCount": 6,
-      "lastAccessed": 1774784051894,
+      "accessCount": 4,
+      "lastAccessed": 1775363739089,
       "type": "file"
     },
     {
-      "path": "js\\v2_patch.js",
-      "accessCount": 6,
-      "lastAccessed": 1774841018564,
+      "path": "js\\events.js",
+      "accessCount": 4,
+      "lastAccessed": 1775367287761,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 4,
+      "lastAccessed": 1775442835184,
       "type": "directory"
     },
     {
       "path": "src\\components\\ResourceBar.svelte",
-      "accessCount": 6,
-      "lastAccessed": 1774843533666,
+      "accessCount": 3,
+      "lastAccessed": 1775361325327,
       "type": "file"
     },
     {
-      "path": "src\\shared\\Card.svelte",
-      "accessCount": 5,
-      "lastAccessed": 1774843661387,
+      "path": "js\\rebirth.js",
+      "accessCount": 3,
+      "lastAccessed": 1775365713546,
       "type": "file"
     },
     {
       "path": "C:\\Users\\adm\\.claude\\projects\\D--OpenClaw-workspace\\memory\\MEMORY.md",
-      "accessCount": 4,
-      "lastAccessed": 1774786105095,
-      "type": "file"
-    },
-    {
-      "path": "src\\stores\\gameStore.js",
       "accessCount": 3,
-      "lastAccessed": 1774841018449,
+      "lastAccessed": 1775367711076,
       "type": "file"
     },
     {
       "path": "package.json",
       "accessCount": 3,
-      "lastAccessed": 1774841414279,
+      "lastAccessed": 1775442812621,
       "type": "file"
     },
     {
-      "path": "tests\\gameAdapter.test.js",
-      "accessCount": 3,
-      "lastAccessed": 1774845271326,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\Navigation.svelte",
+      "path": "src\\components\\PrestigePreview.svelte",
       "accessCount": 2,
-      "lastAccessed": 1774783757359,
+      "lastAccessed": 1775363943235,
       "type": "file"
     },
     {
-      "path": "src\\components\\Toast.svelte",
+      "path": "src\\components\\ReputationTab.svelte",
       "accessCount": 2,
-      "lastAccessed": 1774783765173,
+      "lastAccessed": 1775365702832,
       "type": "file"
     },
     {
-      "path": "src\\components\\AchievementTab.svelte",
+      "path": "js\\v2_patch.js",
       "accessCount": 2,
-      "lastAccessed": 1774784615495,
+      "lastAccessed": 1775365897721,
       "type": "file"
     },
     {
-      "path": "src\\shared\\Modal.svelte",
+      "path": "C:\\Users\\adm\\.claude\\projects\\D--OpenClaw-workspace\\memory\\feedback.md",
       "accessCount": 2,
-      "lastAccessed": 1774843573639,
-      "type": "file"
-    },
-    {
-      "path": "tests\\setup.js",
-      "accessCount": 2,
-      "lastAccessed": 1774845291963,
-      "type": "file"
-    },
-    {
-      "path": "C:\\Users\\adm\\.agent-browser\\tmp\\screenshots\\screenshot-1774782460875.png",
-      "accessCount": 1,
-      "lastAccessed": 1774782464985,
-      "type": "file"
-    },
-    {
-      "path": "C:\\Users\\adm\\.agent-browser\\tmp\\screenshots\\screenshot-1774782484415.png",
-      "accessCount": 1,
-      "lastAccessed": 1774782487953,
-      "type": "file"
-    },
-    {
-      "path": "C:\\Users\\adm\\.agent-browser\\tmp\\screenshots\\screenshot-1774782529303.png",
-      "accessCount": 1,
-      "lastAccessed": 1774782533146,
-      "type": "file"
-    },
-    {
-      "path": "screenshot1.png",
-      "accessCount": 1,
-      "lastAccessed": 1774782871006,
-      "type": "file"
-    },
-    {
-      "path": "screenshot2.png",
-      "accessCount": 1,
-      "lastAccessed": 1774782888014,
-      "type": "file"
-    },
-    {
-      "path": "screenshot_game1.png",
-      "accessCount": 1,
-      "lastAccessed": 1774782910704,
-      "type": "file"
-    },
-    {
-      "path": "src\\styles\\theme-dark.css",
-      "accessCount": 1,
-      "lastAccessed": 1774783772695,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\UpgradeTab.svelte",
-      "accessCount": 1,
-      "lastAccessed": 1774786256216,
+      "lastAccessed": 1775367834949,
       "type": "file"
     },
     {
       "path": "src\\components",
       "accessCount": 1,
-      "lastAccessed": 1774788894959,
+      "lastAccessed": 1775361297045,
       "type": "directory"
     },
     {
-      "path": "C:\\Users\\adm\\.agent-browser\\tmp\\screenshots\\screenshot-1774792449999.png",
+      "path": "src\\components\\AiAdvisorPanel.svelte",
       "accessCount": 1,
-      "lastAccessed": 1774792455313,
+      "lastAccessed": 1775361949452,
       "type": "file"
     },
     {
-      "path": "C:\\Users\\adm\\.agent-browser\\tmp\\screenshots\\screenshot-1774792656135.png",
+      "path": "src\\aiAdvisor.js",
       "accessCount": 1,
-      "lastAccessed": 1774792660986,
+      "lastAccessed": 1775361961384,
       "type": "file"
     },
     {
-      "path": "C:\\Users\\adm\\.agent-browser\\tmp\\screenshots\\screenshot-1774792939057.png",
+      "path": "src\\components\\ArtifactTab.svelte",
       "accessCount": 1,
-      "lastAccessed": 1774792944150,
+      "lastAccessed": 1775362207196,
       "type": "file"
     },
     {
-      "path": "C:\\Users\\adm\\.agent-browser\\tmp\\screenshots\\screenshot-1774793321931.png",
+      "path": "src\\components\\CollectiblesTab.svelte",
       "accessCount": 1,
-      "lastAccessed": 1774793327338,
+      "lastAccessed": 1775362369329,
       "type": "file"
     },
     {
-      "path": "C:\\Users\\adm\\AppData\\Local\\Temp\\claude\\D--OpenClaw-workspace\\29bbb31f-6453-49c7-9461-25ea3fd12309\\tasks\\b4u55ja98.output",
+      "path": "js\\milestones.js",
       "accessCount": 1,
-      "lastAccessed": 1774836957681,
+      "lastAccessed": 1775362507804,
       "type": "file"
     },
     {
-      "path": "js\\rebirth.js",
+      "path": "src\\components\\MilestoneTab.svelte",
       "accessCount": 1,
-      "lastAccessed": 1774845173757,
+      "lastAccessed": 1775362576008,
       "type": "file"
     },
     {
-      "path": "docs",
+      "path": "src\\components\\EventBuffs.svelte",
       "accessCount": 1,
-      "lastAccessed": 1774846373039,
-      "type": "directory"
-    },
-    {
-      "path": "README.md",
-      "accessCount": 1,
-      "lastAccessed": 1774846384569,
+      "lastAccessed": 1775362672156,
       "type": "file"
     },
     {
-      "path": "scripts\\itch-upload.mjs",
+      "path": "src\\components\\SeasonTab.svelte",
       "accessCount": 1,
-      "lastAccessed": 1774848772906,
+      "lastAccessed": 1775365930564,
       "type": "file"
     },
     {
-      "path": "C:\\Users\\adm\\AppData\\Local\\Temp\\claude\\D--OpenClaw-workspace\\29bbb31f-6453-49c7-9461-25ea3fd12309\\tasks\\b811t2jmt.output",
+      "path": "C:\\Users\\adm\\.claude\\projects\\D--OpenClaw-workspace\\memory\\ai-scientist-v2.md",
       "accessCount": 1,
-      "lastAccessed": 1774849122592,
+      "lastAccessed": 1775367690501,
       "type": "file"
     },
     {
-      "path": "start.bat",
+      "path": "vite.config.js",
       "accessCount": 1,
-      "lastAccessed": 1774849181977,
+      "lastAccessed": 1775442798699,
       "type": "file"
     },
     {
-      "path": "C:\\Users\\adm\\.claude\\plans\\shimmying-baking-lagoon.md",
+      "path": "src\\main.js",
       "accessCount": 1,
-      "lastAccessed": 1774849318007,
+      "lastAccessed": 1775442835612,
       "type": "file"
-    },
-    {
-      "path": "css\\style.css",
-      "accessCount": 1,
-      "lastAccessed": 1775360905735,
-      "type": "directory"
     }
   ],
   "userDirectives": []

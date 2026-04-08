@@ -69,6 +69,29 @@ const ACHIEVEMENTS = [
     { id: 'building_challenge_2', name: '无限工程师', desc: '拥有无限引擎满级', icon: '♾️', condition: { type: 'building_owned', target: 'infinity_engine', count: 100 }, reward: { type: 'gold_multiplier', amount: 0.2 } }
 ];
 
+// 套装奖励配置
+const ACHIEVEMENT_SET_BONUSES = [
+    { id: 'set_builder', name: '建筑大师', icon: '🏗️', members: ['builder_1','builder_2','builder_3','builder_4'], bonus: { type: 'gps', value: 0.05 } },
+    { id: 'set_slayer', name: 'Boss猎杀者', icon: '⚔️', members: ['slayer_1','slayer_2','slayer_3','slayer_4'], bonus: { type: 'boss_damage', value: 0.05 } },
+    { id: 'set_gold', name: '金币大师', icon: '💰', members: ['gold_1','gold_2','gold_3','gold_4'], bonus: { type: 'gold', value: 0.05 } },
+    { id: 'set_click', name: '点击狂人', icon: '👆', members: ['clicker_1','clicker_2','clicker_3'], bonus: { type: 'click', value: 0.05 } },
+    { id: 'set_rebirth', name: '转生达人', icon: '🔄', members: ['rebirth_1','rebirth_2','rebirth_3'], bonus: { type: 'rebirth', value: 0.05 } },
+];
+
+// 检查并应用套装奖励
+function checkSetBonuses() {
+    if (!G.achievements) return;
+    ACHIEVEMENT_SET_BONUSES.forEach(function(set) {
+        if (G.unlockedSets && G.unlockedSets[set.id]) return; // 已激活
+        var allOwned = set.members.every(function(id) { return G.achievements[id]; });
+        if (allOwned) {
+            G.unlockedSets = G.unlockedSets || {};
+            G.unlockedSets[set.id] = true;
+            showMsg('🏆 套装解锁：' + set.icon + ' ' + set.name + '！额外 +' + (set.bonus.value * 100) + '% ' + set.bonus.type, 'achievement');
+        }
+    });
+}
+
 // 检查成就完成度
 function checkAchievements() {
     if (!G.achievements) G.achievements = {};
@@ -129,12 +152,14 @@ function checkAchievements() {
         if (completed) {
             G.achievements[achievement.id] = true;
             newlyUnlocked.push(achievement);
-            
+
             // 发放奖励
             giveAchievementReward(achievement.reward);
         }
     });
-    
+
+    checkSetBonuses();
+
     if (newlyUnlocked.length > 0) {
         newlyUnlocked.forEach(function(achievement) {
             showMsg('🏆 解锁成就：' + achievement.icon + ' ' + achievement.name + '! 奖励：' + formatReward(achievement.reward), 'success');

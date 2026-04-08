@@ -8,6 +8,19 @@
   const unsubGold = goldStore.subscribe(v => gold = v);
   const unsubGps = gpsStore.subscribe(v => gps = v);
 
+  // 离线挂机收益预览：按离线8小时计算
+  const OFFLINE_HOURS = 8;
+  const OFFLINE_RATE = 0.5;
+  let offlinePreview = $derived(gps > 0 ? Math.floor(gps * OFFLINE_HOURS * 3600 * OFFLINE_RATE) : 0);
+  let offlineHint = $derived(offlinePreview > 0 ? `离线约 +${formatNum(offlinePreview)} 💰` : '点击获取 | 空格');
+  function formatNum(n) {
+    if (n >= 1e12) return (n/1e12).toFixed(1)+'T';
+    if (n >= 1e9) return (n/1e9).toFixed(1)+'B';
+    if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+    if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+    return n.toLocaleString();
+  }
+
   onMount(() => startSync());
   onDestroy(() => {
     unsubGold();
@@ -33,7 +46,7 @@
     <div class="gold-info">
       <span class="label">当前金币</span>
       <span class="gold-value font-mono">{$formattedGold}</span>
-      <span class="hint">点击获取 | 空格</span>
+      <span class="hint">{offlineHint}</span>
     </div>
   </div>
   <div class="gps-card">

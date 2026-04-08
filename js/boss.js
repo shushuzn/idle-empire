@@ -25,6 +25,7 @@ var currentBoss = null;
 var bossHp = 0;
 var bossMaxHp = 0;
 var bossDamageTimer = null;
+var bossRushActive = false;
 
 function getDynastyBossScale() {
     if (!G) return 1;
@@ -32,7 +33,11 @@ function getDynastyBossScale() {
 }
 
 function getScaledBossHp(boss) {
-    return Math.floor(boss.hp * getDynastyBossScale());
+    var hp = Math.floor(boss.hp * getDynastyBossScale());
+    if (typeof window.getChallengeBossHpModifier === 'function') {
+        hp = window.getChallengeBossHpModifier(hp);
+    }
+    return hp;
 }
 
 function getScaledBossReward(boss) {
@@ -107,11 +112,10 @@ function startBossDamage() {
     
     bossDamageTimer = setInterval(function() {
         if (!G || !currentBoss) return;
-        
+
+        window.triggerBossAttackFlash?.();
         bossHp -= getCurrentBossDamagePerSecond();
         G.bossHp = bossHp;
-        
-        if (bossHp <= 0) {
             // Boss被击杀
             defeatBoss();
         } else {
@@ -128,7 +132,11 @@ function defeatBoss() {
     G.gold += reward;
     G.totalEarned += reward;
     G.bossesDefeated = (G.bossesDefeated || 0) + 1;
-    
+    if (window.checkQuestProgress) window.checkQuestProgress();
+    if (window.checkSeasonProgress) window.checkSeasonProgress();
+    if (window.checkSeasonProgress) window.checkSeasonProgress();
+    if (window.playSound) window.playSound('boss');
+
     showMsg('🎉 击杀 ' + currentBoss.name + '! +' + formatNumber(reward) + ' 金币!', 'success');
     
     // 下一个Boss
@@ -169,4 +177,161 @@ function defeatBoss() {
 
 function getBossHpPercent() {
     return bossMaxHp > 0 ? (bossHp / bossMaxHp) * 100 : 0;
+}
+
+// 每周挑战Boss：随机选一个Boss，HP×2，奖励×3，每周五0点重置
+function getWeekNumber() {
+    var d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+    var yearStart = new Date(d.getFullYear(), 0, 1);
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function getWeeklyChallengeBoss() {
+    if (!G) return null;
+    var currentWeek = getWeekNumber();
+    if (G.weeklyChallengeWeek === currentWeek && G.weeklyChallengeBoss) {
+        return G.weeklyChallengeBoss;
+    }
+    // 选一个已解锁的非隐藏Boss
+    var unlocked = BOSSES.filter(function(b) {
+        return G.totalEarned >= b.unlockGold && !b.hidden && (!b.rebirthRequired || (G.rebirths || 0) >= 1);
+    });
+    if (unlocked.length === 0) return null;
+    var base = unlocked[Math.floor(Math.random() * unlocked.length)];
+    var challenge = {
+        id: 'challenge_' + base.id,
+        baseId: base.id,
+        name: '⚔️ 挑战: ' + base.name,
+        icon: base.icon,
+        hp: Math.floor(base.hp * 2),
+        reward: Math.floor(base.reward * 3),
+        isChallenge: true
+    };
+    G.weeklyChallengeBoss = challenge;
+    G.weeklyChallengeWeek = currentWeek;
+    return challenge;
+}
+
+function challengeWeeklyBoss() {
+    var cb = getWeeklyChallengeBoss();
+    if (!cb) return;
+    currentBoss = { id: cb.id, name: cb.name, icon: cb.icon, damage: 0 };
+    bossHp = cb.hp;
+    bossMaxHp = cb.hp;
+    G.currentBoss = cb.id;
+    G.bossHp = bossHp;
+    G.bossMaxHp = bossMaxHp;
+    renderBoss();
+    if (typeof requestUiUpdate === 'function') {
+        requestUiUpdate({ heavy: true });
+    } else {
+        updateUI();
+    }
+}
+
+function startBossRush() {
+    if (!G || bossRushActive) return;
+    var unlocked = BOSSES.filter(function(b) {
+        return G.totalEarned >= b.unlockGold && !b.hidden && (!b.rebirthRequired || (G.rebirths || 0) >= 1);
+    });
+    if (unlocked.length === 0) {
+        showMsg('没有可挑战的Boss', 'warning');
+        return;
+    }
+    bossRushActive = true;
+    currentBoss = unlocked[0];
+    bossHp = getScaledBossHp(currentBoss);
+    bossMaxHp = bossHp;
+    G.currentBoss = currentBoss.id;
+    G.bossHp = bossHp;
+    G.bossMaxHp = bossMaxHp;
+    bossRushIdx = 0;
+    bossRushList = unlocked;
+    showMsg('⚔️ Boss Rush 开始！连续击败 ' + unlocked.length + ' 个Boss，奖励x3！', 'success');
+    startBossDamage();
+    if (typeof requestUiUpdate === 'function') {
+        requestUiUpdate({ heavy: true });
+    } else {
+        updateUI();
+    }
+}
+var bossRushIdx = 0;
+var bossRushList = [];
+
+function defeatBoss() {
+    if (!G || !currentBoss) return;
+
+    // 发放奖励（rush模式3倍）
+    var reward = getScaledBossReward(currentBoss);
+    if (bossRushActive) reward = Math.floor(reward * 3);
+    G.gold += reward;
+    G.totalEarned += reward;
+    G.bossesDefeated = (G.bossesDefeated || 0) + 1;
+    if (window.checkQuestProgress) window.checkQuestProgress();
+    if (window.checkSeasonProgress) window.checkSeasonProgress();
+
+    showMsg('🎉 击杀 ' + currentBoss.name + '! +' + formatNumber(reward) + ' 金币!' + (bossRushActive ? ' (Rush)' : ''), 'success');
+
+    // Rush模式：自动进入下一个Boss
+    if (bossRushActive && bossRushIdx < bossRushList.length - 1) {
+        bossRushIdx++;
+        currentBoss = bossRushList[bossRushIdx];
+        bossHp = getScaledBossHp(currentBoss);
+        bossMaxHp = bossHp;
+        G.currentBoss = currentBoss.id;
+        G.bossHp = bossHp;
+        G.bossMaxHp = bossMaxHp;
+        renderBoss();
+        if (typeof requestUiUpdate === 'function') {
+            requestUiUpdate({ heavy: true });
+        } else {
+            updateUI();
+        }
+        checkAchievements();
+        return;
+    }
+
+    // Rush结束
+    if (bossRushActive) {
+        bossRushActive = false;
+        bossRushIdx = 0;
+        bossRushList = [];
+        showMsg('🏆 Boss Rush 完成！所有奖励已x3！', 'success');
+    }
+
+    // 下一个Boss（普通模式）
+    var unlocked = BOSSES.filter(function(b) { return G.totalEarned >= b.unlockGold && (!b.rebirthRequired || (G.rebirths || 0) >= 1); });
+    var idx = BOSSES.indexOf(currentBoss);
+
+    if (idx < BOSSES.length - 1 && unlocked.length > idx + 1) {
+        currentBoss = BOSSES[idx + 1];
+        bossHp = getScaledBossHp(currentBoss);
+        bossMaxHp = getScaledBossHp(currentBoss);
+        G.currentBoss = currentBoss.id;
+        G.bossHp = bossHp;
+        G.bossMaxHp = bossMaxHp;
+    } else {
+        // 最终Boss后提升王朝等级并循环
+        if (currentBoss.id === BOSSES[BOSSES.length - 1].id) {
+            G.dynastyLevel = (G.dynastyLevel || 1) + 1;
+            G.dynastyPoints = (G.dynastyPoints || 0) + 1;
+            showMsg('👑 王朝晋升! 进入 Lv' + G.dynastyLevel + '，获得 1 天赋点', 'achievement');
+            currentBoss = BOSSES[0];
+            bossHp = getScaledBossHp(currentBoss);
+            bossMaxHp = bossHp;
+            G.currentBoss = currentBoss.id;
+            G.bossHp = bossHp;
+            G.bossMaxHp = bossMaxHp;
+        }
+    }
+
+    renderBoss();
+    if (typeof requestUiUpdate === 'function') {
+        requestUiUpdate({ heavy: true });
+    } else {
+        updateUI();
+    }
+    checkAchievements();
 }

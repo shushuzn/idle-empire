@@ -24,6 +24,10 @@ function initV2Systems() {
     if (G && G.seasonsParticipated === undefined) G.seasonsParticipated = 0;
     if (G && G.bestSeasonRank === undefined) G.bestSeasonRank = 9999;
     if (G && G.challengesCompleted === undefined) G.challengesCompleted = 0;
+    if (G && G.seasonPoints === undefined) G.seasonPoints = 0;
+    if (G && G.currentSeason === undefined) G.currentSeason = null;
+    if (G && G.seasonChallenges === undefined) G.seasonChallenges = {};
+    if (G && G.seasonRewards === undefined) G.seasonRewards = {};
     if (G && G.eventsTriggered === undefined) G.eventsTriggered = 0;
     
     // 应用转生加成

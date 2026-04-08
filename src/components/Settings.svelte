@@ -7,6 +7,9 @@
   let particles = $state(true);
   let scanlines = $state(true);
   let autoSave = $state(true);
+  let soundEnabled = $state(true);
+  let slots = $state([]);
+  let activeSlot = $state(0);
 
   function onQualityChange(v) {
     window.setGraphicsQuality?.(v);
@@ -16,6 +19,22 @@
   }
   function onScanlinesChange(v) {
     window.toggleScanlines?.(v);
+  }
+  function onSoundChange(v) {
+    soundEnabled = v;
+    window.setSoundMuted?.(!v);
+    if (v) window.playSound?.('click');
+  }
+
+  $effect(() => {
+    if (open) {
+      slots = window.getSaveSlots?.() || [];
+    }
+  });
+
+  function switchSlot(slot) {
+    if (slot === activeSlot) return;
+    window.switchSaveSlot?.(slot);
   }
 </script>
 
@@ -44,11 +63,36 @@
     <div class="settings-group">
       <h4>游戏</h4>
       <label class="toggle">
+        <span>音效</span>
+        <input type="checkbox" checked={soundEnabled} onchange={(e) => onSoundChange(e.target.checked)} />
+      </label>
+      <label class="toggle">
         <span>自动保存</span>
         <input type="checkbox" bind:checked={autoSave} />
       </label>
       <button class="btn-outline" onclick={() => window.exportSave?.()}>📤 导出存档</button>
       <button class="btn-outline" onclick={() => window.importSave?.()}>📥 导入存档</button>
+    </div>
+
+    <div class="settings-group">
+      <h4>存档槽位</h4>
+      <div class="slot-grid">
+        {#each slots as s}
+          <button
+            class="slot-btn"
+            class:active={s.slot === activeSlot}
+            onclick={() => switchSlot(s.slot)}
+          >
+            <div class="slot-name">{s.name}</div>
+            {#if s.meta}
+              <div class="slot-meta">{Math.floor(s.meta.gold || 0).toLocaleString()} 金</div>
+              <div class="slot-meta">转生 {s.meta.rebirths || 0}</div>
+            {:else}
+              <div class="slot-meta">空</div>
+            {/if}
+          </button>
+        {/each}
+      </div>
     </div>
   </div>
 </Modal>
@@ -120,6 +164,51 @@
   .btn-outline:hover {
     background: var(--bg-elevated);
     border-color: var(--gold-bright);
+    color: var(--gold-bright);
+  }
+
+  .slot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .slot-btn {
+    padding: 10px 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .slot-btn:hover {
+    border-color: var(--gold-bright);
+    background: var(--bg-surface);
+  }
+
+  .slot-btn.active {
+    border-color: var(--gold-bright);
+    background: linear-gradient(135deg, rgba(232,197,71,0.15), rgba(232,197,71,0.05));
+    box-shadow: 0 0 12px rgba(232, 197, 71, 0.2);
+  }
+
+  .slot-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-base);
+  }
+
+  .slot-meta {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .slot-btn.active .slot-name {
     color: var(--gold-bright);
   }
 </style>

@@ -1,12 +1,15 @@
 // Idle Empire - 存档系统
+import pako from 'pako';
 
 const SAVE_KEY = 'idle_empire_save';
+const SAVE_SLOT_META = 'idle_empire_save_meta';
 const THEME_KEY = 'idle_empire_theme';
 const AUTO_SAVE_INTERVAL = 30000;
 const SAVE_OBFUSCATE_KEY = 'idle_empire_v2'; // Changes when save format changes
 
 let autoSaveTimer;
 let lastSaveTime = Date.now();
+let activeSlot = 0;
 
 function xorObfuscate(str) {
     const key = SAVE_OBFUSCATE_KEY;
@@ -48,13 +51,18 @@ function createNewGame() {
         lastSave: Date.now(),
         lastLogin: null,
         totalClicks: 0,
-        lastClickTime: 0
+        lastClickTime: 0,
+        timeOffset: 0 // 时间校准偏移量（毫秒）
     };
 }
 
 function loadGame() {
-    const saved = localStorage.getItem(SAVE_KEY);
-    if (saved) {
+    const slotMeta = localStorage.getItem(SAVE_SLOT_META);
+    if (slotMeta) {
+        try { activeSlot = JSON.parse(slotMeta).activeSlot || 0; } catch(e) { activeSlot = 0; }
+    }
+    const saveKey = activeSlot === 0 ? SAVE_KEY : SAVE_KEY + '_slot' + activeSlot;
+    const saved = localStorage.getItem(saveKey);
         try {
             // Try obfuscated format first
             let plain = xorDeobfuscate(saved);
@@ -83,17 +91,30 @@ function loadGame() {
             if (data.prestigeShop.clickCore === undefined) data.prestigeShop.clickCore = 0;
             if (data.prestigeShop.bossCore === undefined) data.prestigeShop.bossCore = 0;
             if (!data.totalClicks) data.totalClicks = 0;
+            if (data.timeOffset === undefined) data.timeOffset = 0;
             
-            // 计算离线收益
-            const offlineTime = (Date.now() - data.lastSave) / 1000;
+            // 计算离线收益（使用校准后时间）
+            const calibratedNow = Date.now() + (data.timeOffset || 0);
+            const offlineTime = (calibratedNow - data.lastSave) / 1000;
             const gps = getTotalProduction(data);
             const offlineRate = getOfflineRate(data);
             const offlineEarnings = Math.floor(gps * offlineTime * offlineRate);
             
             if (offlineEarnings > 0 && offlineTime > 60) {
+                let totalOffline = offlineEarnings;
+                // 离线收益保护：超过24小时额外补偿50%
+                if (offlineTime > 24 * 3600) {
+                    const bonus = Math.floor(offlineEarnings * 0.5);
+                    totalOffline += bonus;
+                    data.gold += bonus;
+                    data.totalEarned += bonus;
+                    setTimeout(function() {
+                        showMsg('🛡️ 离线保护奖励：+' + formatNumber(bonus) + ' 金币（离线超过24小时）', 'success');
+                    }, 1500);
+                }
                 data.gold += offlineEarnings;
                 data.totalEarned += offlineEarnings;
-                showOfflineEarnings(offlineTime, offlineEarnings);
+                showOfflineEarnings(offlineTime, totalOffline);
             }
 
             // 每日首次登录奖励
@@ -116,7 +137,7 @@ function loadGame() {
                 }, 1000);
             }
 
-            lastSaveTime = data.lastSave || Date.now();
+            lastSaveTime = data.lastSave || calibratedNow;
             return data;
         } catch (e) {
             console.error('存档损坏，创建新游戏');
@@ -131,7 +152,8 @@ function saveGame(gameState) {
     try {
         const plain = JSON.stringify(gameState);
         const obfuscated = xorObfuscate(plain);
-        localStorage.setItem(SAVE_KEY, obfuscated);
+        const saveKey = activeSlot === 0 ? SAVE_KEY : SAVE_KEY + '_slot' + activeSlot;
+        localStorage.setItem(saveKey, obfuscated);
         return true;
     } catch (e) {
         console.error('保存失败:', e);
@@ -142,19 +164,59 @@ function saveGame(gameState) {
 function exportSave(gameState) {
     gameState.lastSave = Date.now();
     const exportData = JSON.stringify(gameState, null, 2);
-    const blob = new Blob([exportData], { type: 'application/json' });
+    // gzip compress then base64 encode for safe download
+    const compressed = pako.gzip(exportData);
+    const b64 = btoa(String.fromCharCode.apply(null, Array.from(compressed)));
+    const blob = new Blob([b64], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `idle-empire-save-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `idle-empire-save-${new Date().toISOString().slice(0, 10)}-slot${activeSlot}.json.gz`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showMessage('存档已导出！', 'success');
+    showMessage('存档已导出（gzip压缩）！', 'success');
 }
 
-/**
+function getSaveSlots() {
+    var slots = [];
+    for (var i = 0; i < 3; i++) {
+        var key = i === 0 ? SAVE_KEY : SAVE_KEY + '_slot' + i;
+        var raw = localStorage.getItem(key);
+        var meta = null;
+        if (raw) {
+            try {
+                var plain = xorDeobfuscate(raw);
+                if (plain) {
+                    var data = JSON.parse(plain);
+                    meta = {
+                        gold: data.gold || 0,
+                        rebirths: data.rebirths || 0,
+                        lastSave: data.lastSave || 0,
+                        bossesDefeated: data.bossesDefeated || 0
+                    };
+                }
+            } catch(e) {}
+        }
+        slots.push({ slot: i, name: i === 0 ? '主存档' : '存档 ' + i, meta: meta });
+    }
+    return slots;
+}
+
+function switchSaveSlot(slot) {
+    if (slot < 0 || slot > 2) return;
+    activeSlot = slot;
+    localStorage.setItem(SAVE_SLOT_META, JSON.stringify({ activeSlot: slot }));
+    showMessage('已切换到槽位 ' + slot + '，正在重新加载...', 'success');
+    setTimeout(function() { location.reload(); }, 1000);
+}
+
+function resetGame() {
+    if (confirm('确定要重置游戏吗？所有进度将丢失！')) {
+        var saveKey = activeSlot === 0 ? SAVE_KEY : SAVE_KEY + '_slot' + activeSlot;
+        localStorage.removeItem(saveKey);
+        location.reload();
  * 验证存档数据，返回具体错误信息；通过返回 null
  * @param {object} data
  * @returns {string|null}
@@ -174,7 +236,7 @@ function validateSaveData(data) {
 function importSave() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json';
+    input.accept = '.json,.json.gz';
     input.onchange = function(e) {
         const file = e.target.files[0];
         if (file) {
@@ -182,9 +244,24 @@ function importSave() {
             reader.onload = function(event) {
                 let importedData;
                 try {
-                    importedData = JSON.parse(event.target.result);
+                    const raw = event.target.result;
+                    // Detect gzip by magic bytes (first 2 bytes: 0x1f 0x8b)
+                    const bytes = new Uint8Array(raw.length);
+                    for (let i = 0; i < raw.length && i < 2; i++) bytes[i] = raw.charCodeAt(i);
+                    const isGzip = bytes[0] === 0x1f && bytes[1] === 0x8b;
+                    if (isGzip) {
+                        // Decode base64 then gunzip
+                        const binary = atob(raw);
+                        const len = binary.length;
+                        const buf = new Uint8Array(len);
+                        for (let i = 0; i < len; i++) buf[i] = binary.charCodeAt(i);
+                        const decompressed = pako.ungzip(buf, { to: 'string' });
+                        importedData = JSON.parse(decompressed);
+                    } else {
+                        importedData = JSON.parse(raw);
+                    }
                 } catch (e) {
-                    showMessage('存档解析失败：文件不是有效的 JSON', 'error');
+                    showMessage('存档解析失败：文件不是有效的存档', 'error');
                     return;
                 }
                 const validationError = validateSaveData(importedData);
@@ -193,12 +270,13 @@ function importSave() {
                     return;
                 }
                 // 备份当前存档
-                const currentSave = localStorage.getItem(SAVE_KEY);
+                const currentSaveKey = activeSlot === 0 ? SAVE_KEY : SAVE_KEY + '_slot' + activeSlot;
+                const currentSave = localStorage.getItem(currentSaveKey);
                 if (currentSave) {
-                    localStorage.setItem(SAVE_KEY + '_backup', currentSave);
+                    localStorage.setItem(currentSaveKey + '_backup', currentSave);
                 }
                 if (confirm('确定要导入存档吗？当前进度将被覆盖（已自动备份）。')) {
-                    localStorage.setItem(SAVE_KEY, JSON.stringify(importedData));
+                    localStorage.setItem(currentSaveKey, JSON.stringify(importedData));
                     showMessage('存档导入成功！正在重新加载...', 'success');
                     setTimeout(function() { location.reload(); }, 1500);
                 }
@@ -236,7 +314,8 @@ function showAchievementPopup(achievements) {
 
 function resetGame() {
     if (confirm('确定要重置游戏吗？所有进度将丢失！')) {
-        localStorage.removeItem(SAVE_KEY);
+        var saveKey = activeSlot === 0 ? SAVE_KEY : SAVE_KEY + '_slot' + activeSlot;
+        localStorage.removeItem(saveKey);
         location.reload();
     }
 }
