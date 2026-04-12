@@ -23,7 +23,6 @@ const ACHIEVEMENT_RARITIES = {
   gold_3: 'uncommon',
   clicker_3: 'uncommon',
   rebirth_2: 'uncommon',
-  artifact_2: 'uncommon',
   collectible_2: 'uncommon',
   milestone_2: 'uncommon',
   // rare: 后期成就
