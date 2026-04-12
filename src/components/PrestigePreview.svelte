@@ -32,8 +32,8 @@
   }
 </script>
 
-<div class="modal-overlay" onclick={onClose} role="presentation">
-  <div class="modal" onclick={(e) => e.stopPropagation()}>
+<div class="modal-overlay" onclick={onClose} onkeydown={(e) => e.key === 'Escape' && onClose?.()} role="presentation" tabindex="-1">
+  <div class="modal" role="document">
     <div class="modal-header">
       <span class="modal-title">⚜️ 王朝重铸预览</span>
       <button class="close-btn" onclick={onClose}>✕</button>

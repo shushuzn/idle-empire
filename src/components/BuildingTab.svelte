@@ -102,7 +102,7 @@
       onclick={() => handleBuy(b)}
     >
       <div class="building-card rarity-{b.rarity || 'common'}" class:purchase-flash={flashingBuilding === b.id}>
-        <div class="b-icon" onclick={() => skinPickerBuilding = skinPickerBuilding === b.id ? null : b.id} role="button" tabindex="0">{getSkinIcon(b.id)}</div>
+        <div class="b-icon" onclick={() => skinPickerBuilding = skinPickerBuilding === b.id ? null : b.id} onkeydown={(e) => e.key === 'Enter' && (skinPickerBuilding = skinPickerBuilding === b.id ? null : b.id)} role="button" tabindex="0">{getSkinIcon(b.id)}</div>
         <div class="b-info">
           <div class="b-name">{b.name || '未知建筑'}</div>
           <div class="b-desc">{b.desc || ''}</div>
@@ -125,8 +125,8 @@
 {#if skinPickerBuilding}
   {@const skins = SKINS[skinPickerBuilding] || []}
   {@const currentSkin = getSkin(skinPickerBuilding)}
-  <div class="skin-picker-overlay" onclick={() => skinPickerBuilding = null} role="presentation">
-    <div class="skin-picker" onclick={(e) => e.stopPropagation()}>
+  <div class="skin-picker-overlay" onclick={() => skinPickerBuilding = null} onkeydown={(e) => e.key === 'Escape' && (skinPickerBuilding = null)} role="dialog" aria-label="选择皮肤" tabindex="-1">
+    <div class="skin-picker" role="document">
       <div class="skin-picker-header">
         <span>选择皮肤</span>
         <button class="close-btn" onclick={() => skinPickerBuilding = null}>✕</button>
