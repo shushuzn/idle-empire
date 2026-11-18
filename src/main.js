@@ -8,6 +8,7 @@ import { buzz, hapticsEnabled, setHaptics } from './ui/haptics.js';
 import { readPref, resolveTheme, systemPrefersLight, writePref } from './ui/theme.js';
 import { centerOf, floatText } from './ui/floaters.js';
 import { hydrateIcons, iconMarkup } from './ui/icons.js';
+import { buildDiagnostics } from './ui/feedback.js';
 import * as B from './game/balance.js';
 
 const TABS = [
@@ -498,6 +499,31 @@ $('#s-close').addEventListener('click', () => dialog.close());
 $('#s-save').addEventListener('click', () => {
   const ok = persist();
   toast(ok ? '已存档' : '存档失败：浏览器存储不可用', ok ? 'good' : 'bad');
+});
+$('#s-diagnostics').addEventListener('click', async () => {
+  const version = $('.about')?.textContent.match(/v(\d+\.\d+\.\d+)/)?.[1] || '';
+  const text = buildDiagnostics({
+    version,
+    pageUrl: location.href,
+    userAgent: navigator.userAgent,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    dpr: window.devicePixelRatio || 1,
+    standalone: isStandalone(),
+    progress: {
+      rebirths: game.s.rebirths,
+      achievements: game.s.achievements.length,
+      achievementTotal: ACHIEVEMENTS.length,
+      story: game.s.story.unlocked.length,
+      storyTotal: CHAPTERS.length,
+    },
+  });
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('诊断信息已复制，粘贴到 issue 里即可', 'good');
+  } catch {
+    window.prompt('复制下面的诊断信息：', text);
+  }
 });
 $('#s-export').addEventListener('click', () => {
   try {

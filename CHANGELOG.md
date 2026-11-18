@@ -3,6 +3,17 @@
 本项目的版本记录，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [3.8.0] - 2026-11-18
+
+### Added
+
+- 设置面板新增「反馈与建议」：一键复制版本、页面、浏览器、屏幕、安装方式与进度计数，并提供 GitHub issue 入口，不包含存档内容。
+- `tests/feedback.test.js`：诊断信息格式用例（2 项，总计 48 项）。
+
+### Changed
+
+- Service Worker 缓存升到 `idle-empire-v3.8.0`。
+
 ## [3.7.0] - 2026-11-18
 
 ### Added

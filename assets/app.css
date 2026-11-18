@@ -797,6 +797,22 @@ button {
 .install-block[hidden] { display: none; }
 .install-block .ghost { width: 100%; margin-top: 8px; }
 
+.feedback-block { margin: 8px 0 2px; }
+
+.feedback-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.feedback-actions a {
+  display: grid;
+  place-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+
 /* 设置是模态弹窗，提示条会被挡住，这里用一行状态代替 */
 .settings-status {
   min-height: 17px;
