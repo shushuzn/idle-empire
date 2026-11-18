@@ -799,6 +799,11 @@ button {
 
 .feedback-block { margin: 8px 0 2px; }
 
+.save-safety { padding: 2px 2px 4px; }
+.save-safety-actions { display: flex; gap: 8px; margin-top: 8px; }
+.save-safety-actions .ghost { flex: 1; }
+.ghost:disabled { opacity: 0.45; }
+
 .feedback-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

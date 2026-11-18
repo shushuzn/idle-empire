@@ -4,6 +4,8 @@ import { CHAPTERS } from './story.js';
 import { offlineEarnings } from './balance.js';
 
 export const SAVE_KEY = 'idle_empire_save';
+export const BACKUP_KEY = 'idle_empire_backup';
+export const BROKEN_KEY = 'idle_empire_broken';
 export const VERSION = 4;
 
 export function defaultState(now = Date.now()) {
@@ -101,11 +103,26 @@ function indexOfBoss(id) {
 }
 
 export function load(now = Date.now()) {
-  let raw = null;
+  let stored = null;
   try {
-    raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    stored = localStorage.getItem(SAVE_KEY);
   } catch {
-    raw = null;
+    stored = null;
+  }
+  let raw = null;
+  let corrupt = false;
+  if (stored !== null) {
+    try {
+      raw = JSON.parse(stored);
+    } catch {
+      raw = null;
+    }
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      // 存档坏了先原样留一份，避免刷新或重置后彻底丢失
+      corrupt = true;
+      raw = null;
+      saveBrokenSave(stored);
+    }
   }
   const state = normalize(raw, now);
   let offline = null;
@@ -120,7 +137,7 @@ export function load(now = Date.now()) {
     }
   }
   state.lastSeen = now;
-  return { state, offline, migrated: Boolean(raw && raw.version !== VERSION) };
+  return { state, offline, migrated: Boolean(raw && raw.version !== VERSION), corrupt };
 }
 
 export function save(state, now = Date.now()) {
@@ -137,6 +154,79 @@ export function save(state, now = Date.now()) {
 export function reset() {
   try {
     localStorage.removeItem(SAVE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+// 有进度的存档才值得留备份；刚开局空档（含自动解锁的序章）不占备份位
+export function hasProgress(state) {
+  if (!state || typeof state !== 'object') return false;
+  if (Number(state.gold) >= 1000 || Number(state.totalEarned) >= 1000) return true;
+  if (Number(state.rebirths) > 0 || Number(state.shards) > 0) return true;
+  if (state.buildings && Object.values(state.buildings).some((n) => Number(n) > 0)) return true;
+  if (Array.isArray(state.upgrades) && state.upgrades.length) return true;
+  return Array.isArray(state.achievements) && state.achievements.length > 0;
+}
+
+// 覆盖或重置前先存一份上一份进度，误操作还能退回来
+export function saveBackup(state, now = Date.now()) {
+  try {
+    const snapshot = JSON.stringify({
+      savedAt: now,
+      gold: Number(state?.gold) || 0,
+      state,
+    });
+    localStorage.setItem(BACKUP_KEY, snapshot);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function loadBackup(now = Date.now()) {
+  let payload = null;
+  try {
+    payload = JSON.parse(localStorage.getItem(BACKUP_KEY) || 'null');
+  } catch {
+    return null;
+  }
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+  const raw = payload.state && typeof payload.state === 'object' ? payload.state : payload;
+  if (!looksLikeSave(raw)) return null;
+  const state = normalize(raw, now);
+  return { state, savedAt: num(payload.savedAt), gold: num(payload.gold, state.gold) };
+}
+
+export function clearBackup() {
+  try {
+    localStorage.removeItem(BACKUP_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+// 解析失败的原始存档文本，原样保留供导出排查
+export function saveBrokenSave(text) {
+  try {
+    localStorage.setItem(BROKEN_KEY, String(text));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function loadBrokenSave() {
+  try {
+    return localStorage.getItem(BROKEN_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+export function clearBrokenSave() {
+  try {
+    localStorage.removeItem(BROKEN_KEY);
   } catch {
     /* ignore */
   }

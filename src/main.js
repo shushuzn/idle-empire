@@ -1,5 +1,8 @@
 import { Game } from './game/engine.js';
-import { load, save, reset, exportSave, exportSaveText, importSave, defaultState } from './game/state.js';
+import {
+  load, save, reset, exportSave, exportSaveText, importSave, defaultState,
+  hasProgress, saveBackup, loadBackup, loadBrokenSave,
+} from './game/state.js';
 import { ACHIEVEMENTS, UPGRADES } from './game/data.js';
 import { CHAPTERS } from './game/story.js';
 import { fmt, fmtInt, fmtTime } from './ui/format.js';
@@ -26,7 +29,7 @@ const welcome = $('#welcome');
 // 静态 HTML 里的 data-icon 占位统一换成自绘 SVG
 hydrateIcons();
 
-const { state, offline, migrated } = load();
+const { state, offline, migrated, corrupt } = load();
 
 // 立刻落盘：首次进入就建立存档；离线结算后也避免刷新一次重复领取
 save(state);
@@ -489,6 +492,62 @@ function syncSettings() {
   $('#s-vibrate').checked = hapticsEnabled();
   syncThemePicker();
   syncInstall();
+  syncBackup();
+}
+
+function syncBackup() {
+  const backup = loadBackup();
+  const restore = $('#s-restore');
+  const note = $('#backup-note');
+  if (restore) restore.disabled = !backup;
+  if (note) {
+    const age = backup ? (Date.now() - backup.savedAt) / 1000 : 0;
+    const when = backup ? (!backup.savedAt || age < 5 ? '刚刚' : `${fmtTime(age)}前`) : '';
+    note.textContent = backup
+      ? `上一份：${fmt(backup.gold)} 金币，${when}。导入或重置前会自动存一份。`
+      : '导入或重置前会自动存一份上一份进度，误操作可以退回来。';
+  }
+  const broken = loadBrokenSave();
+  const brokenBtn = $('#s-broken');
+  if (brokenBtn) brokenBtn.hidden = !broken;
+}
+
+// 覆盖当前进度前留一份备份，空档或刚开局不占备份位
+function snapshotProgress() {
+  return hasProgress(game.s) ? saveBackup(game.s) : false;
+}
+
+function adoptState(next) {
+  Object.keys(game.s).forEach((k) => delete game.s[k]);
+  Object.assign(game.s, next);
+  game.checkAchievements();
+  game.checkStory();
+  persist();
+  switchTab(activeTab);
+  syncSettings();
+}
+
+function downloadText(text, filename, type = 'application/json') {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportBrokenSave() {
+  const text = loadBrokenSave();
+  if (!text) {
+    toast('没有保留的损坏存档', 'bad');
+    return;
+  }
+  const stamp = new Date().toISOString().slice(0, 10);
+  downloadText(text, `idle-empire-broken-${stamp}.txt`, 'text/plain');
+  toast('损坏的原始存档已导出', 'good');
 }
 
 $('#s-vibrate').addEventListener('change', (e) => {
@@ -528,15 +587,7 @@ $('#s-diagnostics').addEventListener('click', async () => {
 $('#s-export').addEventListener('click', () => {
   try {
     const stamp = new Date().toISOString().slice(0, 10);
-    const blob = new Blob([exportSaveText(game.s)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `idle-empire-${stamp}.json`;
-    document.body.append(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadText(exportSaveText(game.s), `idle-empire-${stamp}.json`);
     toast('存档已导出为 JSON 文件', 'good');
   } catch {
     // 极老的浏览器不支持 Blob 下载时退回复制存档码
@@ -557,14 +608,9 @@ function applyImport(text, fileName = '') {
     return;
   }
   const label = fileName ? `「${fileName}」` : '这个存档';
-  if (!confirm(`导入${label}会覆盖当前进度（当前 ${fmt(game.s.gold)} 金币，存档内 ${fmt(imported.gold)} 金币），确定继续？`)) return;
-  Object.keys(game.s).forEach((k) => delete game.s[k]);
-  Object.assign(game.s, imported);
-  game.checkAchievements();
-  game.checkStory();
-  persist();
-  switchTab(activeTab);
-  syncSettings();
+  if (!confirm(`导入${label}会覆盖当前进度（当前 ${fmt(game.s.gold)} 金币，存档内 ${fmt(imported.gold)} 金币）；当前进度会先存一份备份。确定继续？`)) return;
+  snapshotProgress();
+  adoptState(imported);
   toast(fileName ? `已导入 ${fileName}` : '存档已导入', 'good');
 }
 
@@ -584,14 +630,27 @@ $('#save-file').addEventListener('change', async (e) => {
     toast('文件读不出来，换一个试试', 'bad');
   }
 });
+$('#s-restore').addEventListener('click', () => {
+  const backup = loadBackup();
+  if (!backup) {
+    toast('没有可恢复的备份', 'bad');
+    return;
+  }
+  if (!confirm(`恢复上一份存档？当前进度会被覆盖（备份里 ${fmt(backup.gold)} 金币）。`)) return;
+  // 不覆盖备份本身，避免连点恢复时把「上一份」换掉
+  adoptState(backup.state);
+  toast('已恢复上一份存档', 'good');
+});
+$('#s-broken').addEventListener('click', exportBrokenSave);
 $('#s-reset').addEventListener('click', () => {
-  if (!confirm('确定重置？所有进度会清空，且不能撤销。')) return;
+  if (!confirm('确定重置？所有进度会清空（有进度时会先存一份备份）。')) return;
+  snapshotProgress();
   reset();
   Object.assign(game.s, defaultState());
   persist();
   switchTab('buildings');
   dialog.close();
-  toast('已重置', 'good');
+  toast('已重置，可在设置里恢复上一份', 'good', 5000);
 });
 
 /* ---------- 键盘快捷键 ---------- */
@@ -617,7 +676,9 @@ window.addEventListener('keydown', (e) => {
 
 /* ---------- 离线 / 迁移 / 首次进入 ---------- */
 
-if (offline) {
+if (corrupt) {
+  toast('上次的存档读不出来，原始内容已保留', 'bad', 10000, { label: '导出', onClick: exportBrokenSave });
+} else if (offline) {
   showWelcome({
     seconds: offline.seconds,
     gold: offline.gold,

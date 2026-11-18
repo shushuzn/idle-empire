@@ -3,7 +3,7 @@
 一个从点击开始、到无限引擎结束的放置/增量游戏。纯前端静态站点，**零运行时依赖、无构建步骤**，存档在浏览器 localStorage，装成 PWA 后离线也能继续。
 
 [![Deploy](https://github.com/shushuzn/idle-empire/actions/workflows/pages.yml/badge.svg)](https://github.com/shushuzn/idle-empire/actions/workflows/pages.yml)
-[![Version](https://img.shields.io/badge/version-3.8.0-2ea44f)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.9.0-2ea44f)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 **在线游玩**：https://shushuzn.github.io/idle-empire/
@@ -12,12 +12,12 @@
 
 - **完整的成长曲线**：18 座建筑（金矿 → 无限引擎）、21 个升级、15 个 Boss、20 个成就、转生与碎片商店，数字后缀一路支持到 Dd（10^33）。
 - **有结局的故事**：18 篇剧情档案随里程碑解锁，讲一个关于矿井、轮回和第十八顶王冠的故事；转生后还能读到「回响」。
-- **存档能带走**：导出为可读的 JSON 文件，换设备后用文件选择器导入，也兼容旧的 base64 存档码；导入前会校验文件并确认覆盖。
+- **存档能带走**：导出为可读的 JSON 文件，换设备后用文件选择器导入，也兼容旧的 base64 存档码；导入前会校验文件并确认覆盖。导入或重置前自动留一份备份，误操作可在设置里恢复；坏档不会静默清空，原始内容可导出排查。
 - **纯静态**：三个命令就能跑，不需要 npm install，也没有打包产物。
 - **移动优先**：底部标签栏、吸底点击条、`100dvh` 与安全区适配、按钮不小于 46px，360px 宽无横向溢出。
 - **可离线、可安装**：Service Worker 网络优先缓存，断网重载照常进入游戏；支持一键安装到桌面，iOS 给出添加步骤。
 - **标签直达**：地址栏加 `#story`、`#prestige` 等锚点可直接打开对应标签，刷新和收藏都不丢；安装后长按图标还有「剧情」「转生」快捷方式。
-- **轻量**：全部源码约 3400 行（含样式与 51 个自绘图标），单页 6 个标签。
+- **轻量**：全部源码约 3500 行（含样式与 51 个自绘图标），单页 6 个标签。
 - **无障碍**：语义化标签页与 roving tabindex、方向键切换、可见焦点、`prefers-reduced-motion` 支持、读屏友好的提示区。
 
 ## 快速开始
@@ -31,7 +31,7 @@ npm run dev          # python3 -m http.server 5173
 打开 http://127.0.0.1:5173 。也可以直接双击 `index.html`，但 ES module 在部分浏览器的 `file://` 下会被拦截，建议用本地服务。
 
 ```bash
-npm test             # node --test tests/*.test.js，48 项
+npm test             # node --test tests/*.test.js，54 项
 ```
 
 需要 Node.js 20+（CI 使用 22）。
@@ -50,7 +50,7 @@ npm test             # node --test tests/*.test.js，48 项
 | 离线收益 | 按离开时长结算，基础 50%，可经升级与商店提到 100%，上限 8 小时；关页面和后台挂起都算。 |
 | 剧情 | 18 篇档案，按建造、Boss、转生等里程碑逐页解锁；通知条可直接跳转阅读，标签上有未读徽章。 |
 
-底部标签上的数字是当前买得起的升级数，转生页的 `!` 表示已攒够一次转生。`1`–`6` 切换标签，`空格` 点击；地址栏锚点（如 `#story`）也能直接打开对应标签。设置里可切换主题（默认跟随系统）与振动反馈，安装到桌面，导出、导入、重置存档，也能复制诊断信息去 GitHub 提 issue。
+底部标签上的数字是当前买得起的升级数，转生页的 `!` 表示已攒够一次转生。`1`–`6` 切换标签，`空格` 点击；地址栏锚点（如 `#story`）也能直接打开对应标签。设置里可切换主题（默认跟随系统）与振动反馈，安装到桌面，导出、导入、恢复、重置存档，也能复制诊断信息去 GitHub 提 issue。
 
 ## 裂隙纪事
 
@@ -66,7 +66,7 @@ npm test             # node --test tests/*.test.js，48 项
 - **单一状态对象 + 一个 rAF 循环**（`src/main.js`）：每帧只更新视图里那几个节点，不重建 DOM，切页和连点不掉帧，滚动位置也不会跳。
 - **加成分类计算**：building / click / boss / global / offline 五类各自只乘一次，避免旧版重复相乘导致的数值虚高。
 - **剧情是数据**（`src/game/story.js`）：每篇档案自带解锁条件，只读状态；解锁结果写进存档，转生清空进度也不会回退。
-- **存档集中处理**（`src/game/state.js`）：`normalize()` 负责旧字段迁移、越界值夹取和坏档兜底；导出为带版本号的 JSON 文件，导入同时接受 JSON 与旧的 base64 存档码。
+- **存档集中处理**（`src/game/state.js`）：`normalize()` 负责旧字段迁移、越界值夹取和坏档兜底；导出为带版本号的 JSON 文件，导入同时接受 JSON 与旧的 base64 存档码。覆盖类操作前把上一份写进独立备份键，解析失败的原档也会原样保留。
 - **视图即函数**（`src/ui/views.js`）：每个标签页返回一段结构，内置增量刷新；图标通过 `data-icon` 占位，启动时由 `src/ui/icons.js` 统一注入 SVG。
 - **主题不闪**：`<head>` 内联脚本在样式表之前定好主题，`theme-color` 跟着切换。
 
@@ -83,7 +83,8 @@ src/main.js               启动、标签页、主循环、设置面板、快捷
 src/game/data.js          建筑、升级、Boss、成就、商店数据表
 src/game/story.js         剧情档案：18 篇文案与解锁条件
 src/game/balance.js       纯函数数值层
-src/game/state.js         存档结构、迁移、离线结算、导入导出
+src/game/state.js         存档结构、迁移、离线结算、导入导出、备份与坏档保留
+src/ui/feedback.js        诊断信息文本（反馈用，不含存档）
 src/game/engine.js        购买、攻击、转生、成就、tick
 src/ui/views.js           六个页面的 DOM 构建与增量刷新
 src/ui/format.js          数字 / 时间格式化
@@ -91,7 +92,7 @@ src/ui/icons.js           51 个 24×24 线性 SVG 图标
 src/ui/theme.js           主题偏好（跟随系统 / 浅色 / 深色）
 src/ui/floaters.js        点击 / 攻击飘字
 src/ui/haptics.js         振动反馈开关
-tests/                    node:test 用例（数值、存档、引擎、主题、格式化、剧情）
+tests/                    node:test 用例（数值、存档、引擎、主题、格式化、剧情、反馈）
 ```
 
 ## 部署
@@ -113,7 +114,7 @@ tests/                    node:test 用例（数值、存档、引擎、主题�
 ## 版本与文档
 
 - [VERSIONING.md](VERSIONING.md)：版本号规则（什么时候升 `MAJOR` / `MINOR` / `PATCH`）与发布流程
-- [CHANGELOG.md](CHANGELOG.md)：完整版本记录（当前 v3.8.0）
+- [CHANGELOG.md](CHANGELOG.md)：完整版本记录（当前 v3.9.0）
 - [CONTRIBUTING.md](CONTRIBUTING.md)：目录约定、代码风格、提交与 PR 流程
 - [SECURITY.md](SECURITY.md)：漏洞报告渠道与攻击面说明
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)：协作行为准则

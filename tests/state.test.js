@@ -1,6 +1,128 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalize, defaultState, load, save, exportSave, exportSaveText, importSave, SAVE_KEY } from '../src/game/state.js';
+import {
+  normalize,
+  defaultState,
+  load,
+  save,
+  reset,
+  exportSave,
+  exportSaveText,
+  importSave,
+  hasProgress,
+  saveBackup,
+  loadBackup,
+  clearBackup,
+  loadBrokenSave,
+  clearBrokenSave,
+  SAVE_KEY,
+  BACKUP_KEY,
+  BROKEN_KEY,
+} from '../src/game/state.js';
+
+function memoryStorage() {
+  const memory = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (memory.has(k) ? memory.get(k) : null),
+    setItem: (k, v) => memory.set(k, String(v)),
+    removeItem: (k) => memory.delete(k),
+  };
+  return memory;
+}
+
+test('备份能存下上一份进度并读回', () => {
+  memoryStorage();
+  const now = Date.now();
+  const s = defaultState(now);
+  s.gold = 4321;
+  s.buildings = { mine: 7 };
+  s.story = { unlocked: ['prologue'], read: [] };
+
+  assert.equal(saveBackup(s, now), true);
+  const backup = loadBackup(now);
+  assert.equal(backup.gold, 4321);
+  assert.equal(backup.savedAt, now);
+  assert.equal(backup.state.gold, 4321);
+  assert.deepEqual(backup.state.buildings, { mine: 7 });
+  assert.deepEqual(backup.state.story.unlocked, ['prologue']);
+
+  clearBackup();
+  assert.equal(loadBackup(now), null);
+});
+
+test('备份损坏或不是存档时返回 null', () => {
+  const memory = memoryStorage();
+  memory.set(BACKUP_KEY, '{oops');
+  assert.equal(loadBackup(), null);
+
+  memory.set(BACKUP_KEY, JSON.stringify({ savedAt: Date.now(), gold: 1, state: { hello: 'world' } }));
+  assert.equal(loadBackup(), null);
+
+  memory.set(BACKUP_KEY, JSON.stringify([1, 2, 3]));
+  assert.equal(loadBackup(), null);
+});
+
+test('只有有进度的存档才值得备份', () => {
+  const empty = defaultState();
+  assert.equal(hasProgress(empty), false);
+  assert.equal(hasProgress(null), false);
+
+  const gold = defaultState();
+  gold.gold = 1000;
+  assert.equal(hasProgress(gold), true);
+
+  const building = defaultState();
+  building.buildings = { mine: 1 };
+  assert.equal(hasProgress(building), true);
+
+  const story = defaultState();
+  story.story = { unlocked: ['prologue'], read: [] };
+  assert.equal(hasProgress(story), false); // 序章自动解锁，不算进度
+
+  const rebirth = defaultState();
+  rebirth.rebirths = 1;
+  assert.equal(hasProgress(rebirth), true);
+});
+
+test('存档解析失败时标记 corrupt 并保留原始文本', () => {
+  const memory = memoryStorage();
+  const broken = '{"gold": 88, "buildings": ';
+  memory.set(SAVE_KEY, broken);
+
+  const result = load(Date.now());
+  assert.equal(result.corrupt, true);
+  assert.equal(result.state.gold, 0);
+  assert.equal(memory.get(BROKEN_KEY), broken);
+  assert.equal(loadBrokenSave(), broken);
+
+  clearBrokenSave();
+  assert.equal(loadBrokenSave(), '');
+});
+
+test('正常存档不会被当成损坏', () => {
+  const memory = memoryStorage();
+  const s = defaultState();
+  s.gold = 66;
+  memory.set(SAVE_KEY, JSON.stringify(s));
+
+  const result = load(Date.now());
+  assert.equal(result.corrupt, false);
+  assert.equal(result.state.gold, 66);
+  assert.equal(memory.has(BROKEN_KEY), false);
+});
+
+test('重置只清主存档，不碰备份', () => {
+  const memory = memoryStorage();
+  const s = defaultState();
+  s.gold = 999;
+  memory.set(SAVE_KEY, JSON.stringify(s));
+  saveBackup(s);
+
+  reset();
+  assert.equal(memory.has(SAVE_KEY), false);
+  assert.ok(memory.has(BACKUP_KEY));
+  assert.equal(loadBackup().gold, 999);
+});
 
 test('旧版存档能迁到新结构', () => {
   const now = Date.now();

@@ -138,8 +138,17 @@
         <button id="s-reset" class="danger" type="button">重置进度</button>
       </div>
 
+      <div class="pref save-safety">
+        <div class="pref-title">存档安全</div>
+        <p class="note" id="backup-note">导入或重置前会自动存一份上一份进度，误操作可以退回来。</p>
+        <div class="save-safety-actions">
+          <button id="s-restore" class="ghost" type="button" disabled>恢复上一份</button>
+          <button id="s-broken" class="ghost" type="button" hidden>导出损坏存档</button>
+        </div>
+      </div>
+
       <p class="note">进度存在本机 localStorage，换设备或清浏览器数据会丢。「导出存档」会下载一个 JSON 文件，换设备后用「导入存档」选它即可。</p>
-      <p class="about">放置帝国 v3.8.0 · <a href="https://github.com/shushuzn/idle-empire" target="_blank" rel="noopener noreferrer">MIT 许可与源码</a></p>
+      <p class="about">放置帝国 v3.9.0 · <a href="https://github.com/shushuzn/idle-empire" target="_blank" rel="noopener noreferrer">MIT 许可与源码</a></p>
     </form>
   </dialog>
 
