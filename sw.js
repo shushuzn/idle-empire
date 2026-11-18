@@ -10,6 +10,8 @@ const ASSETS = [
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/icon-maskable.png',
+  './assets/art/rift-mine.webp',
+  './assets/art/rift-arena.webp',
   './src/main.js',
   './src/ui/views.js',
   './src/ui/format.js',

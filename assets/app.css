@@ -595,6 +595,45 @@ button {
 .story-foot { margin: 12px 2px 0; font-size: 11.5px; color: var(--muted); text-align: center; }
 .story-foot[hidden] { display: none; }
 
+/* 剧情头图：矿灯下的裂隙 */
+.story-hero {
+  position: relative;
+  margin: 10px 0 12px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.story-hero img {
+  display: block;
+  width: 100%;
+  height: 168px;
+  object-fit: cover;
+  object-position: center 54%;
+}
+
+.story-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(9, 13, 19, 0) 50%, rgba(9, 13, 19, 0.74));
+}
+
+.story-hero figcaption {
+  position: absolute;
+  left: 14px;
+  bottom: 11px;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: rgba(240, 234, 221, 0.84);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
+}
+
 /* ---------- 转生 ---------- */
 
 .panel {
@@ -1148,9 +1187,9 @@ button {
   overflow: hidden;
   border-color: color-mix(in srgb, var(--line) 70%, transparent);
   background:
-    radial-gradient(120% 130% at 50% -20%, rgba(143, 123, 255, 0.22), transparent 62%),
-    radial-gradient(90% 90% at 92% 112%, rgba(255, 122, 89, 0.13), transparent 60%),
-    linear-gradient(180deg, var(--card), var(--bg-2));
+    linear-gradient(180deg, rgba(9, 13, 19, 0.48), rgba(9, 13, 19, 0.8) 62%, rgba(9, 13, 19, 0.94)),
+    radial-gradient(120% 130% at 50% -20%, rgba(143, 123, 255, 0.18), transparent 62%),
+    url('./art/rift-arena.webp') center 54% / cover;
 }
 
 .arena-icon {
@@ -1248,6 +1287,12 @@ button {
 .welcome-inner {
   background: linear-gradient(180deg, var(--bg-2), var(--bg));
   box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.welcome-inner {
+  background:
+    linear-gradient(180deg, rgba(9, 13, 19, 0.38), rgba(16, 23, 34, 0.88) 46%, var(--bg-2) 76%),
+    url('./art/rift-mine.webp') center 32% / cover;
 }
 
 .settings-inner { position: relative; }
@@ -1362,9 +1407,9 @@ button {
 
 [data-theme='light'] .arena {
   background:
+    linear-gradient(180deg, rgba(251, 246, 234, 0.7), rgba(246, 239, 223, 0.88) 62%, rgba(246, 239, 223, 0.94)),
     radial-gradient(120% 130% at 50% -20%, rgba(91, 74, 208, 0.12), transparent 62%),
-    radial-gradient(90% 90% at 92% 112%, rgba(196, 84, 44, 0.08), transparent 60%),
-    linear-gradient(180deg, #fffdf7, #f6efdf);
+    url('./art/rift-arena.webp') center 54% / cover;
 }
 
 [data-theme='light'] .hpbar {
@@ -1392,6 +1437,12 @@ button {
   background: linear-gradient(180deg, #fffdf7, #f6efdf);
 }
 
+[data-theme='light'] .welcome-inner {
+  background:
+    linear-gradient(180deg, rgba(251, 246, 234, 0.48), rgba(251, 246, 234, 0.9) 46%, #fbf6ea 76%),
+    url('./art/rift-mine.webp') center 32% / cover;
+}
+
 [data-theme='light'] .toast {
   background: color-mix(in srgb, #fffdf7 94%, transparent);
   box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -1403,6 +1454,10 @@ button {
 
 [data-theme='light'] .res.gold::after {
   background: linear-gradient(90deg, transparent, rgba(154, 106, 18, 0.42), transparent);
+}
+
+[data-theme='light'] .story-hero::after {
+  background: linear-gradient(180deg, rgba(255, 253, 247, 0) 50%, rgba(36, 31, 22, 0.58));
 }
 
 [data-theme='light'] .arena::before { opacity: 0.55; }

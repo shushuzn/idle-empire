@@ -418,6 +418,17 @@ export function storyView(game) {
   const sub = el('p', 'view-sub', '');
   root.append(sub);
 
+  const hero = el('figure', 'story-hero');
+  const heroImg = el('img');
+  heroImg.src = './assets/art/rift-mine.webp';
+  heroImg.alt = '矿工提灯站在矿洞深处，望着岩壁上发光的紫色裂隙';
+  heroImg.width = 1240;
+  heroImg.height = 692;
+  heroImg.loading = 'lazy';
+  heroImg.decoding = 'async';
+  hero.append(heroImg, el('figcaption', '', '矿灯与裂隙'));
+  root.append(hero);
+
   // 进入页面时未读的章节标「新」，本次浏览期间一直保留，下次再进就不标了
   const fresh = new Set(game.unreadStory());
 
