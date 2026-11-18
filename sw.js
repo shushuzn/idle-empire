@@ -1,5 +1,5 @@
 // 离线缓存：网络优先，断网时回落缓存。改版本号即可让旧缓存失效。
-const CACHE = 'idle-empire-v3.1.8';
+const CACHE = 'idle-empire-v0.1.0';
 
 const ASSETS = [
   './',

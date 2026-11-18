@@ -4,7 +4,7 @@ import { buildDiagnostics } from '../src/ui/feedback.js';
 
 test('反馈诊断信息包含版本、环境与进度', () => {
   const text = buildDiagnostics({
-    version: '3.1.8',
+    version: '0.1.0',
     pageUrl: 'https://example.com/idle-empire/#story',
     userAgent: 'TestBrowser/1.0',
     width: 390,
@@ -14,7 +14,7 @@ test('反馈诊断信息包含版本、环境与进度', () => {
     progress: { rebirths: 2, achievements: 5, achievementTotal: 20, story: 3, storyTotal: 18 },
   });
 
-  assert.match(text, /^版本：3\.1\.8/m);
+  assert.match(text, /^版本：0\.1\.0/m);
   assert.match(text, /^页面：https:\/\/example\.com\/idle-empire\/#story$/m);
   assert.match(text, /^浏览器：TestBrowser\/1\.0$/m);
   assert.match(text, /^屏幕：390×844 @3x$/m);
