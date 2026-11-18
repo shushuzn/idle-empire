@@ -452,6 +452,7 @@ button {
 }
 
 .tab {
+  position: relative;
   min-height: 52px;
   border-radius: 12px;
   display: grid;
@@ -465,6 +466,52 @@ button {
 .tab-icon { font-size: 18px; line-height: 1; }
 
 .tab.on { color: var(--gold); background: var(--gold-soft); }
+
+.tab-badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #191204;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+/* ---------- 点击飘字 ---------- */
+
+.floaters {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 45;
+}
+
+.floater {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  animation: floatUp 0.8s ease-out forwards;
+}
+
+@keyframes floatUp {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -220%) scale(1.05); }
+}
+
+.floater.hit { color: #ff8f8f; font-size: 13.5px; }
 
 /* ---------- 提示 ---------- */
 
@@ -567,6 +614,50 @@ button {
 .danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
 
 .note { font-size: 11.5px; color: var(--muted); line-height: 1.6; margin: 6px 0 0; }
+
+/* ---------- 离线结算弹窗 ---------- */
+
+.welcome {
+  border: 0;
+  padding: 0;
+  width: min(360px, calc(100% - 40px));
+  margin: auto;
+  background: transparent;
+}
+
+.welcome::backdrop { background: rgba(4, 7, 14, 0.7); }
+
+.welcome-inner {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 22px 20px 18px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.welcome-ico { font-size: 38px; line-height: 1; }
+.welcome-inner h2 { margin: 8px 0 4px; font-size: 18px; }
+.w-time { font-size: 12.5px; color: var(--muted); margin: 0 0 12px; }
+
+.w-gain {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  margin: 0 0 10px;
+}
+
+.w-gain b {
+  font-size: 30px;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.w-gain span { font-size: 11.5px; color: var(--muted); }
+.welcome .note { margin: 0 0 14px; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @media (min-width: 720px) {
   .app { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }

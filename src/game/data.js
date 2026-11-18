@@ -12,13 +12,13 @@ export const BUILDINGS = [
   { id: 'quantum', name: '量子实验室', desc: '量子技术放大收益', baseCost: 800000000, baseProduction: 1200000, icon: '⚛️' },
   { id: 'dyson', name: '戴森环', desc: '围住恒星收集能量', baseCost: 12000000000, baseProduction: 15000000, icon: '☀️' },
   { id: 'time', name: '时间机器', desc: '穿越时空搬财富', baseCost: 200000000000, baseProduction: 200000000, icon: '⏰' },
-  { id: 'multiverse', name: '多元宇宙门户', desc: '跨维度收割能量', baseCost: 3000000000000, baseProduction: 3000000000, icon: '🌀' },
-  { id: 'research', name: '研究院', desc: '用前沿科技提效', baseCost: 50000000000000, baseProduction: 50000000, icon: '🔬' },
-  { id: 'stargate', name: '星际之门', desc: '直通遥远星系', baseCost: 500000000000000, baseProduction: 200000000, icon: '🌠' },
-  { id: 'dark', name: '暗能量采集器', desc: '收集宇宙暗能量', baseCost: 800000000000000, baseProduction: 800000000, icon: '🌑' },
-  { id: 'rift', name: '时空裂隙', desc: '连接不同时空', baseCost: 5000000000000000, baseProduction: 5000000000, icon: '⏳' },
-  { id: 'warp', name: '现实扭曲器', desc: '改写物理法则', baseCost: 50000000000000000, baseProduction: 50000000000, icon: '🔮' },
-  { id: 'infinity', name: '无限引擎', desc: '驱动无限可能（需转生）', baseCost: 500000000000000000, baseProduction: 500000000000, icon: '♾️', rebirthRequired: true },
+  { id: 'multiverse', name: '多元宇宙门户', desc: '跨维度收割能量', baseCost: 3000000000000, baseProduction: 2700000000, icon: '🌀' },
+  { id: 'research', name: '研究院', desc: '用前沿科技提效', baseCost: 50000000000000, baseProduction: 42000000000, icon: '🔬' },
+  { id: 'stargate', name: '星际之门', desc: '直通遥远星系', baseCost: 500000000000000, baseProduction: 400000000000, icon: '🌠' },
+  { id: 'dark', name: '暗能量采集器', desc: '收集宇宙暗能量', baseCost: 800000000000000, baseProduction: 600000000000, icon: '🌑' },
+  { id: 'rift', name: '时空裂隙', desc: '连接不同时空', baseCost: 5000000000000000, baseProduction: 3500000000000, icon: '⏳' },
+  { id: 'warp', name: '现实扭曲器', desc: '改写物理法则', baseCost: 50000000000000000, baseProduction: 32000000000000, icon: '🔮' },
+  { id: 'infinity', name: '无限引擎', desc: '驱动无限可能（需转生）', baseCost: 500000000000000000, baseProduction: 300000000000000, icon: '♾️', rebirthRequired: true },
 ];
 
 export const UPGRADES = [

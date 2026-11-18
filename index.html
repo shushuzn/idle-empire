@@ -5,13 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>放置帝国 · Idle Empire</title>
   <meta name="description" content="一个纯前端的放置/增量游戏：建筑、升级、Boss、成就与转生。存档保存在本地浏览器。" />
-  <meta name="theme-color" content="#0f1320" />
+  <meta name="theme-color" content="#0b0f18" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="./assets/icon.svg" />
+  <link rel="apple-touch-icon" href="./assets/icon-192.png" />
   <link rel="manifest" href="./manifest.webmanifest" />
+  <script>
+    // 在样式表加载前定好主题，避免浅色模式刷新时闪一下黑屏
+    (function () {
+      try {
+        var theme = localStorage.getItem('idle_empire_theme') ||
+          (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.dataset.theme = theme;
+        document.querySelector('meta[name="theme-color"]').content =
+          theme === 'light' ? '#f4f2ec' : '#0b0f18';
+      } catch (e) { /* 隐私模式下 localStorage 可能报错 */ }
+    })();
+  </script>
   <link rel="stylesheet" href="./assets/app.css" />
 </head>
 <body>
@@ -42,12 +54,28 @@
       <span class="tap-txt">点击 +<b id="tap-gain">1</b></span>
     </button>
 
-    <main id="view" class="view" aria-live="polite"></main>
+    <main id="view" class="view" role="tabpanel" aria-live="polite"></main>
 
     <nav id="tabbar" class="tabbar" role="tablist" aria-label="主导航"></nav>
   </div>
 
-  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <div id="floaters" class="floaters" aria-hidden="true"></div>
+
+  <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+
+  <dialog id="welcome" class="welcome">
+    <div class="welcome-inner">
+      <div class="welcome-ico" aria-hidden="true">🌙</div>
+      <h2 id="w-title">离线收益</h2>
+      <p id="w-time" class="w-time"></p>
+      <div class="w-gain">
+        <b id="w-gold">0</b>
+        <span>金币</span>
+      </div>
+      <p id="w-rate" class="note"></p>
+      <button id="w-ok" class="primary" type="button">收下</button>
+    </div>
+  </dialog>
 
   <dialog id="settings" class="settings">
     <form method="dialog" class="settings-inner">
@@ -73,6 +101,10 @@
         <span>浅色主题</span>
         <input id="s-theme" type="checkbox" />
       </label>
+      <label class="switch">
+        <span>点击振动</span>
+        <input id="s-vibrate" type="checkbox" checked />
+      </label>
 
       <div class="settings-actions">
         <button id="s-save" class="ghost" type="button">立即存档</button>
@@ -84,6 +116,10 @@
       <p class="note">进度存在本机 localStorage，换设备或清浏览器数据会丢；想带走请用「导出存档」。</p>
     </form>
   </dialog>
+
+  <noscript>
+    <p style="padding: 24px; font-family: system-ui, sans-serif">这个游戏需要开启 JavaScript 才能玩。</p>
+  </noscript>
 
   <script type="module" src="./src/main.js"></script>
 </body>

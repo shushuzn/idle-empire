@@ -1,5 +1,7 @@
 import { BUILDINGS, UPGRADES, BOSSES, ACHIEVEMENTS, SHOP } from '../game/data.js';
 import { fmt, fmtInt } from './format.js';
+import { buzz } from './haptics.js';
+import { centerOf, floatText } from './floaters.js';
 import * as B from '../game/balance.js';
 
 function el(tag, className, text) {
@@ -52,6 +54,7 @@ export function buildingsView(game) {
     list.append(card);
     buy.addEventListener('click', () => {
       if (game.buyBuilding(b.id)) {
+        buzz(5);
         card.classList.remove('pulse');
         void card.offsetWidth;
         card.classList.add('pulse');
@@ -69,6 +72,7 @@ export function buildingsView(game) {
 
   function update() {
     let visible = 0;
+    const mult = B.productionMultiplier(game.s);
     for (const c of cards) {
       const unlocked = game.buildingUnlocked(c.b);
       c.card.hidden = !unlocked;
@@ -77,9 +81,7 @@ export function buildingsView(game) {
       const count = game.owned(c.b.id);
       const { count: buyCount, cost } = game.bulk(c.b, game.s.buyMode);
       c.owned.textContent = `×${fmtInt(count)}`;
-      c.prod.textContent = count
-        ? `每个 +${fmt(c.b.baseProduction * (B.production(game.s) / Math.max(1e-9, sumBase(game.s))))}/秒`
-        : `每个 +${fmt(c.b.baseProduction)}/秒`;
+      c.prod.textContent = `每个 +${fmt(c.b.baseProduction * mult)}/秒`;
       c.buyLabel.textContent = buyCount > 0 ? `购买 ×${buyCount}` : '金币不足';
       c.buyCost.textContent = `${fmt(cost)} 金币`;
       c.buy.disabled = buyCount < 1 || game.s.gold < cost;
@@ -89,12 +91,6 @@ export function buildingsView(game) {
   }
 
   return { el: root, update };
-}
-
-function sumBase(state) {
-  let base = 0;
-  for (const b of BUILDINGS) base += (state.buildings[b.id] || 0) * b.baseProduction;
-  return base || 1;
 }
 
 /* ---------------- 升级 ---------------- */
@@ -195,10 +191,14 @@ export function bossesView(game) {
   attack.addEventListener('click', () => {
     const result = game.attack();
     if (!result) return;
+    buzz(result.killed ? 30 : 10);
     attack.classList.remove('hit');
     void attack.offsetWidth;
     attack.classList.add('hit');
+    const at = centerOf(attack);
+    floatText(`-${fmt(result.damage)}`, at.x, at.y - 6, 'hit');
     if (result.killed) {
+      floatText(`+${fmt(result.killed.reward)}`, at.x, at.y - 34, 'gold');
       root.dispatchEvent(new CustomEvent('toast', { bubbles: true, detail: { text: `击败 ${result.killed.name}，获得 ${fmt(result.killed.reward)} 金币`, kind: 'good' } }));
     }
   });
@@ -340,11 +340,11 @@ export function prestigeView(game) {
   function update() {
     const gain = game.prestigeGain();
     gainValue.textContent = String(gain);
-    const ratio = Math.min(1, game.s.totalEarned / 1e6);
+    const ratio = Math.min(1, game.s.totalEarned / B.PRESTIGE_THRESHOLD);
     progressFill.style.width = `${ratio * 100}%`;
     hint.textContent = gain > 0
       ? `本轮累计收益 ${fmt(game.s.totalEarned)}，现在转生可得 ${gain} 个碎片。`
-      : `本轮累计收益 ${fmt(game.s.totalEarned)}，距 1M 还差 ${fmt(Math.max(0, 1e6 - game.s.totalEarned))}。`;
+      : `本轮累计收益 ${fmt(game.s.totalEarned)}，距 ${fmt(B.PRESTIGE_THRESHOLD)} 还差 ${fmt(Math.max(0, B.PRESTIGE_THRESHOLD - game.s.totalEarned))}。`;
     button.disabled = gain < 1;
     button.textContent = gain > 0 ? `转生（+${gain} 碎片）` : '还不够转生';
     for (const c of shopCards) {

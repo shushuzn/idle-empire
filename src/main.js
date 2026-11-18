@@ -1,8 +1,10 @@
 import { Game } from './game/engine.js';
 import { load, save, reset, exportSave, importSave, THEME_KEY } from './game/state.js';
-import { ACHIEVEMENTS } from './game/data.js';
+import { ACHIEVEMENTS, UPGRADES } from './game/data.js';
 import { fmt, fmtInt, fmtTime } from './ui/format.js';
 import { VIEWS } from './ui/views.js';
+import { buzz, hapticsEnabled, setHaptics } from './ui/haptics.js';
+import { centerOf, floatText } from './ui/floaters.js';
 import * as B from './game/balance.js';
 
 const TABS = [
@@ -14,28 +16,47 @@ const TABS = [
 ];
 
 const $ = (sel) => document.querySelector(sel);
+const welcome = $('#welcome');
 
 const { state, offline, migrated } = load();
+
+// 离线结算弹窗打开时先把成就提示攒起来，关掉再一次性弹，避免被遮挡
+const pendingAchievements = [];
+
+function showAchievements(list) {
+  if (list.length === 1) {
+    const a = list[0];
+    toast(`${a.icon} 成就达成：${a.name}（${a.reward[0] === 'gold' ? `+${fmt(a.reward[1])} 金币` : `+${a.reward[1]} 碎片`}）`, 'good');
+    return;
+  }
+  const names = list.slice(0, 3).map((a) => a.name).join('、');
+  toast(`🏆 一次解锁 ${list.length} 个成就：${names}${list.length > 3 ? ' 等' : ''}`, 'good', 4200);
+}
+
+function flushAchievements() {
+  if (!pendingAchievements.length) return;
+  const list = pendingAchievements.splice(0).flat();
+  showAchievements(list);
+}
+
 const game = new Game(state, {
   onAchievement(list) {
-    if (list.length === 1) {
-      const a = list[0];
-      toast(`${a.icon} 成就达成：${a.name}（${a.reward[0] === 'gold' ? `+${fmt(a.reward[1])} 金币` : `+${a.reward[1]} 碎片`}）`, 'good');
-      return;
-    }
-    const names = list.slice(0, 3).map((a) => a.name).join('、');
-    toast(`🏆 一次解锁 ${list.length} 个成就：${names}${list.length > 3 ? ' 等' : ''}`, 'good', 4200);
+    if (welcome.open) pendingAchievements.push(list);
+    else showAchievements(list);
   },
 });
 
 /* ---------- 主题 ---------- */
 
+const themeMeta = document.querySelector('meta[name="theme-color"]');
+
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   localStorage.setItem(THEME_KEY, theme);
+  if (themeMeta) themeMeta.content = theme === 'light' ? '#f4f2ec' : '#0b0f18';
 }
 
-applyTheme(localStorage.getItem(THEME_KEY) || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+applyTheme(document.documentElement.dataset.theme || 'dark');
 
 /* ---------- 提示条 ---------- */
 
@@ -61,11 +82,15 @@ const shardsEl = $('#shards');
 const tapGainEl = $('#tap-gain');
 const tapBtn = $('#tap');
 
-tapBtn.addEventListener('click', () => {
+tapBtn.addEventListener('click', (e) => {
+  const { perClick } = B.clickPower(game.s);
   game.tap();
   tapBtn.classList.remove('pressed');
   void tapBtn.offsetWidth;
   tapBtn.classList.add('pressed');
+  buzz(6);
+  const at = e.clientX || e.clientY ? { x: e.clientX, y: e.clientY } : centerOf(tapBtn);
+  floatText(`+${fmt(perClick)}`, at.x, at.y - 10, 'gold');
 });
 
 /* ---------- 标签页 ---------- */
@@ -74,12 +99,25 @@ const viewHost = $('#view');
 const tabbar = $('#tabbar');
 let activeTab = 'buildings';
 let currentView = null;
+const badges = {};
+
+// 视图内部派发的 toast 事件（Boss 击杀、转生、商店升级）在这里统一接住
+viewHost.addEventListener('toast', (e) => {
+  if (e.detail?.text) toast(e.detail.text, e.detail.kind || '', e.detail.ms);
+});
 
 for (const [id, icon, label] of TABS) {
   const btn = document.createElement('button');
   btn.className = 'tab';
   btn.dataset.tab = id;
+  btn.setAttribute('role', 'tab');
+  btn.setAttribute('aria-selected', 'false');
   btn.innerHTML = `<span class="tab-icon" aria-hidden="true">${icon}</span><span class="tab-label">${label}</span>`;
+  const badge = document.createElement('span');
+  badge.className = 'tab-badge';
+  badge.hidden = true;
+  btn.append(badge);
+  badges[id] = badge;
   btn.addEventListener('click', () => switchTab(id));
   tabbar.append(btn);
 }
@@ -101,9 +139,26 @@ function switchTab(id) {
 
 switchTab('buildings');
 
+function setBadge(id, text) {
+  const node = badges[id];
+  if (!node) return;
+  node.textContent = text;
+  node.hidden = !text;
+}
+
+function updateBadges() {
+  let affordable = 0;
+  for (const u of UPGRADES) {
+    if (game.upgradeAvailable(u) === 'ok' && game.s.gold >= u.cost) affordable++;
+  }
+  setBadge('upgrades', affordable > 0 ? (affordable > 9 ? '9+' : String(affordable)) : '');
+  setBadge('prestige', game.prestigeGain() > 0 ? '!' : '');
+}
+
 /* ---------- 主循环 ---------- */
 
 let last = performance.now();
+let badgeTimer = 0;
 function frame(now) {
   const dt = Math.min(0.5, (now - last) / 1000);
   last = now;
@@ -114,6 +169,12 @@ function frame(now) {
   shardsEl.textContent = fmtInt(game.s.shards);
   tapGainEl.textContent = fmt(B.clickPower(game.s).perClick);
   if (currentView) currentView.update();
+
+  badgeTimer += dt;
+  if (badgeTimer >= 0.25) {
+    badgeTimer = 0;
+    updateBadges();
+  }
 
   requestAnimationFrame(frame);
 }
@@ -127,10 +188,51 @@ function persist() {
   return false;
 }
 
+let hiddenAt = 0;
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') persist();
+  if (document.visibilityState === 'hidden') {
+    hiddenAt = Date.now();
+    persist();
+  } else if (hiddenAt) {
+    const seconds = (Date.now() - hiddenAt) / 1000;
+    hiddenAt = 0;
+    if (seconds > 5) settle(seconds, '离开');
+  }
 });
 window.addEventListener('pagehide', persist);
+document.addEventListener('freeze', persist);
+
+// 切到后台期间 rAF 不跑，回到前台时补算这段时间的产出
+function settle(seconds, label) {
+  const result = B.offlineEarnings(game.s, seconds);
+  if (result.gold <= 0) return;
+  game.addGold(result.gold);
+  persist(); // 立刻落盘，避免刚回来又刷新时重复结算
+  if (seconds >= 300) {
+    showWelcome({
+      seconds: result.seconds,
+      gold: result.gold,
+      capped: seconds > result.seconds,
+      title: label === '离线' ? '离线收益' : '欢迎回来',
+    });
+  }
+  game.checkAchievements(); // 弹窗已开时成就提示会先入队，关掉后再弹
+  if (seconds >= 30 && seconds < 300) {
+    toast(`${label} ${fmtTime(result.seconds)}，获得 ${fmt(result.gold)} 金币`, 'good');
+  }
+}
+
+/* ---------- 离线结算弹窗 ---------- */
+
+function showWelcome({ seconds, gold, capped, title }) {
+  $('#w-title').textContent = title;
+  $('#w-time').textContent = `你离开了 ${fmtTime(seconds)}${capped ? '（离线收益按 8 小时封顶）' : ''}`;
+  $('#w-gold').textContent = fmt(gold);
+  $('#w-rate').textContent = `按产能 ${fmt(B.totalPerSecond(game.s))}/秒 的 ${Math.round(B.offlineRate(game.s) * 100)}% 结算${B.offlineRate(game.s) < 1 ? '，升级「离线契约」能提高比例' : ''}`;
+  if (!welcome.open) welcome.showModal();
+}
+$('#w-ok').addEventListener('click', () => welcome.close());
+welcome.addEventListener('close', flushAchievements);
 
 /* ---------- 设置面板 ---------- */
 
@@ -149,14 +251,18 @@ function syncSettings() {
   $('#s-kills').textContent = fmtInt(game.s.kills);
   $('#s-rebirths').textContent = fmtInt(game.s.rebirths);
   $('#s-shards').textContent = fmtInt(game.s.shards);
-  $('#s-kills').textContent = fmtInt(game.s.kills);
   $('#s-playtime').textContent = fmtTime((Date.now() - game.s.startedAt) / 1000);
   $('#s-ach').textContent = `${game.s.achievements.length} / ${ACHIEVEMENTS.length}`;
   $('#s-theme').checked = document.documentElement.dataset.theme === 'light';
+  $('#s-vibrate').checked = hapticsEnabled();
 }
 
 $('#s-theme').addEventListener('change', (e) => {
   applyTheme(e.target.checked ? 'light' : 'dark');
+});
+$('#s-vibrate').addEventListener('change', (e) => {
+  setHaptics(e.target.checked);
+  buzz(12);
 });
 $('#s-close').addEventListener('click', () => dialog.close());
 $('#s-save').addEventListener('click', () => {
@@ -176,6 +282,7 @@ $('#s-import').addEventListener('click', () => {
     const imported = importSave(text);
     Object.keys(game.s).forEach((k) => delete game.s[k]);
     Object.assign(game.s, imported);
+    game.checkAchievements();
     persist();
     switchTab(activeTab);
     toast('存档已导入', 'good');
@@ -200,21 +307,30 @@ $('#s-reset').addEventListener('click', () => {
 /* ---------- 键盘快捷键 ---------- */
 
 window.addEventListener('keydown', (e) => {
-  if (e.target.matches('input, textarea')) return;
-  const map = { '1': 'buildings', '2': 'upgrades', '3': 'bosses', '4': 'achievements', '5': 'prestige' };
+  if (e.target.matches('input, textarea') || dialog.open || welcome.open) return;
+  const map = { 1: 'buildings', 2: 'upgrades', 3: 'bosses', 4: 'achievements', 5: 'prestige' };
   if (map[e.key]) {
     switchTab(map[e.key]);
     e.preventDefault();
   } else if (e.code === 'Space') {
+    const { perClick } = B.clickPower(game.s);
     game.tap();
+    buzz(6);
+    const at = centerOf(tapBtn);
+    floatText(`+${fmt(perClick)}`, at.x, at.y - 10, 'gold');
     e.preventDefault();
   }
 });
 
-/* ---------- 首次进入 / 离线提示 ---------- */
+/* ---------- 离线 / 迁移 / 首次进入 ---------- */
 
 if (offline) {
-  toast(`离线 ${fmtTime(offline.seconds)}，按 ${Math.round(B.offlineRate(game.s) * 100)}% 结算，获得 ${fmt(offline.gold)} 金币`, 'good');
+  showWelcome({
+    seconds: offline.seconds,
+    gold: offline.gold,
+    capped: offline.seconds >= B.OFFLINE_CAP_SECONDS,
+    title: '离线收益',
+  });
 } else if (migrated) {
   toast('已把旧版存档迁移到新版本', 'good');
 } else if (!Object.keys(game.s.buildings).length && game.s.clicks === 0) {
@@ -223,3 +339,13 @@ if (offline) {
 
 // 页面关闭前再存一次，避免丢最后 15 秒
 window.addEventListener('beforeunload', persist);
+
+/* ---------- PWA ---------- */
+
+const swCapable =
+  location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname);
+if ('serviceWorker' in navigator && swCapable) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}

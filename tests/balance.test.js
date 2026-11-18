@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   costOf, bulkCost, maxAffordable, production, clickPower,
   bossDamage, offlineEarnings, shardsFor, shopCost, upgradeBonus,
+  buildingRate, OFFLINE_CAP_SECONDS,
 } from '../src/game/balance.js';
 import { BUILDINGS, SHOP } from '../src/game/data.js';
 import { defaultState } from '../src/game/state.js';
@@ -71,4 +72,31 @@ test('Boss 伤害随点击与产能提升', () => {
   const base = bossDamage(s);
   s.buildings = { mine: 20 };
   assert.ok(bossDamage(s) > base);
+});
+
+test('单座产出与总产出口径一致', () => {
+  const s = defaultState();
+  s.buildings = { mine: 7, lumber: 3 };
+  s.upgrades = ['speed2', 'global1'];
+  s.shards = 5;
+  const sum = BUILDINGS.reduce((acc, b) => acc + (s.buildings[b.id] || 0) * buildingRate(b, s), 0);
+  assert.ok(Math.abs(sum - production(s)) < 1e-9);
+  assert.ok(buildingRate(BUILDINGS[1], s) > buildingRate(BUILDINGS[0], s));
+});
+
+test('每座建筑的回本时间在合理区间内（后期不再出现天文数字）', () => {
+  const paybacks = BUILDINGS.map((b) => b.baseCost / b.baseProduction);
+  for (const [i, p] of paybacks.entries()) {
+    assert.ok(p >= 4 && p <= 2200, `${BUILDINGS[i].name} 回本 ${p.toFixed(0)}s 超出范围`);
+    if (i > 0) assert.ok(p >= paybacks[i - 1] * 0.9, `${BUILDINGS[i].name} 回本时间出现倒挂`);
+  }
+  // 后期建筑不能比首座亏 100 倍以上，否则等于买不到收益
+  assert.ok(paybacks.at(-1) / paybacks[0] < 400);
+});
+
+test('离线结算上限与导出常量一致', () => {
+  assert.equal(OFFLINE_CAP_SECONDS, 8 * 3600);
+  const s = defaultState();
+  s.buildings = { mine: 10 };
+  assert.equal(offlineEarnings(s, OFFLINE_CAP_SECONDS * 3).seconds, OFFLINE_CAP_SECONDS);
 });
