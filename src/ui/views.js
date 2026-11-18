@@ -165,57 +165,163 @@ export function buildingsView(game) {
   return { el: root, update };
 }
 
-/* ---------------- 升级 ---------------- */
+/* ---------------- 升级：科技树 ---------------- */
+
+const TREE_LANES = [
+  { type: 'click', label: '点击' },
+  { type: 'building', label: '建筑' },
+  { type: 'boss', label: 'Boss' },
+  { type: 'auto', label: '自动' },
+  { type: 'global', label: '全局' },
+  { type: 'offline', label: '离线' },
+];
+
+// 节点位置：横轴是流派，纵轴是同一条链上的第几级
+const TREE_NODES = (() => {
+  const laneOf = new Map(TREE_LANES.map((lane, i) => [lane.type, i]));
+  const depth = new Map();
+  return UPGRADES.map((u) => {
+    const type = u.effect[0];
+    const lane = laneOf.get(type) ?? 0;
+    const row = depth.get(lane) || 0;
+    depth.set(lane, row + 1);
+    return { u, lane, row, look: UPGRADE_LOOK[type] || UPGRADE_LOOK.global };
+  });
+})();
+const TREE_ROWS = Math.max(...TREE_NODES.map((n) => n.row)) + 1;
+const TREE_COLS = TREE_LANES.length;
+const TREE_BY_ID = new Map(TREE_NODES.map((n) => [n.u.id, n]));
+
+// 连线：同流派走竖直的线，跨流派绕到目标那一列的右侧再折回来
+function treeLink(from, to) {
+  const x1 = from.lane * 100 + 50;
+  const y1 = from.row * 100 + 50;
+  const x2 = to.lane * 100 + 50;
+  const y2 = to.row * 100 + 50;
+  if (from.lane === to.lane) return `M${x1} ${y1} L${x2} ${y2}`;
+  const rail = x2 + (to.lane >= from.lane ? 50 : -50);
+  return `M${x1} ${y1} H${rail} V${y2} H${x2}`;
+}
 
 export function upgradesView(game) {
   const root = el('div', 'view-upgrades');
-  root.append(el('h2', 'view-title', '升级'));
-  const sub = el('p', 'view-sub', '一次性买断，转生后清零。');
-  root.append(sub);
+  root.append(el('h2', 'view-title', '科技树'));
+  root.append(el('p', 'view-sub', '点亮一个节点才能往下走；一次性买断，转生后清零。'));
 
-  const list = el('div', 'cards');
-  root.append(list);
+  const labels = el('div', 'utree-labels');
+  for (const lane of TREE_LANES) labels.append(el('span', '', lane.label));
+  root.append(labels);
 
-  const cards = UPGRADES.map((u) => {
-    const card = el('article', 'card upgrade');
-    card.dataset.id = u.id;
-    const look = UPGRADE_LOOK[u.effect[0]] || UPGRADE_LOOK.global;
-    const ico = iconTile(look.name, look.tone);
-    const body = el('div', 'body');
-    const nameRow = el('div', 'name-row');
-    const name = el('span', 'name', u.name);
-    const tag = el('span', 'tag');
-    nameRow.append(name, tag);
-    body.append(nameRow, el('div', 'desc', u.desc));
-    const cost = el('div', 'prod', `${fmt(u.cost)} 金币`);
-    body.append(cost);
-    const buy = el('button', 'buy');
-    const label = el('b', 'buy-label', '购买');
-    const price = el('span', 'buy-cost', fmt(u.cost));
-    buy.append(label, price);
-    card.append(ico, body, buy);
-    list.append(card);
-    buy.addEventListener('click', () => {
-      if (game.buyUpgrade(u.id)) {
-        card.classList.remove('pulse');
-        void card.offsetWidth;
-        card.classList.add('pulse');
-      }
+  const canvas = el('div', 'utree-canvas');
+  canvas.style.setProperty('--rows', String(TREE_ROWS));
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'utree-links');
+  svg.setAttribute('viewBox', `0 0 ${TREE_COLS * 100} ${TREE_ROWS * 100}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.setAttribute('aria-hidden', 'true');
+  const edges = new Map();
+  for (const node of TREE_NODES) {
+    if (!node.u.req) continue;
+    const from = TREE_BY_ID.get(node.u.req);
+    if (!from) continue;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', treeLink(from, node));
+    path.dataset.to = node.u.id;
+    svg.append(path);
+    edges.set(node.u.id, path);
+  }
+  canvas.append(svg);
+
+  const grid = el('div', 'utree-grid');
+  grid.style.gridTemplateColumns = `repeat(${TREE_COLS}, 1fr)`;
+  canvas.append(grid);
+  root.append(canvas);
+
+  let selectedId = null;
+
+  const detail = el('section', 'utree-detail');
+  const detailHead = el('div', 'utree-detail-head');
+  const detailName = el('b', 'utree-name', '');
+  const detailState = el('span', 'utree-state', '');
+  detailHead.append(detailName, detailState);
+  const detailDesc = el('p', 'utree-desc', '');
+  const detailBuy = el('button', 'buy utree-buy');
+  const detailBuyLabel = el('b', 'buy-label', '购买');
+  const detailBuyCost = el('span', 'buy-cost', '');
+  detailBuy.append(detailBuyLabel, detailBuyCost);
+  detail.append(detailHead, detailDesc, detailBuy);
+  root.append(detail);
+
+  const nodes = TREE_NODES.map((node) => {
+    const btn = el('button', 'utree-node');
+    btn.type = 'button';
+    btn.dataset.id = node.u.id;
+    btn.style.gridColumn = String(node.lane + 1);
+    btn.style.gridRow = String(node.row + 1);
+    btn.append(iconTile(node.look.name, node.look.tone, 'utree-ico', ICON_ART[node.look.name]));
+    grid.append(btn);
+    btn.addEventListener('click', () => {
+      selectedId = node.u.id;
+      update();
     });
-    return { u, card, tag, buy, label, price };
+    return { ...node, btn };
+  });
+
+  function detailFor(id) {
+    const node = TREE_BY_ID.get(id);
+    if (!node) return;
+    const u = node.u;
+    const state = game.upgradeAvailable(u);
+    const prev = u.req ? UPGRADES.find((x) => x.id === u.req) : null;
+    detailName.textContent = u.name;
+    detailDesc.textContent = u.desc;
+    detailState.className = `utree-state ${state}`;
+    detailState.textContent =
+      state === 'owned' ? '已购买' : state === 'locked' ? `需要「${prev?.name || '前置'}」` : `${fmt(u.cost)} 金币`;
+    detailBuy.hidden = state === 'owned';
+    detailBuy.disabled = state !== 'ok' || game.s.gold < u.cost;
+    detailBuyLabel.textContent = state === 'locked' ? '未解锁' : '购买';
+    detailBuyCost.textContent = state === 'locked' ? '' : `${fmt(u.cost)} 金币`;
+  }
+
+  detailBuy.addEventListener('click', () => {
+    if (!selectedId || !game.buyUpgrade(selectedId)) return;
+    buzz(6);
+    const node = nodes.find((n) => n.u.id === selectedId);
+    if (node) {
+      node.btn.classList.remove('pulse');
+      void node.btn.offsetWidth;
+      node.btn.classList.add('pulse');
+    }
+    update();
   });
 
   function update() {
-    for (const c of cards) {
-      const state = game.upgradeAvailable(c.u);
-      c.card.hidden = state === 'locked';
-      c.card.classList.toggle('owned', state === 'owned');
-      c.tag.textContent = state === 'owned' ? '已购买' : '';
-      c.buy.hidden = state === 'owned';
-      c.buy.disabled = game.s.gold < c.u.cost;
-      c.card.classList.toggle('affordable', state === 'ok' && game.s.gold >= c.u.cost);
-      c.price.textContent = fmt(c.u.cost);
+    for (const n of nodes) {
+      const state = game.upgradeAvailable(n.u);
+      const affordable = state === 'ok' && game.s.gold >= n.u.cost;
+      n.btn.classList.toggle('is-owned', state === 'owned');
+      n.btn.classList.toggle('is-ready', state === 'ok');
+      n.btn.classList.toggle('is-affordable', affordable);
+      n.btn.classList.toggle('is-locked', state === 'locked');
+      n.btn.setAttribute(
+        'aria-label',
+        `${n.u.name}：${state === 'owned' ? '已购买' : state === 'locked' ? '未解锁' : `${fmt(n.u.cost)} 金币`}`,
+      );
+      const edge = edges.get(n.u.id);
+      if (edge) edge.classList.toggle('on', state === 'owned');
     }
+    // 没选过或选中的节点被买掉后，自动挑一个当下最该看的
+    if (!selectedId || !TREE_BY_ID.has(selectedId)) {
+      const pick =
+        nodes.find((n) => game.upgradeAvailable(n.u) === 'ok' && game.s.gold >= n.u.cost) ||
+        nodes.find((n) => game.upgradeAvailable(n.u) === 'ok') ||
+        nodes[0];
+      selectedId = pick.u.id;
+    }
+    for (const n of nodes) n.btn.classList.toggle('is-selected', n.u.id === selectedId);
+    detailFor(selectedId);
   }
 
   return { el: root, update };

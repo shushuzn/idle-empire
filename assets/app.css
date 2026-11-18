@@ -86,7 +86,8 @@
 .boss-ico[data-tone],
 .res-ico[data-tone],
 .welcome-ico[data-tone],
-.brand-ico[data-tone] { color: var(--tone); }
+.brand-ico[data-tone],
+.utree-ico[data-tone] { color: var(--tone); }
 
 .ico[data-tone],
 .arena-icon[data-tone] { background: var(--tone-soft); }
@@ -383,6 +384,189 @@ button {
 }
 
 .tag:empty { display: none; }
+
+/* ---------- 科技树 ---------- */
+
+.utree-labels {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0;
+  margin: 2px 0 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-align: center;
+}
+
+.utree-canvas {
+  position: relative;
+  height: calc(var(--rows) * 70px);
+  border-radius: 16px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(242, 189, 77, 0.08), transparent 62%),
+    var(--card);
+  /* 用内阴影当边框，避免 2px 边框让网格和 SVG 的坐标错位 */
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.utree-links {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.utree-links path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--gold) 26%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.utree-links path.on { stroke: color-mix(in srgb, var(--gold) 72%, transparent); }
+
+.utree-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-auto-rows: 70px;
+  align-items: center;
+  justify-items: center;
+}
+
+.utree-node {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  background-color: var(--card-2);
+  background-image: var(--tex-surface);
+  background-size: 80px 80px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-blend-mode: overlay;
+  display: grid;
+  place-items: center;
+  transition: transform 0.12s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.utree-node.is-locked { opacity: 0.4; }
+
+.utree-node.is-ready { border-color: color-mix(in srgb, var(--gold) 52%, transparent); }
+
+.utree-node.is-affordable {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent), 0 0 20px -8px rgba(242, 189, 77, 0.95);
+}
+
+.utree-node.is-owned {
+  border-color: rgba(60, 38, 0, 0.4);
+  background-color: #f0b429;
+  background-image:
+    var(--tex-gold),
+    linear-gradient(180deg, #ffdc8b, #e8a91f);
+  background-size: 90px 90px, 100% 100%;
+  background-blend-mode: overlay, normal;
+  box-shadow: 0 6px 16px -12px rgba(242, 189, 77, 0.95);
+}
+
+.utree-node.is-selected { transform: scale(1.08); }
+
+.utree-node.is-selected::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1px dashed color-mix(in srgb, var(--gold) 62%, transparent);
+  border-radius: 50%;
+}
+
+.utree-node.pulse { animation: treePulse 0.36s ease; }
+
+@keyframes treePulse {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.16); }
+  100% { transform: scale(1.08); }
+}
+
+.utree-ico {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 19px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.utree-ico > .ico-art { border-radius: 7px; }
+
+.utree-node.is-owned .utree-ico { color: #2f1f06; }
+
+.utree-detail {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  display: grid;
+  gap: 8px;
+}
+
+.utree-detail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.utree-name { font-size: 15px; }
+
+.utree-state {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.utree-state.ok { color: var(--gold); }
+.utree-state.owned { color: var(--good); }
+
+.utree-desc {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.utree-buy {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.utree-buy[hidden] { display: none; }
+
+[data-theme='light'] .utree-canvas {
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(154, 106, 18, 0.07), transparent 62%),
+    #fffdf7;
+}
+
+[data-theme='light'] .utree-node:not(.is-owned) {
+  background-color: #fffdf7;
+  background-image: var(--tex-surface);
+}
+
 
 .desc {
   font-size: 12px;
