@@ -22,7 +22,7 @@ npm run dev    # python3 -m http.server 5173
 | `src/game/balance.js` | 纯函数数值层，不碰 DOM |
 | `src/game/state.js` | 存档结构、迁移、导入导出 |
 | `src/game/engine.js` | 购买、攻击、转生、成就判定、tick |
-| `src/ui/views.js` | 五个页面的 DOM 构建与增量刷新 |
+| `src/ui/views.js` | 六个页面的 DOM 构建与增量刷新 |
 | `src/ui/icons.js` | 自绘 SVG 图标集，新增图标加在这里 |
 | `src/ui/theme.js` | 主题偏好与系统深浅色解析 |
 | `assets/app.css` | 全部样式，深/浅两套变量 |
@@ -42,6 +42,16 @@ npm run dev    # python3 -m http.server 5173
 - `src/game/state.js` 里的 `VERSION` 和 `normalize()` 负责旧档迁移。
 - 改动存档字段时必须：升级 `VERSION`、补迁移逻辑、给 `tests/state.test.js` 加用例。
 - 不允许让旧存档打开后白屏或数值变成 `NaN`。
+
+## 版本号与发布
+
+详细规则见 [VERSIONING.md](VERSIONING.md)，记住三句话：
+
+- **MAJOR**：旧存档、旧安装或旧链接没法平滑过渡。
+- **MINOR**：玩家能用上新东西，旧进度照常可用。
+- **PATCH**：只把已有的东西修对，玩法和存档结构不变。
+
+改到线上产物（`index.html`、`assets/`、`src/`、`manifest.webmanifest`、`sw.js`）就必须升版本，并同步 `package.json`、`sw.js`、`index.html`、`README.md`、`CHANGELOG.md` 五处；`tests/version.test.js` 会拦住漏改。只动 CI、模板、测试或文档措辞，可以不升版本，记为 `CHANGELOG.md` 的 `Unreleased`。
 
 ## 提交与 PR
 

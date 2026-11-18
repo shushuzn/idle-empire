@@ -3,6 +3,17 @@
 本项目的版本记录，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+
+- `VERSIONING.md`：`MAJOR` / `MINOR` / `PATCH` 的判定标准、五处版本落点与发布流程。
+- `tests/version.test.js`：校验 `package.json`、`sw.js`、`index.html`、`README.md`、`CHANGELOG.md` 的版本一致（总计 45 项）。
+
+### Changed
+
+- CONTRIBUTING 增加版本规则入口，修正视图页面数量描述。
+
 ## [3.6.0] - 2026-11-18
 
 ### Added
