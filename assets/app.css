@@ -556,6 +556,24 @@ button {
 
 .utree-buy[hidden] { display: none; }
 
+/* 买得起时也是一块实心金锭，跟建筑卡的购买键一致 */
+.utree-detail .utree-buy:not(:disabled) {
+  background-color: #eab02f;
+  background-image:
+    linear-gradient(180deg, rgba(255, 244, 205, 0.3), rgba(255, 255, 255, 0) 38%, rgba(92, 56, 0, 0.3)),
+    var(--tex-gold),
+    linear-gradient(180deg, #f5c04a, #dfa015);
+  background-size: 100% 100%, 160px 160px, 100% 100%;
+  background-position: 0 0, center, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-blend-mode: normal, overlay, normal;
+  border-color: rgba(242, 189, 77, 0.5);
+  box-shadow: 0 10px 22px -18px rgba(242, 189, 77, 0.9);
+}
+
+.utree-detail .utree-buy:not(:disabled) b { color: #2f1f06; }
+.utree-detail .utree-buy:not(:disabled) .buy-cost { color: rgba(47, 31, 6, 0.72); }
+
 [data-theme='light'] .utree-canvas {
   background:
     radial-gradient(120% 70% at 50% 0%, rgba(154, 106, 18, 0.07), transparent 62%),
