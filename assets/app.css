@@ -1151,6 +1151,35 @@ button {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
+/* 插画缩略图：填满图标格，露不出的线条图标作为兜底 */
+.card .ico,
+.arena-icon,
+.boss-ico {
+  position: relative;
+  overflow: hidden;
+}
+
+.ico-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.boss-ico { border-radius: 8px; }
+
+.ico.has-art,
+.arena-icon.has-art {
+  border-color: color-mix(in srgb, var(--tone, var(--line)) 34%, transparent);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 8px 18px -14px rgba(0, 0, 0, 0.9);
+}
+
+.boss-ico.has-art { box-shadow: 0 0 0 1px color-mix(in srgb, var(--tone, var(--line)) 30%, transparent); }
+
 .name { font-size: 15px; }
 
 .owned, .tag { background: color-mix(in srgb, var(--card-2) 55%, transparent); }

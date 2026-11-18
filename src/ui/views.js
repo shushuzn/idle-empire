@@ -14,12 +14,47 @@ function el(tag, className, text) {
 }
 
 // 统一的图标格子：颜色由 data-tone 决定，具体映射在 app.css
-function iconTile(name, tone, className = 'ico') {
+const ICON_ART = {
+  hand: './assets/art/icons/hand.webp',
+  bricks: './assets/art/icons/bricks.webp',
+  dagger: './assets/art/icons/dagger.webp',
+  robot: './assets/art/icons/robot.webp',
+  laurel: './assets/art/icons/laurel.webp',
+  moon: './assets/art/icons/moon.webp',
+  gear: './assets/art/icons/gear.webp',
+  tower: './assets/art/icons/tower.webp',
+  skull: './assets/art/icons/skull.webp',
+  coin: './assets/art/icons/coin.webp',
+  upgrade: './assets/art/icons/upgrade.webp',
+  rebirth: './assets/art/icons/rebirth.webp',
+  shard: './assets/art/icons/shard.webp',
+};
+
+function iconTile(name, tone, className = 'ico', art = ICON_ART[name] || '') {
   const node = el('div', className);
   node.dataset.tone = String(tone);
   node.append(icon(name));
+  if (art) addArt(node, art, 144);
   return node;
 }
+
+// 生成式插画叠在线条图标上；加载失败就露出下面的图标
+function addArt(node, src, size = 160) {
+  const img = el('img', 'ico-art');
+  img.src = src;
+  img.alt = '';
+  img.width = size;
+  img.height = size;
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  img.addEventListener('error', () => img.remove(), { once: true });
+  node.classList.add('has-art');
+  node.append(img);
+  return img;
+}
+
+const buildingArt = (id) => `./assets/art/buildings/${id}.webp`;
+const bossArt = (id) => `./assets/art/bosses/${id}.webp`;
 
 const UPGRADE_LOOK = {
   click: { name: 'hand', tone: 1 },
@@ -81,7 +116,7 @@ export function buildingsView(game) {
   const cards = BUILDINGS.map((b) => {
     const card = el('article', 'card building');
     card.dataset.id = b.id;
-    const ico = iconTile(b.icon, BUILDING_TONE[b.id] || 2);
+    const ico = iconTile(b.icon, BUILDING_TONE[b.id] || 2, 'ico', buildingArt(b.id));
     const body = el('div', 'body');
     const nameRow = el('div', 'name-row');
     const name = el('span', 'name', b.name);
@@ -158,7 +193,7 @@ export function upgradesView(game) {
     const name = el('span', 'name', u.name);
     const tag = el('span', 'tag');
     nameRow.append(name, tag);
-    body.append(el('div', 'desc', u.desc));
+    body.append(nameRow, el('div', 'desc', u.desc));
     const cost = el('div', 'prod', `${fmt(u.cost)} 金币`);
     body.append(cost);
     const buy = el('button', 'buy');
@@ -203,7 +238,8 @@ export function bossesView(game) {
 
   const arena = el('section', 'arena');
   const top = el('div', 'arena-top');
-  const arenaIcon = iconTile('goblin', 1, 'arena-icon');
+  const arenaIcon = iconTile('goblin', 1, 'arena-icon', bossArt('goblin'));
+  let arenaBossId = 'goblin';
   const meta = el('div', 'arena-meta');
   const name = el('div', 'arena-name', '');
   const hpText = el('div', 'arena-hp-text', '');
@@ -224,9 +260,7 @@ export function bossesView(game) {
   const rows = BOSSES.map((b, i) => {
     const row = el('div', 'boss-row');
     const num = el('span', 'boss-num', String(i + 1).padStart(2, '0'));
-    const ico = el('span', 'boss-ico');
-    ico.dataset.tone = String(toneOf(i));
-    ico.append(icon(b.icon));
+    const ico = iconTile(b.icon, toneOf(i), 'boss-ico', bossArt(b.id));
     const nm = el('span', 'boss-name', b.name);
     const st = el('span', 'boss-state', '');
     row.append(num, ico, nm, st);
@@ -252,8 +286,12 @@ export function bossesView(game) {
 
   function update() {
     const info = game.bossState();
-    arenaIcon.dataset.tone = String(toneOf(game.s.bossIndex));
-    arenaIcon.replaceChildren(icon(info.boss.icon));
+    if (arenaBossId !== info.boss.id) {
+      arenaBossId = info.boss.id;
+      arenaIcon.dataset.tone = String(toneOf(game.s.bossIndex));
+      arenaIcon.replaceChildren(icon(info.boss.icon));
+      addArt(arenaIcon, bossArt(info.boss.id), 192);
+    }
     name.textContent = info.boss.name;
     hpText.textContent = info.unlocked ? `${fmt(info.hp)} / ${fmt(info.maxHp)} HP` : '尚未解锁';
     fill.style.width = `${Math.max(0, Math.min(1, info.hp / info.maxHp)) * 100}%`;

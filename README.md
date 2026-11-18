@@ -77,6 +77,7 @@ index.html                应用外壳
 assets/app.css            全部样式（深/浅双主题，移动优先）
 assets/icon.svg           favicon / PWA 图标源文件
 assets/icon-*.png         192 / 512 / maskable 应用图标
+assets/art/               建筑、Boss、图标与场景插画（WebP，随 SW 预缓存）
 manifest.webmanifest      PWA 清单
 sw.js                     离线缓存（网络优先，断网回落）
 src/main.js               启动、标签页、主循环、设置面板、快捷键
