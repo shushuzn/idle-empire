@@ -1271,6 +1271,61 @@ button {
   box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* 标题旁一道勘测标线 */
+.view-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  margin-top: 2px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 42%, transparent), transparent 88%);
+}
+
+/* 金币牌顶沿的灯芯高光 */
+.res.gold::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(242, 189, 77, 0.55), transparent);
+}
+
+/* 点击条两端的打磨亮斑 */
+.tap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 10% 22%, rgba(255, 255, 255, 0.65) 0 1px, transparent 2.4px),
+    radial-gradient(circle at 92% 76%, rgba(255, 255, 255, 0.35) 0 1px, transparent 2.4px);
+}
+
+/* Boss 场：地面透出的同心裂隙光环 */
+.arena::before {
+  content: '';
+  position: absolute;
+  inset: -35% -15% auto;
+  height: 130%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 30%, transparent 0 54px, rgba(143, 123, 255, 0.14) 55px, transparent 56.5px),
+    radial-gradient(circle at 50% 30%, transparent 0 90px, rgba(143, 123, 255, 0.1) 91px, transparent 92.5px),
+    radial-gradient(circle at 50% 30%, transparent 0 128px, rgba(143, 123, 255, 0.07) 129px, transparent 130.5px);
+  -webkit-mask-image: radial-gradient(circle at 50% 30%, #000 0 52%, transparent 76%);
+  mask-image: radial-gradient(circle at 50% 30%, #000 0 52%, transparent 76%);
+  opacity: 0.9;
+}
+
+.arena > * { position: relative; }
+
 /* 浅色：纸面版本，压掉发光，只留暖纸与墨 */
 [data-theme='light'] .res {
   background: var(--card);
@@ -1338,3 +1393,13 @@ button {
   background: color-mix(in srgb, #fffdf7 94%, transparent);
   box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
+
+[data-theme='light'] .view-title::after {
+  background: linear-gradient(90deg, rgba(154, 106, 18, 0.3), transparent 88%);
+}
+
+[data-theme='light'] .res.gold::after {
+  background: linear-gradient(90deg, transparent, rgba(154, 106, 18, 0.42), transparent);
+}
+
+[data-theme='light'] .arena::before { opacity: 0.55; }
