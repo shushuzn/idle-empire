@@ -45,6 +45,7 @@ src/ui/format.js          数字 / 时间格式化
 src/ui/floaters.js        点击/攻击飘字
 src/ui/haptics.js         振动反馈开关
 src/ui/theme.js           主题偏好（跟随系统 / 浅色 / 深色）
+src/ui/icons.js           自绘 SVG 图标集（50 个，24×24 线性风格）
 src/main.js               启动、标签页、主循环、设置面板、快捷键
 sw.js                     离线缓存（网络优先，断网回落）
 tests/*.test.js           node:test 用例（数值、存档、引擎）
@@ -91,3 +92,10 @@ npm test        # node --test tests/*.test.js，29 项
 
 - 主题默认改为**跟随系统**：设置里分「跟随系统 / 浅色 / 深色」三档，选自动时监听 `prefers-color-scheme`，系统切换会实时换肤，刷新也不闪。
 - 手动选浅色/深色会覆盖系统，存在 `idle_empire_theme`；选回跟随系统即恢复自动。
+
+## v3.3 改动
+
+- **图标全部重绘**：界面里的 emoji 全部换成一体的 24×24 线性 SVG 图标（`src/ui/icons.js`，50 个），通过 `currentColor` 和 `data-tone` 上色，深浅色主题各自有一套色调。
+- **应用图标重画**：favicon / PWA 图标改成金色城堡线性标志，192/512/maskable 三张 PNG 由同一份 SVG 渲染，maskable 版留足安全区。
+- **静态占位**：HTML 里用 `data-icon` 占位，启动时统一换成 SVG，后续改图标不用动结构。
+- **缓存升级**：Service Worker 缓存版本提到 `v3.3.0`，并把 `icons.js` 加进预缓存清单。

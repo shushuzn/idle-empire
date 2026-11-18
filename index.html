@@ -33,27 +33,27 @@
   <div class="app">
     <header class="hud">
       <div class="hud-top">
-        <h1 class="brand"><span aria-hidden="true">🏰</span> 放置帝国</h1>
-        <button id="settings-btn" class="icon-btn" aria-label="设置">⚙️</button>
+        <h1 class="brand"><span class="brand-ico" data-icon="castle" data-tone="1" aria-hidden="true"></span> 放置帝国</h1>
+        <button id="settings-btn" class="icon-btn" aria-label="设置" data-icon="gear"></button>
       </div>
       <div class="resources">
         <div class="res gold">
           <b id="gold">0</b>
-          <span>金币</span>
+          <span class="res-label"><span class="res-ico" data-icon="coin" data-tone="1" aria-hidden="true"></span>金币</span>
         </div>
         <div class="res">
           <b id="gps">+0/秒</b>
-          <span>产能</span>
+          <span class="res-label"><span class="res-ico" data-icon="bolt" data-tone="2" aria-hidden="true"></span>产能</span>
         </div>
         <div class="res shards">
           <b id="shards">0</b>
-          <span>碎片</span>
+          <span class="res-label"><span class="res-ico" data-icon="shard" data-tone="3" aria-hidden="true"></span>碎片</span>
         </div>
       </div>
     </header>
 
     <button id="tap" class="tap" aria-label="点击挖矿">
-      <span class="tap-ico" aria-hidden="true">⛏️</span>
+      <span class="tap-ico" data-icon="mine" aria-hidden="true"></span>
       <span class="tap-txt">点击 +<b id="tap-gain">1</b></span>
     </button>
 
@@ -68,7 +68,7 @@
 
   <dialog id="welcome" class="welcome">
     <div class="welcome-inner">
-      <div class="welcome-ico" aria-hidden="true">🌙</div>
+      <div class="welcome-ico" data-icon="moon" data-tone="3" aria-hidden="true"></div>
       <h2 id="w-title">离线收益</h2>
       <p id="w-time" class="w-time"></p>
       <div class="w-gain">
@@ -84,7 +84,7 @@
     <form method="dialog" class="settings-inner">
       <header class="settings-head">
         <h2>设置</h2>
-        <button id="s-close" class="icon-btn" value="close" aria-label="关闭">✕</button>
+        <button id="s-close" class="icon-btn" value="close" aria-label="关闭" data-icon="close"></button>
       </header>
 
       <section class="stats-grid">

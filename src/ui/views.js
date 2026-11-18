@@ -2,6 +2,7 @@ import { BUILDINGS, UPGRADES, BOSSES, ACHIEVEMENTS, SHOP } from '../game/data.js
 import { fmt, fmtInt } from './format.js';
 import { buzz } from './haptics.js';
 import { centerOf, floatText } from './floaters.js';
+import { icon } from './icons.js';
 import * as B from '../game/balance.js';
 
 function el(tag, className, text) {
@@ -10,6 +11,48 @@ function el(tag, className, text) {
   if (text !== undefined) node.textContent = text;
   return node;
 }
+
+// 统一的图标格子：颜色由 data-tone 决定，具体映射在 app.css
+function iconTile(name, tone, className = 'ico') {
+  const node = el('div', className);
+  node.dataset.tone = String(tone);
+  node.append(icon(name));
+  return node;
+}
+
+const UPGRADE_LOOK = {
+  click: { name: 'hand', tone: 1 },
+  building: { name: 'bricks', tone: 2 },
+  boss: { name: 'dagger', tone: 5 },
+  auto: { name: 'robot', tone: 3 },
+  global: { name: 'laurel', tone: 6 },
+  offline: { name: 'moon', tone: 4 },
+};
+
+const BUILDING_TONE = {
+  mine: 1, lumber: 4, farm: 6, factory: 2, bank: 1, castle: 2, temple: 3,
+  station: 2, quantum: 3, dyson: 1, time: 4, multiverse: 3, research: 5,
+  stargate: 4, dark: 5, rift: 4, warp: 3, infinity: 6,
+};
+
+const ACHIEVEMENT_TONE = {
+  tower: 2,
+  hand: 1,
+  skull: 5,
+  coin: 1,
+  upgrade: 2,
+  rebirth: 3,
+  shard: 4,
+};
+
+const SHOP_LOOK = {
+  idle: { name: 'gear', tone: 2 },
+  click: { name: 'hand', tone: 1 },
+  boss: { name: 'dagger', tone: 5 },
+  offline: { name: 'moon', tone: 4 },
+};
+
+const toneOf = (index) => (index % 6) + 1;
 
 /* ---------------- 建筑 ---------------- */
 
@@ -37,7 +80,7 @@ export function buildingsView(game) {
   const cards = BUILDINGS.map((b) => {
     const card = el('article', 'card building');
     card.dataset.id = b.id;
-    const ico = el('div', 'ico', b.icon);
+    const ico = iconTile(b.icon, BUILDING_TONE[b.id] || 2);
     const body = el('div', 'body');
     const nameRow = el('div', 'name-row');
     const name = el('span', 'name', b.name);
@@ -107,7 +150,8 @@ export function upgradesView(game) {
   const cards = UPGRADES.map((u) => {
     const card = el('article', 'card upgrade');
     card.dataset.id = u.id;
-    const ico = el('div', 'ico', u.effect[0] === 'click' ? '👆' : u.effect[0] === 'building' ? '🏗️' : u.effect[0] === 'boss' ? '⚔️' : u.effect[0] === 'offline' ? '🌙' : u.effect[0] === 'auto' ? '🤖' : '👑');
+    const look = UPGRADE_LOOK[u.effect[0]] || UPGRADE_LOOK.global;
+    const ico = iconTile(look.name, look.tone);
     const body = el('div', 'body');
     const nameRow = el('div', 'name-row');
     const name = el('span', 'name', u.name);
@@ -158,12 +202,12 @@ export function bossesView(game) {
 
   const arena = el('section', 'arena');
   const top = el('div', 'arena-top');
-  const icon = el('div', 'arena-icon', '👺');
+  const arenaIcon = iconTile('goblin', 1, 'arena-icon');
   const meta = el('div', 'arena-meta');
   const name = el('div', 'arena-name', '');
   const hpText = el('div', 'arena-hp-text', '');
   meta.append(name, hpText);
-  top.append(icon, meta);
+  top.append(arenaIcon, meta);
   const bar = el('div', 'hpbar');
   const fill = el('div', 'hpfill');
   bar.append(fill);
@@ -179,7 +223,9 @@ export function bossesView(game) {
   const rows = BOSSES.map((b, i) => {
     const row = el('div', 'boss-row');
     const num = el('span', 'boss-num', String(i + 1).padStart(2, '0'));
-    const ico = el('span', 'boss-ico', b.icon);
+    const ico = el('span', 'boss-ico');
+    ico.dataset.tone = String(toneOf(i));
+    ico.append(icon(b.icon));
     const nm = el('span', 'boss-name', b.name);
     const st = el('span', 'boss-state', '');
     row.append(num, ico, nm, st);
@@ -205,7 +251,8 @@ export function bossesView(game) {
 
   function update() {
     const info = game.bossState();
-    icon.textContent = info.boss.icon;
+    arenaIcon.dataset.tone = String(toneOf(game.s.bossIndex));
+    arenaIcon.replaceChildren(icon(info.boss.icon));
     name.textContent = info.boss.name;
     hpText.textContent = info.unlocked ? `${fmt(info.hp)} / ${fmt(info.maxHp)} HP` : '尚未解锁';
     fill.style.width = `${Math.max(0, Math.min(1, info.hp / info.maxHp)) * 100}%`;
@@ -246,7 +293,7 @@ export function achievementsView(game) {
 
   const cards = ACHIEVEMENTS.map((a) => {
     const card = el('article', 'card achievement');
-    const ico = el('div', 'ico', a.icon);
+    const ico = iconTile(a.icon, ACHIEVEMENT_TONE[a.icon] || 2);
     const body = el('div', 'body');
     const nameRow = el('div', 'name-row');
     const name = el('span', 'name', a.name);
@@ -315,7 +362,8 @@ export function prestigeView(game) {
 
   const shopCards = SHOP.map((item) => {
     const card = el('article', 'card shop');
-    const ico = el('div', 'ico', item.id === 'idle' ? '⚙️' : item.id === 'click' ? '👆' : item.id === 'boss' ? '⚔️' : '🌙');
+    const look = SHOP_LOOK[item.id] || SHOP_LOOK.idle;
+    const ico = iconTile(look.name, look.tone);
     const body = el('div', 'body');
     const nameRow = el('div', 'name-row');
     const name = el('span', 'name', item.name);

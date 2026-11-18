@@ -6,18 +6,22 @@ import { VIEWS } from './ui/views.js';
 import { buzz, hapticsEnabled, setHaptics } from './ui/haptics.js';
 import { readPref, resolveTheme, systemPrefersLight, writePref } from './ui/theme.js';
 import { centerOf, floatText } from './ui/floaters.js';
+import { hydrateIcons, iconMarkup } from './ui/icons.js';
 import * as B from './game/balance.js';
 
 const TABS = [
-  ['buildings', '🏗️', '建筑'],
-  ['upgrades', '⬆️', '升级'],
-  ['bosses', '⚔️', 'Boss'],
-  ['achievements', '🏆', '成就'],
-  ['prestige', '🔄', '轮回'],
+  ['buildings', 'castle', '建筑'],
+  ['upgrades', 'upgrade', '升级'],
+  ['bosses', 'skull', 'Boss'],
+  ['achievements', 'trophy', '成就'],
+  ['prestige', 'rebirth', '轮回'],
 ];
 
 const $ = (sel) => document.querySelector(sel);
 const welcome = $('#welcome');
+
+// 静态 HTML 里的 data-icon 占位统一换成自绘 SVG
+hydrateIcons();
 
 const { state, offline, migrated } = load();
 
@@ -27,11 +31,11 @@ const pendingAchievements = [];
 function showAchievements(list) {
   if (list.length === 1) {
     const a = list[0];
-    toast(`${a.icon} 成就达成：${a.name}（${a.reward[0] === 'gold' ? `+${fmt(a.reward[1])} 金币` : `+${a.reward[1]} 碎片`}）`, 'good');
+    toast(`成就达成：${a.name}（${a.reward[0] === 'gold' ? `+${fmt(a.reward[1])} 金币` : `+${a.reward[1]} 碎片`}）`, 'good');
     return;
   }
   const names = list.slice(0, 3).map((a) => a.name).join('、');
-  toast(`🏆 一次解锁 ${list.length} 个成就：${names}${list.length > 3 ? ' 等' : ''}`, 'good', 4200);
+  toast(`一次解锁 ${list.length} 个成就：${names}${list.length > 3 ? ' 等' : ''}`, 'good', 4200);
 }
 
 function flushAchievements() {
@@ -132,13 +136,13 @@ viewHost.addEventListener('toast', (e) => {
   if (e.detail?.text) toast(e.detail.text, e.detail.kind || '', e.detail.ms);
 });
 
-for (const [id, icon, label] of TABS) {
+for (const [id, iconName, label] of TABS) {
   const btn = document.createElement('button');
   btn.className = 'tab';
   btn.dataset.tab = id;
   btn.setAttribute('role', 'tab');
   btn.setAttribute('aria-selected', 'false');
-  btn.innerHTML = `<span class="tab-icon" aria-hidden="true">${icon}</span><span class="tab-label">${label}</span>`;
+  btn.innerHTML = `<span class="tab-icon" aria-hidden="true">${iconMarkup(iconName)}</span><span class="tab-label">${label}</span>`;
   const badge = document.createElement('span');
   badge.className = 'tab-badge';
   badge.hidden = true;
