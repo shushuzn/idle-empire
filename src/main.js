@@ -785,8 +785,6 @@ if (corrupt) {
   });
 } else if (migrated) {
   toast('已把旧版存档迁移到新版本', 'good');
-} else if (!Object.keys(game.s.buildings).length && game.s.clicks === 0) {
-  toast('点上面的金色条开始，先攒够 10 金币买第一座金矿', '');
 }
 
 // 页面关闭前再存一次，避免丢最后 15 秒

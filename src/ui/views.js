@@ -95,6 +95,11 @@ export function buildingsView(game) {
   const summary = el('p', 'view-sub');
   root.append(summary);
 
+  // 全新存档：先告诉玩家该点什么，买下第一座建筑后就不再出现
+  const hint = el('p', 'first-hint');
+  hint.innerHTML = '<b>第一次来？</b>点上面那条金色按钮攒金币，攒到 10 枚就能买下第一座金矿。';
+  root.append(hint);
+
   const list = el('div', 'cards');
   root.append(list);
 
@@ -136,6 +141,7 @@ export function buildingsView(game) {
 
   function update() {
     let visible = 0;
+    let ownedTotal = 0;
     const mult = B.productionMultiplier(game.s);
     for (const c of cards) {
       const unlocked = game.buildingUnlocked(c.b);
@@ -143,6 +149,7 @@ export function buildingsView(game) {
       if (!unlocked) continue;
       visible++;
       const count = game.owned(c.b.id);
+      ownedTotal += count;
       const { count: buyCount, cost } = game.bulk(c.b, game.s.buyMode);
       c.owned.textContent = `×${fmtInt(count)}`;
       c.prod.textContent = `每个 +${fmt(c.b.baseProduction * mult)}/秒`;
@@ -152,6 +159,7 @@ export function buildingsView(game) {
       c.card.classList.toggle('affordable', game.s.gold >= cost && buyCount > 0);
     }
     summary.textContent = `${visible} 种建筑 · 总产出 ${fmt(B.production(game.s))} /秒 · 点击 +${fmt(B.clickPower(game.s).perClick)}`;
+    hint.hidden = ownedTotal > 0;
   }
 
   return { el: root, update };
