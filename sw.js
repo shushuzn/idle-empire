@@ -63,6 +63,7 @@ const ASSETS = [
   './assets/art/icons/book.webp',
   './assets/art/icons/bolt.webp',
   './assets/art/icons/mine.webp',
+  './assets/art/start-sunrise.webp',
   './src/main.js',
   './src/ui/views.js',
   './src/ui/format.js',

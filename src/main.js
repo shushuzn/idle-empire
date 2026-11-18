@@ -25,6 +25,10 @@ const TABS = [
 
 const $ = (sel) => document.querySelector(sel);
 const welcome = $('#welcome');
+// 开始页还盖着的时候不跑模拟，提示和离线结算都攒到进游戏后再弹
+const startScreen = $('#start');
+const startQueue = [];
+let entered = false;
 
 // 静态 HTML 里的 data-icon 占位统一换成自绘 SVG
 hydrateIcons();
@@ -138,6 +142,11 @@ function showSettingsStatus(text, kind = '') {
 
 // action 形如 { label, onClick }，用于「新版本已就绪」这类可操作的提示
 function toast(text, kind = '', ms = 3000, action = null) {
+  // 开始页还盖着，先攒着，点「开始游戏」后按顺序补上
+  if (!entered) {
+    startQueue.push([text, kind, ms, action]);
+    return;
+  }
   if (document.getElementById('settings')?.open) {
     // 带操作的提示先在设置里留一句，关掉弹窗后再弹出来，避免按钮被挡住
     if (action) {
@@ -314,6 +323,43 @@ function updateBadges() {
   setBadge('story', unread > 0 ? (unread > 9 ? '9+' : String(unread)) : '');
 }
 
+/* ---------- 开始页 ---------- */
+
+const startBtn = $('#start-btn');
+const appEl = $('.app');
+
+// 有存档就说「继续」，顺手把上次的成绩写在下面
+if (hasProgress(state)) {
+  startBtn.textContent = '继续帝国';
+  $('#start-meta').textContent = `上次：${fmt(state.gold)} 金币 · 转生 ${fmtInt(state.rebirths)} 次 · v0.1.0`;
+}
+// 开始页盖着时，底下的界面不参与键盘焦点
+appEl.inert = true;
+
+function enterGame() {
+  if (entered) return;
+  entered = true;
+  last = performance.now();
+  appEl.inert = false;
+  startScreen?.classList.add('gone');
+  setTimeout(() => startScreen?.remove(), 520);
+  if (pendingWelcome) {
+    const next = pendingWelcome;
+    pendingWelcome = null;
+    showWelcome(next);
+  }
+  for (const [text, kind, ms, action] of startQueue.splice(0)) toast(text, kind, ms, action);
+}
+
+startBtn.addEventListener('click', enterGame);
+document.addEventListener('keydown', (e) => {
+  if (entered || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    enterGame();
+  }
+});
+
 /* ---------- 主循环 ---------- */
 
 let last = performance.now();
@@ -322,6 +368,13 @@ let saveTimer = 0;
 const AUTOSAVE_SECONDS = 20;
 
 function frame(now) {
+  // 还没点开始：不推进模拟，只等着
+  if (!entered) {
+    last = now;
+    requestAnimationFrame(frame);
+    return;
+  }
+
   const dt = Math.min(0.5, (now - last) / 1000);
   last = now;
   game.tick(dt);
@@ -373,6 +426,7 @@ document.addEventListener('freeze', () => persist());
 
 // 切到后台期间 rAF 不跑，回到前台时补算这段时间的产出
 function settle(seconds, label) {
+  if (!entered) return; // 开始页还没点，先不算
   const result = B.offlineEarnings(game.s, seconds);
   if (result.gold <= 0) return;
   game.addGold(result.gold);
@@ -393,7 +447,14 @@ function settle(seconds, label) {
 
 /* ---------- 离线结算弹窗 ---------- */
 
+// 开始页还盖着的话先记下来，进游戏后再弹
+let pendingWelcome = null;
+
 function showWelcome({ seconds, gold, capped, title }) {
+  if (!entered) {
+    pendingWelcome = { seconds, gold, capped, title };
+    return;
+  }
   $('#w-title').textContent = title;
   $('#w-time').textContent = `你离开了 ${fmtTime(seconds)}${capped ? '（离线收益按 8 小时封顶）' : ''}`;
   $('#w-gold').textContent = fmt(gold);

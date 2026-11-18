@@ -27,13 +27,36 @@
       } catch (e) { /* 隐私模式下 localStorage 可能报错 */ }
     })();
   </script>
+  <link rel="preload" as="image" href="./assets/art/start-sunrise.webp" />
   <link rel="stylesheet" href="./assets/app.css" />
 </head>
 <body>
+  <section id="start" class="start" aria-label="开始游戏">
+    <img
+      class="start-art"
+      src="./assets/art/start-sunrise.webp"
+      alt="晨光下的矿镇：山坡上的城堡、矿架与麦田，远处地平线有一道微弱的裂隙紫光"
+      width="848"
+      height="1264"
+      decoding="async"
+      fetchpriority="high"
+    />
+    <div class="start-shade" aria-hidden="true"></div>
+    <div class="start-inner">
+      <p class="start-kicker">IDLE EMPIRE</p>
+      <h1 class="start-title">放置帝国</h1>
+      <p class="start-sub">点一盏矿灯，把裂隙边的荒地经营成帝国。</p>
+      <div class="start-bottom">
+        <button id="start-btn" class="start-btn" type="button">开始游戏</button>
+        <p class="start-meta" id="start-meta">存档保存在本机 · v0.1.0</p>
+      </div>
+    </div>
+  </section>
+
   <div class="app">
     <header class="hud">
       <div class="hud-top">
-        <h1 class="brand"><span class="brand-ico" data-icon="castle" data-tone="1" aria-hidden="true"></span> 放置帝国</h1>
+        <div class="brand"><span class="brand-ico" data-icon="castle" data-tone="1" aria-hidden="true"></span> 放置帝国</div>
         <button id="settings-btn" class="icon-btn" aria-label="设置" data-icon="gear"></button>
       </div>
       <div class="resources">
