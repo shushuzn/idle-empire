@@ -1,9 +1,10 @@
 // 存档：创建、迁移、读写、离线结算
 import { BUILDINGS, UPGRADES, SHOP, BOSSES } from './data.js';
+import { CHAPTERS } from './story.js';
 import { offlineEarnings } from './balance.js';
 
 export const SAVE_KEY = 'idle_empire_save';
-export const VERSION = 3;
+export const VERSION = 4;
 
 export function defaultState(now = Date.now()) {
   return {
@@ -22,6 +23,7 @@ export function defaultState(now = Date.now()) {
     bossHp: null,
     kills: 0,
     buyMode: 'x1',
+    story: { unlocked: [], read: [] },
     startedAt: now,
     lastSeen: now,
   };
@@ -66,6 +68,14 @@ export function normalize(raw, now = Date.now()) {
   s.achievements = Array.isArray(raw.achievements)
     ? [...new Set(raw.achievements.filter((id) => typeof id === 'string'))]
     : [];
+
+  // 剧情：只保留已知章节，已读必须是已解锁的子集
+  const storyRaw = raw.story && typeof raw.story === 'object' ? raw.story : {};
+  const validChapter = new Set(CHAPTERS.map((c) => c.id));
+  const chapters = (v) =>
+    Array.isArray(v) ? [...new Set(v.filter((id) => typeof id === 'string' && validChapter.has(id)))] : [];
+  const unlocked = chapters(storyRaw.unlocked);
+  s.story = { unlocked, read: chapters(storyRaw.read).filter((id) => unlocked.includes(id)) };
 
   if (['x1', 'x10', 'max'].includes(raw.buyMode)) s.buyMode = raw.buyMode;
 

@@ -1,4 +1,5 @@
 import { BUILDINGS, UPGRADES, BOSSES, ACHIEVEMENTS, SHOP } from '../game/data.js';
+import { CHAPTERS } from '../game/story.js';
 import { fmt, fmtInt } from './format.js';
 import { buzz } from './haptics.js';
 import { centerOf, floatText } from './floaters.js';
@@ -409,10 +410,83 @@ export function prestigeView(game) {
   return { el: root, update };
 }
 
+/* ---------------- 剧情档案 ---------------- */
+
+export function storyView(game) {
+  const root = el('div', 'view-story');
+  root.append(el('h2', 'view-title', '裂隙纪事'));
+  const sub = el('p', 'view-sub', '');
+  root.append(sub);
+
+  // 进入页面时未读的章节标「新」，本次浏览期间一直保留，下次再进就不标了
+  const fresh = new Set(game.unreadStory());
+
+  const list = el('div', 'chapters');
+  root.append(list);
+  const foot = el('p', 'story-foot', '');
+  root.append(foot);
+
+  const cards = CHAPTERS.map((chapter, i) => {
+    const card = el('article', 'chapter');
+    const head = el('div', 'chapter-head');
+    const no = el('span', 'chapter-no', String(i + 1).padStart(2, '0'));
+    no.dataset.tone = String(toneOf(i));
+    const source = el('span', 'chapter-source', chapter.source);
+    const freshTag = el('span', 'chapter-new', '新');
+    head.append(no, source, freshTag);
+    const title = el('h3', 'chapter-title', chapter.title);
+    const text = el('p', 'chapter-text', chapter.text);
+    card.append(head, title, text);
+
+    let echo = null;
+    if (chapter.echo) {
+      echo = el('p', 'chapter-echo');
+      echo.append(el('b', '', '回响'), el('span', '', chapter.echo));
+      card.append(echo);
+    }
+
+    list.append(card);
+    return { chapter, card, source, freshTag, title, text, echo };
+  });
+
+  function update() {
+    const unlocked = new Set(game.s.story.unlocked);
+    let shown = 0;
+    let lockedShown = false;
+    let lockedLeft = 0;
+
+    for (const c of cards) {
+      const on = unlocked.has(c.chapter.id);
+      if (on) {
+        shown += 1;
+      } else {
+        lockedLeft += 1;
+        // 只露出最早一篇未解锁的档案作为线索，其余先藏起来
+        c.card.hidden = lockedShown;
+        lockedShown = true;
+      }
+      if (on) c.card.hidden = false;
+      c.card.classList.toggle('locked', !on);
+      c.title.textContent = on ? c.chapter.title : '这一页还是空白';
+      c.text.textContent = on ? c.chapter.text : `解锁条件：${c.chapter.need}`;
+      c.source.textContent = on ? c.chapter.source : '未解锁';
+      c.freshTag.hidden = !(on && fresh.has(c.chapter.id));
+      if (c.echo) c.echo.hidden = !on || game.s.rebirths < 1;
+    }
+
+    sub.textContent = `已收集 ${shown} / ${CHAPTERS.length} 篇。每完成一个里程碑，缝隙里就会多出一页记录${game.s.rebirths > 0 ? '；转生之后，读过的档案会多出一段「回响」' : ''}。`;
+    foot.hidden = lockedLeft < 2;
+    foot.textContent = lockedLeft > 1 ? `还有 ${lockedLeft - 1} 篇档案没有找到。` : '';
+  }
+
+  return { el: root, update };
+}
+
 export const VIEWS = {
   buildings: buildingsView,
   upgrades: upgradesView,
   bosses: bossesView,
   achievements: achievementsView,
   prestige: prestigeView,
+  story: storyView,
 };

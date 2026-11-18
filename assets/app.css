@@ -477,6 +477,86 @@ button {
 }
 .boss-state { color: var(--muted); font-size: 11.5px; }
 
+/* ---------- 剧情档案 ---------- */
+
+.chapters { display: grid; gap: 10px; }
+
+.chapter {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 14px 13px;
+  box-shadow: var(--shadow);
+}
+
+.chapter[hidden] { display: none; }
+
+.chapter-head { display: flex; align-items: center; gap: 8px; }
+
+.chapter-no {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--tone);
+  background: var(--tone-soft);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+.chapter-source { font-size: 11px; color: var(--muted); }
+
+.chapter-new {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  color: #191204;
+  background: var(--gold);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.chapter-new[hidden] { display: none; }
+
+.chapter-title { margin: 8px 0 6px; font-size: 15px; line-height: 1.4; }
+
+.chapter-text { margin: 0; font-size: 13px; line-height: 1.78; color: var(--ink-2); }
+
+.chapter-echo {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--t3);
+  background: var(--t3s);
+  border-radius: 0 10px 10px 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.chapter-echo[hidden] { display: none; }
+
+.chapter-echo b {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--t3);
+}
+
+.chapter.locked {
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.chapter.locked .chapter-no { color: var(--muted); background: var(--card-2); }
+.chapter.locked .chapter-title { color: var(--muted); font-weight: 600; }
+.chapter.locked .chapter-text { color: var(--muted); font-size: 12px; }
+
+.story-foot { margin: 12px 2px 0; font-size: 11.5px; color: var(--muted); text-align: center; }
+.story-foot[hidden] { display: none; }
+
 /* ---------- 转生 ---------- */
 
 .panel {
@@ -508,7 +588,7 @@ button {
 
 .tabbar {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 4px;
   padding: 6px 10px calc(6px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
@@ -534,17 +614,17 @@ button {
 
 .tab-badge {
   position: absolute;
-  top: 4px;
-  right: 6px;
-  min-width: 16px;
-  height: 16px;
+  top: 3px;
+  right: 4px;
+  min-width: 15px;
+  height: 15px;
   padding: 0 4px;
   border-radius: 999px;
   background: var(--gold);
   color: #191204;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
-  line-height: 16px;
+  line-height: 15px;
   text-align: center;
   box-shadow: 0 0 0 2px var(--bg);
 }
@@ -650,6 +730,7 @@ button {
 
 .stats-grid span { display: block; font-size: 11px; color: var(--muted); }
 .stats-grid b { display: block; font-size: 15px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.stats-grid div:last-child { grid-column: span 2; }
 
 .switch {
   display: flex;

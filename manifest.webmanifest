@@ -2,7 +2,7 @@
   "id": "./",
   "name": "放置帝国 Idle Empire",
   "short_name": "放置帝国",
-  "description": "纯前端放置/增量游戏：建筑、升级、Boss、成就、转生。",
+  "description": "纯前端放置/增量游戏：建筑、升级、Boss、成就、转生与剧情档案。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

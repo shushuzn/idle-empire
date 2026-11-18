@@ -1,5 +1,6 @@
-// 游戏引擎：状态变更、购买、Boss、转生、成就。UI 只负责展示与派发事件
+// 游戏引擎：状态变更、购买、Boss、转生、成就、剧情。UI 只负责展示与派发事件
 import { BUILDINGS, UPGRADES, BOSSES, ACHIEVEMENTS, SHOP } from './data.js';
+import { CHAPTERS, chapterUnlocked } from './story.js';
 import * as B from './balance.js';
 import { save } from './state.js';
 
@@ -13,6 +14,7 @@ export class Game {
     this.hooks = hooks;
     this.saveTimer = 0;
     this.achievementTimer = 0;
+    if (!this.state.story) this.state.story = { unlocked: [], read: [] };
   }
 
   get s() {
@@ -137,6 +139,7 @@ export class Game {
         this.s.bossHp = info.boss.hp;
       }
       this.checkAchievements();
+      this.checkStory();
     }
     return { damage, killed };
   }
@@ -152,6 +155,7 @@ export class Game {
   prestige() {
     const gain = this.prestigeGain();
     if (gain < 1) return 0;
+    this.checkStory(); // 先把本轮达成的章节记下来，再清空进度
     this.s.shards += gain;
     this.s.rebirths += 1;
     this.s.gold = 0;
@@ -161,6 +165,7 @@ export class Game {
     this.s.bossIndex = 0;
     this.s.bossHp = null;
     this.checkAchievements();
+    this.checkStory();
     return gain;
   }
 
@@ -197,6 +202,28 @@ export class Game {
     return unlocked;
   }
 
+  // 剧情章节一经解锁就永久保留，转生清空进度也不会丢
+  checkStory() {
+    const unlockedNow = [];
+    for (const chapter of CHAPTERS) {
+      if (this.s.story.unlocked.includes(chapter.id)) continue;
+      if (!chapterUnlocked(chapter, this.s)) continue;
+      this.s.story.unlocked.push(chapter.id);
+      unlockedNow.push(chapter);
+    }
+    if (unlockedNow.length && this.hooks.onStory) this.hooks.onStory(unlockedNow);
+    return unlockedNow;
+  }
+
+  unreadStory() {
+    const read = new Set(this.s.story.read);
+    return this.s.story.unlocked.filter((id) => !read.has(id));
+  }
+
+  markStoryRead() {
+    this.s.story.read = [...this.s.story.unlocked];
+  }
+
   tick(dt, now = performance.now()) {
     const gain = B.totalPerSecond(this.s) * dt;
     if (gain > 0) this.addGold(gain);
@@ -205,6 +232,7 @@ export class Game {
     if (this.achievementTimer >= 0.5) {
       this.achievementTimer = 0;
       this.checkAchievements();
+      this.checkStory();
     }
 
     this.saveTimer += dt;

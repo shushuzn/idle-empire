@@ -1,6 +1,7 @@
 import { Game } from './game/engine.js';
-import { load, save, reset, exportSave, importSave } from './game/state.js';
+import { load, save, reset, exportSave, importSave, defaultState } from './game/state.js';
 import { ACHIEVEMENTS, UPGRADES } from './game/data.js';
+import { CHAPTERS } from './game/story.js';
 import { fmt, fmtInt, fmtTime } from './ui/format.js';
 import { VIEWS } from './ui/views.js';
 import { buzz, hapticsEnabled, setHaptics } from './ui/haptics.js';
@@ -15,6 +16,7 @@ const TABS = [
   ['bosses', 'skull', 'Boss'],
   ['achievements', 'trophy', '成就'],
   ['prestige', 'rebirth', '轮回'],
+  ['story', 'book', '剧情'],
 ];
 
 const $ = (sel) => document.querySelector(sel);
@@ -47,10 +49,33 @@ function flushAchievements() {
   showAchievements(list);
 }
 
+function showStories(list) {
+  if (!list.length) return;
+  const text = list.length === 1 ? `新档案：${list[0].title}` : `一次解锁 ${list.length} 篇档案`;
+  toast(text, '', 5000, { label: '阅读', onClick: () => switchTab('story') });
+}
+
+// 离线弹窗开着时先攒着，关掉再提示
+const pendingStories = [];
+function flushStories() {
+  if (!pendingStories.length) return;
+  showStories(pendingStories.splice(0).flat());
+}
+
 const game = new Game(state, {
   onAchievement(list) {
     if (welcome.open) pendingAchievements.push(list);
     else showAchievements(list);
+  },
+  onStory(list) {
+    if (welcome.open) {
+      pendingStories.push(list);
+    } else if (activeTab === 'story') {
+      // 正停在剧情页，新章节直接算已读，不弹提示
+      game.markStoryRead();
+    } else {
+      showStories(list);
+    }
   },
 });
 
@@ -190,6 +215,12 @@ function switchTab(id) {
   currentView = VIEWS[id](game);
   viewHost.append(currentView.el);
   currentView.update();
+  // 打开剧情页即视为读过，徽章清零；页面里本次仍保留「新」标记
+  if (id === 'story' && game.unreadStory().length) {
+    game.markStoryRead();
+    persist(true);
+  }
+  updateBadges();
   const restore = scrollMemo[id] || 0;
   viewHost.scrollTop = restore;
   // 刚替换 DOM 时高度还没算出来，下一帧再对齐一次
@@ -224,6 +255,8 @@ function updateBadges() {
   }
   setBadge('upgrades', affordable > 0 ? (affordable > 9 ? '9+' : String(affordable)) : '');
   setBadge('prestige', game.prestigeGain() > 0 ? '!' : '');
+  const unread = game.unreadStory().length;
+  setBadge('story', unread > 0 ? (unread > 9 ? '9+' : String(unread)) : '');
 }
 
 /* ---------- 主循环 ---------- */
@@ -313,7 +346,10 @@ function showWelcome({ seconds, gold, capped, title }) {
   if (!welcome.open) welcome.showModal();
 }
 $('#w-ok').addEventListener('click', () => welcome.close());
-welcome.addEventListener('close', flushAchievements);
+welcome.addEventListener('close', () => {
+  flushStories();
+  flushAchievements();
+});
 
 /* ---------- 设置面板 ---------- */
 
@@ -334,6 +370,7 @@ function syncSettings() {
   $('#s-shards').textContent = fmtInt(game.s.shards);
   $('#s-playtime').textContent = fmtTime((Date.now() - game.s.startedAt) / 1000);
   $('#s-ach').textContent = `${game.s.achievements.length} / ${ACHIEVEMENTS.length}`;
+  $('#s-story').textContent = `${game.s.story.unlocked.length} / ${CHAPTERS.length}`;
   $('#s-vibrate').checked = hapticsEnabled();
   syncThemePicker();
 }
@@ -371,11 +408,7 @@ $('#s-import').addEventListener('click', () => {
 $('#s-reset').addEventListener('click', () => {
   if (!confirm('确定重置？所有进度会清空，且不能撤销。')) return;
   reset();
-  Object.assign(game.s, {
-    gold: 0, totalEarned: 0, lifetimeEarned: 0, clicks: 0, buildings: {}, upgrades: [],
-    shards: 0, rebirths: 0, shop: { idle: 0, click: 0, boss: 0, offline: 0 },
-    achievements: [], bossIndex: 0, bossHp: null, kills: 0, buyMode: 'x1', startedAt: Date.now(),
-  });
+  Object.assign(game.s, defaultState());
   persist();
   switchTab('buildings');
   dialog.close();
@@ -386,7 +419,7 @@ $('#s-reset').addEventListener('click', () => {
 
 window.addEventListener('keydown', (e) => {
   if (e.target.matches('input, textarea') || dialog.open || welcome.open) return;
-  const map = { 1: 'buildings', 2: 'upgrades', 3: 'bosses', 4: 'achievements', 5: 'prestige' };
+  const map = { 1: 'buildings', 2: 'upgrades', 3: 'bosses', 4: 'achievements', 5: 'prestige', 6: 'story' };
   if (map[e.key]) {
     switchTab(map[e.key]);
     e.preventDefault();
