@@ -18,6 +18,9 @@
   --shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.95);
   --font-ui: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   --font-display: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+  /* 按钮材质：生成的金面 / 石面 / 纸纹，按主题走 */
+  --tex-gold: url('./tex/gold.webp');
+  --tex-surface: url('./tex/stone.webp');
   --t1: #f2bd4d; --t1s: rgba(242, 189, 77, 0.14);
   --t2: #74a7ff; --t2s: rgba(116, 167, 255, 0.14);
   --t3: #a58bff; --t3s: rgba(165, 139, 255, 0.15);
@@ -52,6 +55,8 @@
   --t5: #b8425a; --t5s: rgba(184, 66, 90, 0.1);
   --t6: #b0521c; --t6s: rgba(176, 82, 28, 0.1);
   color-scheme: light;
+  /* 浅色主题改用暖纸纹理 */
+  --tex-surface: url('./tex/paper.webp');
 }
 
 * { box-sizing: border-box; }
@@ -178,7 +183,12 @@ button {
   display: grid;
   place-items: center;
   border-radius: 12px;
-  background: var(--card);
+  background-color: var(--card);
+  background-image: var(--tex-surface);
+  background-size: 180px 180px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-blend-mode: soft-light;
   border: 1px solid var(--line);
   font-size: 19px;
 }
@@ -389,6 +399,10 @@ button {
   border-color: color-mix(in srgb, var(--gold) 45%, transparent);
 }
 .card.affordable .buy b { color: var(--gold); }
+
+/* 可购买时按钮是一块实心金锭，文字改深色才看得清 */
+.card.affordable .buy b { color: #2f1f06; }
+.card.affordable .buy .buy-cost { color: rgba(47, 31, 6, 0.72); }
 
 .buy:disabled { opacity: 0.55; }
 
@@ -913,7 +927,12 @@ button {
   min-height: 46px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: var(--card);
+  background-color: var(--card);
+  background-image: var(--tex-surface);
+  background-size: 180px 180px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-blend-mode: soft-light;
   font-size: 13.5px;
 }
 
@@ -1084,7 +1103,14 @@ button {
   height: 60px;
   border-radius: 18px;
   color: #211505;
-  background: linear-gradient(180deg, #ffd982 0%, #f3bb3d 46%, #dfa01e 100%);
+  background-color: #f0b429;
+  background-image:
+    var(--tex-gold),
+    linear-gradient(180deg, #ffd982 0%, #f3bb3d 46%, #dfa01e 100%);
+  background-size: cover, 100% 100%;
+  background-position: center, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-blend-mode: soft-light, normal;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.65),
     inset 0 -2px 0 rgba(120, 70, 0, 0.28),
@@ -1248,13 +1274,28 @@ button {
 
 .buy {
   border-radius: 13px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--card-2) 82%, transparent), var(--card-2));
+  background-color: var(--card-2);
+  background-image:
+    var(--tex-surface),
+    linear-gradient(180deg, color-mix(in srgb, var(--card-2) 82%, transparent), var(--card-2));
+  background-size: 180px 180px, 100% 100%;
+  background-position: center, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-blend-mode: soft-light, normal;
   border-color: color-mix(in srgb, var(--line) 80%, transparent);
   transition: transform 0.08s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .card.affordable .buy {
-  background: linear-gradient(180deg, rgba(242, 189, 77, 0.2), rgba(242, 189, 77, 0.07));
+  background-color: #e8b23c;
+  background-image:
+    linear-gradient(180deg, rgba(255, 246, 214, 0.55), rgba(255, 255, 255, 0) 46%, rgba(92, 56, 0, 0.28)),
+    var(--tex-gold),
+    linear-gradient(180deg, rgba(242, 189, 77, 0.28), rgba(242, 189, 77, 0.1));
+  background-size: cover, cover, 100% 100%;
+  background-position: center, center, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-blend-mode: soft-light, soft-light, normal;
   border-color: rgba(242, 189, 77, 0.5);
   box-shadow: 0 0 0 1px rgba(242, 189, 77, 0.1), 0 10px 22px -18px rgba(242, 189, 77, 0.9);
 }
@@ -1367,7 +1408,14 @@ button {
 }
 
 .primary {
-  background: linear-gradient(180deg, #a08cff, #6f5ae8 55%, #5a46cc);
+  background-color: #6f5ae8;
+  background-image:
+    var(--tex-surface),
+    linear-gradient(180deg, #a08cff, #6f5ae8 55%, #5a46cc);
+  background-size: cover, 100% 100%;
+  background-position: center, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-blend-mode: soft-light, normal;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 14px 28px -18px rgba(111, 90, 232, 0.85);
 }
 
@@ -1477,7 +1525,14 @@ button {
 
 [data-theme='light'] .icon-btn,
 [data-theme='light'] .buy {
-  background: linear-gradient(180deg, #fffdf7, var(--card-2));
+  background-color: #fffdf7;
+  background-image:
+    var(--tex-surface),
+    linear-gradient(180deg, #fffdf7, var(--card-2));
+  background-size: 180px 180px, 100% 100%;
+  background-position: center, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-blend-mode: soft-light, normal;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
