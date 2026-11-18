@@ -40,7 +40,7 @@ test('版本历史条目完整，缓存名书写一致', () => {
   assert.doesNotMatch(text, /idle_empire-v\d/, '缓存名应为 idle-empire-vX.Y.Z');
 });
 
-// 规范见 VERSIONING.md：同一天最多只有一个 MINOR 版本（MAJOR 不受限）
+// 规范见 VERSIONING.md：同一天最多只有一个 MINOR 版本（第一位由用户决定，不参与统计）
 test('同一天最多一个 MINOR 版本', () => {
   const policyDate = '2026-11-18';
   const entries = [...read('CHANGELOG.md').matchAll(/^## \[(\d+)\.(\d+)\.(\d+)\] - (\d{4}-\d{2}-\d{2})$/gm)]
@@ -49,7 +49,7 @@ test('同一天最多一个 MINOR 版本', () => {
   const counts = new Map();
   for (const { version, date } of entries) {
     if (date < policyDate) continue;
-    if (version[1] === 0 && version[2] === 0) continue; // MAJOR
+    if (version[1] === 0 && version[2] === 0) continue; // X.0.0：第一位变更
     if (version[2] !== 0) continue;
     counts.set(date, (counts.get(date) || 0) + 1);
   }
