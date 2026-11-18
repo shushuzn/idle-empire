@@ -16,9 +16,12 @@
     // 在样式表加载前定好主题，避免浅色模式刷新时闪一下黑屏
     (function () {
       try {
-        var theme = localStorage.getItem('idle_empire_theme') ||
-          (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var pref = localStorage.getItem('idle_empire_theme');
+        if (pref !== 'light' && pref !== 'dark') pref = 'auto';
+        var light = window.matchMedia('(prefers-color-scheme: light)').matches;
+        var theme = pref === 'auto' ? (light ? 'light' : 'dark') : pref;
         document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.themePref = pref;
         document.querySelector('meta[name="theme-color"]').content =
           theme === 'light' ? '#f4f2ec' : '#0b0f18';
       } catch (e) { /* 隐私模式下 localStorage 可能报错 */ }
@@ -97,10 +100,14 @@
         <div><span>游戏时长</span><b id="s-playtime">0</b></div>
       </section>
 
-      <label class="switch">
-        <span>浅色主题</span>
-        <input id="s-theme" type="checkbox" />
-      </label>
+      <div class="pref">
+        <div class="pref-title" id="pref-theme-label">主题</div>
+        <div class="theme-picker" role="radiogroup" aria-labelledby="pref-theme-label">
+          <label><input type="radio" name="theme-pref" value="auto" /><span>跟随系统</span></label>
+          <label><input type="radio" name="theme-pref" value="light" /><span>浅色</span></label>
+          <label><input type="radio" name="theme-pref" value="dark" /><span>深色</span></label>
+        </div>
+      </div>
       <label class="switch">
         <span>点击振动</span>
         <input id="s-vibrate" type="checkbox" checked />

@@ -1,9 +1,10 @@
 import { Game } from './game/engine.js';
-import { load, save, reset, exportSave, importSave, THEME_KEY } from './game/state.js';
+import { load, save, reset, exportSave, importSave } from './game/state.js';
 import { ACHIEVEMENTS, UPGRADES } from './game/data.js';
 import { fmt, fmtInt, fmtTime } from './ui/format.js';
 import { VIEWS } from './ui/views.js';
 import { buzz, hapticsEnabled, setHaptics } from './ui/haptics.js';
+import { readPref, resolveTheme, systemPrefersLight, writePref } from './ui/theme.js';
 import { centerOf, floatText } from './ui/floaters.js';
 import * as B from './game/balance.js';
 
@@ -46,17 +47,42 @@ const game = new Game(state, {
   },
 });
 
-/* ---------- 主题 ---------- */
+/* ---------- 主题（默认跟随系统） ---------- */
 
 const themeMeta = document.querySelector('meta[name="theme-color"]');
+const themeInputs = [...document.querySelectorAll('input[name="theme-pref"]')];
+let themePref = readPref();
 
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  localStorage.setItem(THEME_KEY, theme);
-  if (themeMeta) themeMeta.content = theme === 'light' ? '#f4f2ec' : '#0b0f18';
+function paintTheme(pref, persist = true) {
+  themePref = pref;
+  const actual = resolveTheme(pref, systemPrefersLight());
+  document.documentElement.dataset.theme = actual;
+  document.documentElement.dataset.themePref = pref;
+  if (themeMeta) themeMeta.content = actual === 'light' ? '#f4f2ec' : '#0b0f18';
+  if (persist) writePref(pref);
+  syncThemePicker();
 }
 
-applyTheme(document.documentElement.dataset.theme || 'dark');
+function syncThemePicker() {
+  for (const input of themeInputs) input.checked = input.value === themePref;
+}
+
+paintTheme(themePref, false);
+
+for (const input of themeInputs) {
+  input.addEventListener('change', () => {
+    if (input.checked) paintTheme(input.value);
+  });
+}
+
+// 选「跟随系统」时，系统深浅色切换要实时生效
+try {
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+    if (themePref === 'auto') paintTheme('auto', false);
+  });
+} catch {
+  /* 老浏览器没有 addEventListener，下次打开页面时也会重新解析 */
+}
 
 /* ---------- 提示条 ---------- */
 
@@ -253,13 +279,10 @@ function syncSettings() {
   $('#s-shards').textContent = fmtInt(game.s.shards);
   $('#s-playtime').textContent = fmtTime((Date.now() - game.s.startedAt) / 1000);
   $('#s-ach').textContent = `${game.s.achievements.length} / ${ACHIEVEMENTS.length}`;
-  $('#s-theme').checked = document.documentElement.dataset.theme === 'light';
   $('#s-vibrate').checked = hapticsEnabled();
+  syncThemePicker();
 }
 
-$('#s-theme').addEventListener('change', (e) => {
-  applyTheme(e.target.checked ? 'light' : 'dark');
-});
 $('#s-vibrate').addEventListener('change', (e) => {
   setHaptics(e.target.checked);
   buzz(12);

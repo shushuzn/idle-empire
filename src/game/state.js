@@ -3,7 +3,6 @@ import { BUILDINGS, UPGRADES, SHOP, BOSSES } from './data.js';
 import { offlineEarnings } from './balance.js';
 
 export const SAVE_KEY = 'idle_empire_save';
-export const THEME_KEY = 'idle_empire_theme';
 export const VERSION = 3;
 
 export function defaultState(now = Date.now()) {
