@@ -1,0 +1,14 @@
+{
+  "name": "放置帝国 Idle Empire",
+  "short_name": "放置帝国",
+  "description": "纯前端放置/增量游戏：建筑、升级、Boss、成就、转生。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f18",
+  "theme_color": "#0f1320",
+  "icons": [
+    { "src": "./assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

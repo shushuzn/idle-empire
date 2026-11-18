@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>放置帝国 · Idle Empire</title>
+  <meta name="description" content="一个纯前端的放置/增量游戏：建筑、升级、Boss、成就与转生。存档保存在本地浏览器。" />
+  <meta name="theme-color" content="#0f1320" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./assets/icon.svg" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./assets/app.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="hud">
+      <div class="hud-top">
+        <h1 class="brand"><span aria-hidden="true">🏰</span> 放置帝国</h1>
+        <button id="settings-btn" class="icon-btn" aria-label="设置">⚙️</button>
+      </div>
+      <div class="resources">
+        <div class="res gold">
+          <b id="gold">0</b>
+          <span>金币</span>
+        </div>
+        <div class="res">
+          <b id="gps">+0/秒</b>
+          <span>产能</span>
+        </div>
+        <div class="res shards">
+          <b id="shards">0</b>
+          <span>碎片</span>
+        </div>
+      </div>
+    </header>
+
+    <button id="tap" class="tap" aria-label="点击挖矿">
+      <span class="tap-ico" aria-hidden="true">⛏️</span>
+      <span class="tap-txt">点击 +<b id="tap-gain">1</b></span>
+    </button>
+
+    <main id="view" class="view" aria-live="polite"></main>
+
+    <nav id="tabbar" class="tabbar" role="tablist" aria-label="主导航"></nav>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <dialog id="settings" class="settings">
+    <form method="dialog" class="settings-inner">
+      <header class="settings-head">
+        <h2>设置</h2>
+        <button id="s-close" class="icon-btn" value="close" aria-label="关闭">✕</button>
+      </header>
+
+      <section class="stats-grid">
+        <div><span>当前金币</span><b id="s-gold">0</b></div>
+        <div><span>本轮收益</span><b id="s-total">0</b></div>
+        <div><span>累计收益</span><b id="s-life">0</b></div>
+        <div><span>点击次数</span><b id="s-clicks">0</b></div>
+        <div><span>建筑总数</span><b id="s-buildings">0</b></div>
+        <div><span>Boss 击杀</span><b id="s-kills">0</b></div>
+        <div><span>转生次数</span><b id="s-rebirths">0</b></div>
+        <div><span>碎片</span><b id="s-shards">0</b></div>
+        <div><span>成就</span><b id="s-ach">0 / 0</b></div>
+        <div><span>游戏时长</span><b id="s-playtime">0</b></div>
+      </section>
+
+      <label class="switch">
+        <span>浅色主题</span>
+        <input id="s-theme" type="checkbox" />
+      </label>
+
+      <div class="settings-actions">
+        <button id="s-save" class="ghost" type="button">立即存档</button>
+        <button id="s-export" class="ghost" type="button">导出存档</button>
+        <button id="s-import" class="ghost" type="button">导入存档</button>
+        <button id="s-reset" class="danger" type="button">重置进度</button>
+      </div>
+
+      <p class="note">进度存在本机 localStorage，换设备或清浏览器数据会丢；想带走请用「导出存档」。</p>
+    </form>
+  </dialog>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
