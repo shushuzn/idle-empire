@@ -1,48 +1,56 @@
 :root {
-  --bg: #0b0f18;
-  --bg-2: #111726;
-  --card: #161d2e;
-  --card-2: #1c2438;
-  --ink: #e9eefb;
-  --ink-2: #a7b1c9;
-  --muted: #6f7a94;
-  --line: #232c42;
-  --gold: #f5c451;
-  --gold-soft: rgba(245, 196, 81, 0.14);
-  --accent: #5b8cff;
-  --good: #3ddc97;
-  --bad: #ff6b6b;
-  --shadow: 0 12px 32px -18px rgba(0, 0, 0, 0.9);
-  --t1: #f5c451; --t1s: rgba(245, 196, 81, 0.14);
-  --t2: #6ea8ff; --t2s: rgba(110, 168, 255, 0.14);
-  --t3: #a78bfa; --t3s: rgba(167, 139, 250, 0.15);
-  --t4: #4fd1c5; --t4s: rgba(79, 209, 197, 0.14);
-  --t5: #ff7b8a; --t5s: rgba(255, 123, 138, 0.14);
-  --t6: #ffa15c; --t6s: rgba(255, 161, 92, 0.14);
+  --bg: #090d13;
+  --bg-2: #101722;
+  --card: #141b26;
+  --card-2: #1d2634;
+  --ink: #f0eadd;
+  --ink-2: #b6b3a6;
+  --muted: #858a80;
+  --line: #28313f;
+  --gold: #f2bd4d;
+  --gold-deep: #c98a1f;
+  --gold-soft: rgba(242, 189, 77, 0.13);
+  --accent: #8f7bff;
+  --accent-soft: rgba(143, 123, 255, 0.14);
+  --good: #4bd6a0;
+  --bad: #ff7676;
+  --ember: #ff7a59;
+  --shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.95);
+  --font-ui: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-display: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+  --t1: #f2bd4d; --t1s: rgba(242, 189, 77, 0.14);
+  --t2: #74a7ff; --t2s: rgba(116, 167, 255, 0.14);
+  --t3: #a58bff; --t3s: rgba(165, 139, 255, 0.15);
+  --t4: #45d4c4; --t4s: rgba(69, 212, 196, 0.14);
+  --t5: #ff8090; --t5s: rgba(255, 128, 144, 0.14);
+  --t6: #ffa860; --t6s: rgba(255, 168, 96, 0.14);
   color-scheme: dark;
 }
 
 [data-theme='light'] {
-  --bg: #f4f2ec;
-  --bg-2: #fbf9f4;
-  --card: #ffffff;
-  --card-2: #f3efe6;
-  --ink: #1c2230;
-  --ink-2: #4a5364;
-  --muted: #7c8496;
-  --line: #e3ddd0;
-  --gold: #b8821a;
-  --gold-soft: rgba(184, 130, 26, 0.12);
-  --accent: #2f5bd0;
-  --good: #1f9e6b;
-  --bad: #c94040;
-  --shadow: 0 12px 30px -20px rgba(60, 45, 20, 0.5);
-  --t1: #a8740f; --t1s: rgba(184, 130, 26, 0.12);
+  --bg: #f2ecdd;
+  --bg-2: #fbf6ea;
+  --card: #fffdf7;
+  --card-2: #f4eddf;
+  --ink: #241f16;
+  --ink-2: #57503f;
+  --muted: #867c69;
+  --line: #e3d8c2;
+  --gold: #9a6a12;
+  --gold-deep: #7d5510;
+  --gold-soft: rgba(154, 106, 18, 0.1);
+  --accent: #5b4ad0;
+  --accent-soft: rgba(91, 74, 208, 0.1);
+  --good: #17795a;
+  --bad: #b83b3b;
+  --ember: #c4542c;
+  --shadow: 0 16px 34px -24px rgba(74, 58, 32, 0.45);
+  --t1: #9a6a12; --t1s: rgba(154, 106, 18, 0.11);
   --t2: #2f5bd0; --t2s: rgba(47, 91, 208, 0.1);
   --t3: #6b46c1; --t3s: rgba(107, 70, 193, 0.1);
   --t4: #147d74; --t4s: rgba(20, 125, 116, 0.1);
-  --t5: #c43a52; --t5s: rgba(196, 58, 82, 0.1);
-  --t6: #b8541f; --t6s: rgba(184, 84, 31, 0.1);
+  --t5: #b8425a; --t5s: rgba(184, 66, 90, 0.1);
+  --t6: #b0521c; --t6s: rgba(176, 82, 28, 0.1);
   color-scheme: light;
 }
 
@@ -83,10 +91,38 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--ink);
-  font-family: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-ui);
   -webkit-text-size-adjust: 100%;
   overscroll-behavior: none;
 }
+
+body {
+  position: relative;
+  background:
+    radial-gradient(120% 46% at 50% -8%, rgba(242, 189, 77, 0.16), transparent 62%),
+    radial-gradient(90% 50% at 50% 112%, rgba(143, 123, 255, 0.2), transparent 68%),
+    linear-gradient(180deg, var(--bg-2), var(--bg) 46%);
+}
+
+/* 细颗粒，让大面积深色不至于像纯色块 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+[data-theme='light'] body {
+  background:
+    radial-gradient(130% 44% at 50% -6%, rgba(154, 106, 18, 0.12), transparent 64%),
+    radial-gradient(90% 48% at 50% 112%, rgba(91, 74, 208, 0.1), transparent 68%),
+    linear-gradient(180deg, var(--bg-2), var(--bg) 52%);
+}
+
+[data-theme='light'] body::before { opacity: 0.035; }
 
 button {
   font: inherit;
@@ -99,13 +135,15 @@ button {
 }
 
 .app {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   height: 100dvh;
   max-width: 640px;
   margin: 0 auto;
   padding-top: env(safe-area-inset-top);
-  background: linear-gradient(180deg, var(--bg-2), var(--bg) 38%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-2) 55%, transparent), transparent 40%);
 }
 
 /* ---------- 顶部 ---------- */
@@ -935,4 +973,368 @@ button {
 .about a {
   color: var(--ink-2);
   text-underline-offset: 2px;
+}
+
+/* =========================================================
+   画风：矿灯与裂隙
+   —— 暖色矿灯照亮冷色岩层，裂隙的紫色从底部透上来
+   ========================================================= */
+
+/* 标题用衬线，向「档案 / 勘测记录」靠 */
+.brand,
+.view-title,
+.arena-name,
+.chapter-title,
+.gain-value,
+.settings-head h2,
+.welcome-inner h2 {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  letter-spacing: 0.12em;
+}
+
+.brand-ico {
+  color: var(--gold);
+  filter: drop-shadow(0 0 10px rgba(242, 189, 77, 0.5));
+}
+
+/* 顶部资源：矿灯下的玻璃牌 */
+.hud { padding: 12px 14px 4px; }
+
+.resources { margin-top: 12px; }
+
+.res {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 58%),
+    var(--card);
+  border-color: color-mix(in srgb, var(--line) 85%, transparent);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.res b { letter-spacing: -0.01em; }
+
+.res.gold b {
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(242, 189, 77, 0.3);
+}
+
+.icon-btn {
+  background: linear-gradient(180deg, var(--card-2), var(--card));
+  border-color: color-mix(in srgb, var(--line) 85%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 18px -14px rgba(0, 0, 0, 0.9);
+}
+
+.icon-btn:active { transform: scale(0.96); }
+
+/* 点击条：一块被打磨过的金锭 */
+.tap {
+  position: relative;
+  overflow: hidden;
+  height: 60px;
+  border-radius: 18px;
+  color: #211505;
+  background: linear-gradient(180deg, #ffd982 0%, #f3bb3d 46%, #dfa01e 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -2px 0 rgba(120, 70, 0, 0.28),
+    0 14px 30px -16px rgba(242, 189, 77, 0.8);
+  letter-spacing: 0.02em;
+}
+
+.tap::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -40%;
+  width: 38%;
+  height: 220%;
+  transform: rotate(18deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  opacity: 0.32;
+}
+
+.tap:active::after { animation: sheen 0.55s ease; }
+
+@keyframes sheen {
+  from { left: -40%; }
+  to { left: 115%; }
+}
+
+.tap.pressed { transform: scale(0.985) translateY(1px); }
+
+.tap-ico { filter: drop-shadow(0 1px 1px rgba(90, 50, 0, 0.35)); }
+
+/* 分段控件：凹槽 + 被灯照到的当前项 */
+.segmented {
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card-2) 70%, transparent);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.22);
+}
+
+.seg { border-radius: 10px; }
+
+.seg.on {
+  background: linear-gradient(180deg, rgba(242, 189, 77, 0.22), rgba(242, 189, 77, 0.09));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 6px -4px rgba(0, 0, 0, 0.55);
+}
+
+/* 卡片：岩层表面，顶部有一道很弱的反光 */
+.cards { gap: 9px; }
+
+.card {
+  grid-template-columns: 46px 1fr auto;
+  border-color: color-mix(in srgb, var(--line) 82%, transparent);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 58%),
+    var(--card);
+  box-shadow: 0 12px 26px -22px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.card .ico {
+  border-radius: 13px;
+  color: var(--tone, var(--ink-2));
+  background:
+    radial-gradient(120% 120% at 30% 20%, var(--tone-soft, var(--card-2)), transparent 72%),
+    var(--card-2);
+  border: 1px solid color-mix(in srgb, var(--tone, var(--line)) 22%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.name { font-size: 15px; }
+
+.owned, .tag { background: color-mix(in srgb, var(--card-2) 55%, transparent); }
+
+.buy {
+  border-radius: 13px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card-2) 82%, transparent), var(--card-2));
+  border-color: color-mix(in srgb, var(--line) 80%, transparent);
+  transition: transform 0.08s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.card.affordable .buy {
+  background: linear-gradient(180deg, rgba(242, 189, 77, 0.2), rgba(242, 189, 77, 0.07));
+  border-color: rgba(242, 189, 77, 0.5);
+  box-shadow: 0 0 0 1px rgba(242, 189, 77, 0.1), 0 10px 22px -18px rgba(242, 189, 77, 0.9);
+}
+
+.buy:active { transform: scale(0.97); }
+
+/* 进度条：暗槽里的一线灯芯 */
+.progress {
+  background: color-mix(in srgb, var(--card-2) 75%, transparent);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.32);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  box-shadow: 0 0 12px -2px rgba(242, 189, 77, 0.45);
+}
+
+/* Boss 场：裂隙从底部透光 */
+.arena {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--line) 70%, transparent);
+  background:
+    radial-gradient(120% 130% at 50% -20%, rgba(143, 123, 255, 0.22), transparent 62%),
+    radial-gradient(90% 90% at 92% 112%, rgba(255, 122, 89, 0.13), transparent 60%),
+    linear-gradient(180deg, var(--card), var(--bg-2));
+}
+
+.arena-icon {
+  border-radius: 18px;
+  font-size: 33px;
+  background:
+    radial-gradient(120% 120% at 30% 20%, var(--tone-soft, var(--card-2)), transparent 72%),
+    var(--card-2);
+  border: 1px solid color-mix(in srgb, var(--tone, var(--line)) 24%, transparent);
+}
+
+.hpbar {
+  background: color-mix(in srgb, var(--card-2) 55%, #000 45%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.hpfill {
+  background: linear-gradient(90deg, #ff9a6b, #ff6b6b 55%, #d94f6a);
+  box-shadow: 0 0 14px rgba(255, 107, 107, 0.35);
+}
+
+.attack {
+  border-radius: 15px;
+  background: linear-gradient(180deg, #ff9a6b, #f2673f 55%, #cf4a26);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 12px 24px -16px rgba(242, 103, 63, 0.85);
+}
+
+.attack:active { transform: scale(0.985); }
+.attack-label { letter-spacing: 0.04em; }
+
+/* 底部导航：贴近页面底部的一层磨砂岩面 */
+.tabbar {
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-top-color: color-mix(in srgb, var(--line) 70%, transparent);
+  box-shadow: 0 -12px 30px -22px rgba(0, 0, 0, 0.9);
+}
+
+.tab {
+  border-radius: 14px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.tab.on {
+  background: linear-gradient(180deg, rgba(242, 189, 77, 0.16), rgba(242, 189, 77, 0.04));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.tab.on .tab-icon { filter: drop-shadow(0 0 8px rgba(242, 189, 77, 0.4)); }
+
+.tab-badge { box-shadow: 0 0 0 2px var(--bg), 0 2px 6px rgba(0, 0, 0, 0.45); }
+
+/* 剧情档案：像一页被翻旧的记录 */
+.chapter {
+  border-color: color-mix(in srgb, var(--line) 80%, transparent);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 55%),
+    var(--card);
+  box-shadow: 0 14px 30px -26px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.chapter-title { font-size: 16.5px; }
+.chapter-text { line-height: 1.85; }
+
+.chapter.locked {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--line) 55%, transparent);
+}
+
+/* 转生面板：紫光从数字后面透出来 */
+.panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 58%),
+    var(--card);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.gain-value {
+  font-size: 36px;
+  color: var(--accent);
+  text-shadow: 0 0 24px rgba(143, 123, 255, 0.4);
+}
+
+.primary {
+  background: linear-gradient(180deg, #a08cff, #6f5ae8 55%, #5a46cc);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 14px 28px -18px rgba(111, 90, 232, 0.85);
+}
+
+.primary:active:not(:disabled) { transform: scale(0.99); }
+
+/* 设置与离线弹窗 */
+.settings-inner,
+.welcome-inner {
+  background: linear-gradient(180deg, var(--bg-2), var(--bg));
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.settings-inner { position: relative; }
+
+.settings-inner::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 38px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 80%, transparent);
+}
+
+.settings-head { padding-top: 8px; }
+
+.welcome-ico { filter: drop-shadow(0 0 18px rgba(165, 139, 255, 0.45)); }
+
+.toast {
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 浅色：纸面版本，压掉发光，只留暖纸与墨 */
+[data-theme='light'] .res {
+  background: var(--card);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+[data-theme='light'] .res.gold b,
+[data-theme='light'] .brand-ico,
+[data-theme='light'] .tab.on .tab-icon { text-shadow: none; filter: none; }
+
+[data-theme='light'] .icon-btn,
+[data-theme='light'] .buy {
+  background: linear-gradient(180deg, #fffdf7, var(--card-2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+[data-theme='light'] .tap {
+  color: #2a1d06;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -2px 0 rgba(120, 70, 0, 0.2),
+    0 14px 28px -18px rgba(154, 106, 18, 0.55);
+}
+
+[data-theme='light'] .card,
+[data-theme='light'] .chapter,
+[data-theme='light'] .panel {
+  background: var(--card);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+[data-theme='light'] .arena {
+  background:
+    radial-gradient(120% 130% at 50% -20%, rgba(91, 74, 208, 0.12), transparent 62%),
+    radial-gradient(90% 90% at 92% 112%, rgba(196, 84, 44, 0.08), transparent 60%),
+    linear-gradient(180deg, #fffdf7, #f6efdf);
+}
+
+[data-theme='light'] .hpbar {
+  background: #e9dfcb;
+  border-color: #dccfb6;
+  box-shadow: inset 0 2px 5px rgba(120, 95, 55, 0.18);
+}
+
+[data-theme='light'] .attack {
+  background: linear-gradient(180deg, #e5834f, #c4542c);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 12px 22px -16px rgba(196, 84, 44, 0.7);
+}
+
+[data-theme='light'] .tabbar {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  box-shadow: 0 -12px 28px -24px rgba(74, 58, 32, 0.4);
+}
+
+[data-theme='light'] .seg.on {
+  background: linear-gradient(180deg, rgba(154, 106, 18, 0.14), rgba(154, 106, 18, 0.06));
+}
+
+[data-theme='light'] .settings-inner,
+[data-theme='light'] .welcome-inner {
+  background: linear-gradient(180deg, #fffdf7, #f6efdf);
+}
+
+[data-theme='light'] .toast {
+  background: color-mix(in srgb, #fffdf7 94%, transparent);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }

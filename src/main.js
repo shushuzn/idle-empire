@@ -94,7 +94,7 @@ function paintTheme(pref, persist = true) {
   const actual = resolveTheme(pref, systemPrefersLight());
   document.documentElement.dataset.theme = actual;
   document.documentElement.dataset.themePref = pref;
-  if (themeMeta) themeMeta.content = actual === 'light' ? '#f4f2ec' : '#0b0f18';
+  if (themeMeta) themeMeta.content = actual === 'light' ? '#f2ecdd' : '#090d13';
   if (persist) writePref(pref);
   syncThemePicker();
 }
