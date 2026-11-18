@@ -45,7 +45,8 @@ function addArt(node, src, size = 160) {
   img.alt = '';
   img.width = size;
   img.height = size;
-  img.loading = 'lazy';
+  // 小尺寸缩略图已随 Service Worker 预缓存，直接加载，避免内部滚动容器里懒加载不触发
+  img.loading = 'eager';
   img.decoding = 'async';
   img.addEventListener('error', () => img.remove(), { once: true });
   node.classList.add('has-art');
