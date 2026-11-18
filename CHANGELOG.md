@@ -3,16 +3,28 @@
 本项目的版本记录，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [3.7.0] - 2026-11-18
 
 ### Added
 
+- 标签页与地址栏锚点同步：`#story`、`#prestige` 等可直接打开，刷新后停在原标签。
+- 应用清单新增「裂隙纪事」「轮回转生」快捷方式，安装后长按图标可直达。
+- 导入存档前先校验文件并确认覆盖，提示当前与存档内金币；非存档 JSON 不再清空进度（新增测试，总计 46 项）。
 - `VERSIONING.md`：`MAJOR` / `MINOR` / `PATCH` 的判定标准、五处版本落点与发布流程。
-- `tests/version.test.js`：校验 `package.json`、`sw.js`、`index.html`、`README.md`、`CHANGELOG.md` 的版本一致（总计 45 项）。
+- `tests/version.test.js`：校验 `package.json`、`sw.js`、`index.html`、`README.md`、`CHANGELOG.md` 的版本一致。
 
 ### Changed
 
+- 带操作按钮的提示条停留时间由 12 秒缩短到 8 秒。
+- 标签栏支持 `Home` / `End` 键；空格在按钮上不再误触挖矿。
 - CONTRIBUTING 增加版本规则入口，修正视图页面数量描述。
+- Service Worker 缓存升到 `idle-empire-v3.7.0`。
+
+### Fixed
+
+- 误选普通 JSON 文件导入会清空进度。
+- 焦点在按钮上按空格会触发挖矿，而不是激活按钮。
+- 设置弹窗打开时提示条被压在弹窗下面，存档、导出、导入的结果看不见；改为面板内状态行，带操作的提示等关闭后再弹。
 
 ## [3.6.0] - 2026-11-18
 

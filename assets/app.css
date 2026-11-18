@@ -797,6 +797,17 @@ button {
 .install-block[hidden] { display: none; }
 .install-block .ghost { width: 100%; margin-top: 8px; }
 
+/* 设置是模态弹窗，提示条会被挡住，这里用一行状态代替 */
+.settings-status {
+  min-height: 17px;
+  margin: 0 0 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.settings-status.good { color: var(--good); }
+.settings-status.bad { color: var(--bad); }
+
 .ghost, .danger {
   min-height: 46px;
   border-radius: 12px;

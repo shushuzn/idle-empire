@@ -45,5 +45,31 @@
     "standalone",
     "minimal-ui"
   ],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "裂隙纪事",
+      "short_name": "剧情",
+      "url": "./#story",
+      "icons": [
+        {
+          "src": "./assets/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "轮回转生",
+      "short_name": "转生",
+      "url": "./#prestige",
+      "icons": [
+        {
+          "src": "./assets/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
 }

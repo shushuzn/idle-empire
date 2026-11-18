@@ -101,6 +101,18 @@ test('JSON 存档文件与旧版 base64 存档码都能导入', () => {
   assert.throws(() => importSave('not a save'));
 });
 
+test('不是存档的 JSON 会被拒绝', () => {
+  // 选错文件时不能当成空存档把进度清掉
+  const wrong = JSON.stringify({ name: 'idle-empire', version: '3.7.0' });
+  assert.throws(() => importSave(wrong), (error) => error.code === 'not-a-save');
+  assert.throws(() => importSave('[1, 2, 3]'), (error) => error.code === 'not-a-save');
+
+  // 手写的极简存档仍然接受
+  const minimal = importSave(JSON.stringify({ gold: 5, buildings: { mine: 1 } }));
+  assert.equal(minimal.gold, 5);
+  assert.deepEqual(minimal.buildings, { mine: 1 });
+});
+
 test('离线收益：超过 60 秒才结算，且有上限', () => {
   const memory = new Map();
   globalThis.localStorage = {

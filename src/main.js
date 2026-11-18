@@ -119,9 +119,31 @@ try {
 /* ---------- 提示条 ---------- */
 
 const toastHost = $('#toasts');
+let statusTimer = 0;
+let deferredToast = null;
+
+// 设置弹窗是模态的，toast 会被压在下层，改在面板里显示一行状态
+function showSettingsStatus(text, kind = '') {
+  const node = $('#s-status');
+  if (!node) return;
+  clearTimeout(statusTimer);
+  node.textContent = text;
+  node.className = `settings-status ${kind}`.trim();
+  if (text) statusTimer = setTimeout(() => showSettingsStatus(''), 6000);
+}
 
 // action 形如 { label, onClick }，用于「新版本已就绪」这类可操作的提示
 function toast(text, kind = '', ms = 3000, action = null) {
+  if (document.getElementById('settings')?.open) {
+    // 带操作的提示先在设置里留一句，关掉弹窗后再弹出来，避免按钮被挡住
+    if (action) {
+      deferredToast = { text, kind, ms, action };
+      showSettingsStatus(`${text}（关闭设置后可查看）`, kind);
+    } else {
+      showSettingsStatus(text, kind);
+    }
+    return;
+  }
   while (toastHost.children.length >= 3) toastHost.firstElementChild.remove();
   const node = document.createElement('div');
   node.className = `toast ${kind}`.trim();
@@ -146,7 +168,7 @@ function toast(text, kind = '', ms = 3000, action = null) {
   setTimeout(() => {
     node.classList.remove('show');
     setTimeout(() => node.remove(), 250);
-  }, action ? Math.max(ms, 12000) : ms);
+  }, action ? Math.max(ms, 8000) : ms);
 }
 
 /* ---------- 顶部资源与点击 ---------- */
@@ -173,10 +195,26 @@ tapBtn.addEventListener('click', (e) => {
 const viewHost = $('#view');
 const tabbar = $('#tabbar');
 const TAB_LABELS = Object.fromEntries(TABS.map(([id, , label]) => [id, label]));
+const TAB_IDS = TABS.map(([id]) => id);
+const TAB_ID_SET = new Set(TAB_IDS);
 let activeTab = 'buildings';
 let currentView = null;
 const badges = {};
 const scrollMemo = {}; // 每个标签页记住自己的滚动位置
+
+// 地址栏带上 #story 这类锚点：刷新、收藏、PWA 快捷方式都能直达对应标签
+function tabFromHash() {
+  const id = location.hash.replace(/^#\/?/, '');
+  return TAB_ID_SET.has(id) ? id : null;
+}
+
+function writeTabHash(id) {
+  try {
+    history.replaceState(null, '', `#${id}`);
+  } catch {
+    /* 个别浏览器在 file:// 下不让改地址，忽略即可 */
+  }
+}
 
 // 视图内部派发的 toast 事件（Boss 击杀、转生、商店升级）在这里统一接住
 viewHost.addEventListener('toast', (e) => {
@@ -200,10 +238,11 @@ for (const [id, iconName, label] of TABS) {
   tabbar.append(btn);
 }
 
-function switchTab(id) {
+function switchTab(id, { writeHash = true } = {}) {
   if (!VIEWS[id]) return;
   if (currentView) scrollMemo[activeTab] = viewHost.scrollTop;
   activeTab = id;
+  if (writeHash) writeTabHash(id);
   for (const b of tabbar.children) {
     const on = b.dataset.tab === id;
     b.classList.toggle('on', on);
@@ -227,15 +266,26 @@ function switchTab(id) {
   if (restore) requestAnimationFrame(() => { viewHost.scrollTop = restore; });
 }
 
-switchTab('buildings');
+switchTab(tabFromHash() || 'buildings', { writeHash: false });
 
-// 标签栏按 ARIA tabs 模式做 roving tabindex，左右方向键切换
+// 手动改地址栏锚点，或从 PWA 快捷方式跳进来时同步标签
+window.addEventListener('hashchange', () => {
+  const id = tabFromHash();
+  if (id && id !== activeTab) switchTab(id, { writeHash: false });
+});
+
+// 标签栏按 ARIA tabs 模式做 roving tabindex，方向键 / Home / End 切换
 tabbar.addEventListener('keydown', (e) => {
-  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
   e.preventDefault();
-  const ids = TABS.map(([id]) => id);
-  const step = e.key === 'ArrowRight' ? 1 : -1;
-  const next = ids[(ids.indexOf(activeTab) + step + ids.length) % ids.length];
+  const ids = TAB_IDS;
+  const current = ids.indexOf(activeTab);
+  const next =
+    e.key === 'Home'
+      ? ids[0]
+      : e.key === 'End'
+        ? ids[ids.length - 1]
+        : ids[(current + (e.key === 'ArrowRight' ? 1 : -1) + ids.length) % ids.length];
   switchTab(next);
   const btn = tabbar.querySelector(`[data-tab="${next}"]`);
   if (btn) btn.focus();
@@ -411,7 +461,16 @@ $('#s-install').addEventListener('click', async () => {
 const dialog = $('#settings');
 $('#settings-btn').addEventListener('click', () => {
   syncSettings();
+  showSettingsStatus('');
   dialog.showModal();
+});
+
+dialog.addEventListener('close', () => {
+  showSettingsStatus('');
+  if (!deferredToast) return;
+  const next = deferredToast;
+  deferredToast = null;
+  toast(next.text, next.kind, next.ms, next.action);
 });
 
 function syncSettings() {
@@ -437,7 +496,8 @@ $('#s-vibrate').addEventListener('change', (e) => {
 });
 $('#s-close').addEventListener('click', () => dialog.close());
 $('#s-save').addEventListener('click', () => {
-  toast(persist() ? '已存档' : '存档失败', 'good');
+  const ok = persist();
+  toast(ok ? '已存档' : '存档失败：浏览器存储不可用', ok ? 'good' : 'bad');
 });
 $('#s-export').addEventListener('click', () => {
   try {
@@ -463,18 +523,23 @@ $('#s-export').addEventListener('click', () => {
 });
 
 function applyImport(text, fileName = '') {
+  let imported;
   try {
-    const imported = importSave(text);
-    Object.keys(game.s).forEach((k) => delete game.s[k]);
-    Object.assign(game.s, imported);
-    game.checkAchievements();
-    persist();
-    switchTab(activeTab);
-    syncSettings();
-    toast(fileName ? `已导入 ${fileName}` : '存档已导入', 'good');
-  } catch {
-    toast('存档格式不对，没能导入', 'bad');
+    imported = importSave(text);
+  } catch (error) {
+    toast(error?.code === 'not-a-save' ? '这个文件不像放置帝国的存档，没有导入' : '存档格式不对，没能导入', 'bad');
+    return;
   }
+  const label = fileName ? `「${fileName}」` : '这个存档';
+  if (!confirm(`导入${label}会覆盖当前进度（当前 ${fmt(game.s.gold)} 金币，存档内 ${fmt(imported.gold)} 金币），确定继续？`)) return;
+  Object.keys(game.s).forEach((k) => delete game.s[k]);
+  Object.assign(game.s, imported);
+  game.checkAchievements();
+  game.checkStory();
+  persist();
+  switchTab(activeTab);
+  syncSettings();
+  toast(fileName ? `已导入 ${fileName}` : '存档已导入', 'good');
 }
 
 $('#s-import').addEventListener('click', () => $('#save-file').click());
@@ -483,6 +548,10 @@ $('#save-file').addEventListener('change', async (e) => {
   const file = input.files?.[0];
   input.value = ''; // 清空后可以连续导入同一个文件
   if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    toast('文件太大，不像是这个游戏的存档', 'bad');
+    return;
+  }
   try {
     applyImport(await file.text(), file.name);
   } catch {
@@ -502,12 +571,15 @@ $('#s-reset').addEventListener('click', () => {
 /* ---------- 键盘快捷键 ---------- */
 
 window.addEventListener('keydown', (e) => {
-  if (e.target.matches('input, textarea') || dialog.open || welcome.open) return;
+  const target = e.target;
+  if (target.closest?.('input, textarea, select, [contenteditable="true"]') || dialog.open || welcome.open) return;
   const map = { 1: 'buildings', 2: 'upgrades', 3: 'bosses', 4: 'achievements', 5: 'prestige', 6: 'story' };
   if (map[e.key]) {
     switchTab(map[e.key]);
     e.preventDefault();
   } else if (e.code === 'Space') {
+    // 焦点在按钮/链接上时，空格应该触发那个控件，而不是挖矿
+    if (target.closest?.('button, a[href], [role="button"]')) return;
     const { perClick } = B.clickPower(game.s);
     game.tap();
     buzz(6);

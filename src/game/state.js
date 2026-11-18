@@ -151,8 +151,22 @@ export function exportSaveText(state) {
   return JSON.stringify(state, null, 2);
 }
 
+// 至少要有两个核心字段，才认得出是存档；避免选错 JSON 把进度清空
+const SAVE_FIELDS = ['gold', 'buildings', 'upgrades', 'achievements', 'story'];
+function looksLikeSave(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+  return SAVE_FIELDS.filter((key) => key in raw).length >= 2;
+}
+
 export function importSave(text, now = Date.now()) {
   const trimmed = String(text).replace(/^\uFEFF/, '').trim();
-  const raw = JSON.parse(trimmed.startsWith('{') ? trimmed : decodeURIComponent(escape(atob(trimmed))));
+  // 以 { 或 [ 开头按 JSON 解析，其余当成旧版 base64 存档码
+  const json = trimmed.startsWith('{') || trimmed.startsWith('[');
+  const raw = JSON.parse(json ? trimmed : decodeURIComponent(escape(atob(trimmed))));
+  if (!looksLikeSave(raw)) {
+    const error = new Error('not-a-save');
+    error.code = 'not-a-save';
+    throw error;
+  }
   return normalize(raw, now);
 }
