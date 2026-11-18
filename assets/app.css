@@ -781,4 +781,41 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
+  .floaters { display: none; }
+}
+
+/* ---------- 提示条操作 ---------- */
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast-text { min-width: 0; }
+
+.toast.has-action { pointer-events: auto; }
+
+.toast-action {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #191204;
+  background: linear-gradient(135deg, #ffd873, #f0b429);
+}
+
+/* ---------- 关于 / 许可 ---------- */
+
+.about {
+  margin: 14px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.about a {
+  color: var(--ink-2);
+  text-underline-offset: 2px;
 }

@@ -41,18 +41,18 @@ src/game/balance.js       纯函数数值层（成本、产能、点击、Boss �
 src/game/state.js         存档结构、旧档迁移、离线结算、导出/导入
 src/game/engine.js        购买、攻击、转生、成就、tick
 src/ui/views.js           五个页面的 DOM 构建与增量刷新
-src/ui/format.js          数字 / 时间格式化
+src/ui/format.js          数字 / 时间格式化（K/M/B 缩写、时间分档）
 src/ui/floaters.js        点击/攻击飘字
 src/ui/haptics.js         振动反馈开关
 src/ui/theme.js           主题偏好（跟随系统 / 浅色 / 深色）
 src/ui/icons.js           自绘 SVG 图标集（50 个，24×24 线性风格）
 src/main.js               启动、标签页、主循环、设置面板、快捷键
 sw.js                     离线缓存（网络优先，断网回落）
-tests/*.test.js           node:test 用例（数值、存档、引擎）
+tests/*.test.js           node:test 用例（数值、存档、引擎、主题、格式化）
 ```
 
 ```bash
-npm test        # node --test tests/*.test.js，29 项
+npm test        # node --test tests/*.test.js，35 项
 ```
 
 装到手机上：用手机浏览器打开 Pages 地址，Android Chrome 会提示「安装应用」，iOS Safari 用「添加到主屏幕」。装好后离线也能玩，进度照常存在本地。
@@ -113,3 +113,14 @@ npm test        # node --test tests/*.test.js，29 项
 [MIT](LICENSE) © 2026 shushuzn
 
 游戏代码、自绘图标和样式都可以自由使用、修改、分发，保留版权声明即可。
+
+## v3.4 改动
+
+- **自动存档**：主循环每 20 秒静默落盘一次，崩溃或强杀进程最多丢 20 秒；手动存档失败仍会提示。
+- **更新提示**：Service Worker 发现新版本时弹出「新版本已就绪 / 刷新」，回到前台会主动检查一次更新。
+- **短时切后台不丢收益**：离开超过 1 秒就按离线规则补算（以前 1–5 秒白丢）。
+- **切页记住滚动位置**：五个标签各自保留 `scrollTop`，来回切不再跳回顶部。
+- **无障碍**：去掉每帧刷新区域的 `aria-live`（避免读屏器刷不停），弹窗补 `aria-labelledby`，标签栏支持左右方向键切换并采用 roving tabindex。
+- **减少动态效果**：系统开启「减少动态效果」时关闭动画、过渡与飘字。
+- **数字格式**：修掉 `1.50` / `1.50B` 这类多余尾零，补 `tests/format.test.js`（6 项）。
+- **关于信息**：设置底部显示版本号、MIT 许可与源码链接。

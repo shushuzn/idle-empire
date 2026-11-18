@@ -25,6 +25,9 @@ hydrateIcons();
 
 const { state, offline, migrated } = load();
 
+// 立刻落盘：首次进入就建立存档；离线结算后也避免刷新一次重复领取
+save(state);
+
 // 离线结算弹窗打开时先把成就提示攒起来，关掉再一次性弹，避免被遮挡
 const pendingAchievements = [];
 
@@ -91,17 +94,34 @@ try {
 /* ---------- 提示条 ---------- */
 
 const toastHost = $('#toasts');
-function toast(text, kind = '', ms = 3000) {
+
+// action 形如 { label, onClick }，用于「新版本已就绪」这类可操作的提示
+function toast(text, kind = '', ms = 3000, action = null) {
   while (toastHost.children.length >= 3) toastHost.firstElementChild.remove();
   const node = document.createElement('div');
   node.className = `toast ${kind}`.trim();
-  node.textContent = text;
+  const message = document.createElement('span');
+  message.className = 'toast-text';
+  message.textContent = text;
+  node.append(message);
+  if (action) {
+    node.classList.add('has-action');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'toast-action';
+    button.textContent = action.label;
+    button.addEventListener('click', () => {
+      node.remove();
+      action.onClick();
+    });
+    node.append(button);
+  }
   toastHost.append(node);
   requestAnimationFrame(() => node.classList.add('show'));
   setTimeout(() => {
     node.classList.remove('show');
     setTimeout(() => node.remove(), 250);
-  }, ms);
+  }, action ? Math.max(ms, 12000) : ms);
 }
 
 /* ---------- 顶部资源与点击 ---------- */
@@ -127,9 +147,11 @@ tapBtn.addEventListener('click', (e) => {
 
 const viewHost = $('#view');
 const tabbar = $('#tabbar');
+const TAB_LABELS = Object.fromEntries(TABS.map(([id, , label]) => [id, label]));
 let activeTab = 'buildings';
 let currentView = null;
 const badges = {};
+const scrollMemo = {}; // 每个标签页记住自己的滚动位置
 
 // 视图内部派发的 toast 事件（Boss 击杀、转生、商店升级）在这里统一接住
 viewHost.addEventListener('toast', (e) => {
@@ -142,6 +164,7 @@ for (const [id, iconName, label] of TABS) {
   btn.dataset.tab = id;
   btn.setAttribute('role', 'tab');
   btn.setAttribute('aria-selected', 'false');
+  btn.setAttribute('aria-controls', 'view');
   btn.innerHTML = `<span class="tab-icon" aria-hidden="true">${iconMarkup(iconName)}</span><span class="tab-label">${label}</span>`;
   const badge = document.createElement('span');
   badge.className = 'tab-badge';
@@ -154,20 +177,38 @@ for (const [id, iconName, label] of TABS) {
 
 function switchTab(id) {
   if (!VIEWS[id]) return;
+  if (currentView) scrollMemo[activeTab] = viewHost.scrollTop;
   activeTab = id;
   for (const b of tabbar.children) {
     const on = b.dataset.tab === id;
     b.classList.toggle('on', on);
     b.setAttribute('aria-selected', String(on));
+    b.tabIndex = on ? 0 : -1;
   }
+  viewHost.setAttribute('aria-label', TAB_LABELS[id] || '');
   viewHost.replaceChildren();
   currentView = VIEWS[id](game);
   viewHost.append(currentView.el);
   currentView.update();
-  viewHost.scrollTop = 0;
+  const restore = scrollMemo[id] || 0;
+  viewHost.scrollTop = restore;
+  // 刚替换 DOM 时高度还没算出来，下一帧再对齐一次
+  if (restore) requestAnimationFrame(() => { viewHost.scrollTop = restore; });
 }
 
 switchTab('buildings');
+
+// 标签栏按 ARIA tabs 模式做 roving tabindex，左右方向键切换
+tabbar.addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  e.preventDefault();
+  const ids = TABS.map(([id]) => id);
+  const step = e.key === 'ArrowRight' ? 1 : -1;
+  const next = ids[(ids.indexOf(activeTab) + step + ids.length) % ids.length];
+  switchTab(next);
+  const btn = tabbar.querySelector(`[data-tab="${next}"]`);
+  if (btn) btn.focus();
+});
 
 function setBadge(id, text) {
   const node = badges[id];
@@ -189,10 +230,20 @@ function updateBadges() {
 
 let last = performance.now();
 let badgeTimer = 0;
+let saveTimer = 0;
+const AUTOSAVE_SECONDS = 20;
+
 function frame(now) {
   const dt = Math.min(0.5, (now - last) / 1000);
   last = now;
   game.tick(dt);
+
+  // 定时落盘：崩溃或强杀进程时最多丢 20 秒
+  saveTimer += dt;
+  if (saveTimer >= AUTOSAVE_SECONDS) {
+    saveTimer = 0;
+    persist(true);
+  }
 
   goldEl.textContent = fmt(game.s.gold);
   gpsEl.textContent = `+${fmt(B.totalPerSecond(game.s))}/秒`;
@@ -212,9 +263,9 @@ requestAnimationFrame(frame);
 
 /* ---------- 自动存档 ---------- */
 
-function persist() {
+function persist(silent = false) {
   if (save(game.s)) return true;
-  toast('存档失败：浏览器存储不可用', 'bad');
+  if (!silent) toast('存档失败：浏览器存储不可用', 'bad');
   return false;
 }
 
@@ -226,11 +277,11 @@ document.addEventListener('visibilitychange', () => {
   } else if (hiddenAt) {
     const seconds = (Date.now() - hiddenAt) / 1000;
     hiddenAt = 0;
-    if (seconds > 5) settle(seconds, '离开');
+    if (seconds > 1) settle(seconds, '离开');
   }
 });
-window.addEventListener('pagehide', persist);
-document.addEventListener('freeze', persist);
+window.addEventListener('pagehide', () => persist());
+document.addEventListener('freeze', () => persist());
 
 // 切到后台期间 rAF 不跑，回到前台时补算这段时间的产出
 function settle(seconds, label) {
@@ -365,14 +416,38 @@ if (offline) {
 }
 
 // 页面关闭前再存一次，避免丢最后 15 秒
-window.addEventListener('beforeunload', persist);
+window.addEventListener('beforeunload', () => persist());
 
 /* ---------- PWA ---------- */
 
 const swCapable =
   location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname);
 if ('serviceWorker' in navigator && swCapable) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  window.addEventListener('load', async () => {
+    let updateNotified = false;
+    const notifyUpdate = () => {
+      // 首次安装时没有旧的 controller，不需要提示
+      if (updateNotified || !navigator.serviceWorker.controller) return;
+      updateNotified = true;
+      toast('新版本已就绪', 'good', 12000, { label: '刷新', onClick: () => location.reload() });
+    };
+
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js');
+      if (reg.waiting) notifyUpdate();
+      reg.addEventListener('updatefound', () => {
+        const installing = reg.installing;
+        if (!installing) return;
+        installing.addEventListener('statechange', () => {
+          if (installing.state === 'installed') notifyUpdate();
+        });
+      });
+      // 回到前台时主动检查一次，避免长期挂着页面错过更新
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
+    } catch {
+      /* 浏览器不支持或离线时忽略 */
+    }
   });
 }

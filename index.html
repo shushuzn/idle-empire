@@ -57,7 +57,7 @@
       <span class="tap-txt">点击 +<b id="tap-gain">1</b></span>
     </button>
 
-    <main id="view" class="view" role="tabpanel" aria-live="polite"></main>
+    <main id="view" class="view" role="tabpanel" aria-label="建筑" tabindex="-1"></main>
 
     <nav id="tabbar" class="tabbar" role="tablist" aria-label="主导航"></nav>
   </div>
@@ -66,7 +66,7 @@
 
   <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
 
-  <dialog id="welcome" class="welcome">
+  <dialog id="welcome" class="welcome" aria-labelledby="w-title" aria-describedby="w-time w-rate">
     <div class="welcome-inner">
       <div class="welcome-ico" data-icon="moon" data-tone="3" aria-hidden="true"></div>
       <h2 id="w-title">离线收益</h2>
@@ -80,10 +80,10 @@
     </div>
   </dialog>
 
-  <dialog id="settings" class="settings">
+  <dialog id="settings" class="settings" aria-labelledby="s-title">
     <form method="dialog" class="settings-inner">
       <header class="settings-head">
-        <h2>设置</h2>
+        <h2 id="s-title">设置</h2>
         <button id="s-close" class="icon-btn" value="close" aria-label="关闭" data-icon="close"></button>
       </header>
 
@@ -121,6 +121,7 @@
       </div>
 
       <p class="note">进度存在本机 localStorage，换设备或清浏览器数据会丢；想带走请用「导出存档」。</p>
+      <p class="about">放置帝国 v3.4.0 · <a href="https://github.com/shushuzn/idle-empire" target="_blank" rel="noopener noreferrer">MIT 许可与源码</a></p>
     </form>
   </dialog>
 

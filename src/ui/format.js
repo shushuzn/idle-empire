@@ -1,5 +1,10 @@
 const UNITS = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc', 'Ud', 'Dd'];
 
+// 1.50 → 1.5、2.00 → 2；没有小数点时原样返回，避免把 20 削成 2
+function trimZeros(text) {
+  return text.includes('.') ? text.replace(/\.?0+$/, '') : text;
+}
+
 // 1234 → 1.23K；1.5 → 1.5；0 → 0
 export function fmt(value, digits = 2) {
   const n = Number(value) || 0;
@@ -7,7 +12,8 @@ export function fmt(value, digits = 2) {
   if (n < 0) return '-' + fmt(-n, digits);
   if (n < 1000) {
     const rounded = Math.floor(n * 100) / 100;
-    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(n < 10 ? digits : 0);
+    if (Number.isInteger(rounded)) return String(rounded);
+    return trimZeros(rounded.toFixed(n < 10 ? digits : 0));
   }
   let tier = 0;
   let v = n;
@@ -15,7 +21,7 @@ export function fmt(value, digits = 2) {
     v /= 1000;
     tier++;
   }
-  return `${v.toFixed(v < 10 ? digits : 1).replace(/\.0+$/, '')}${UNITS[tier]}`;
+  return `${trimZeros(v.toFixed(v < 10 ? digits : 1))}${UNITS[tier]}`;
 }
 
 export function fmtInt(n) {
