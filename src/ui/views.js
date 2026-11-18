@@ -3,7 +3,7 @@ import { CHAPTERS } from '../game/story.js';
 import { fmt, fmtInt } from './format.js';
 import { buzz } from './haptics.js';
 import { centerOf, floatText } from './floaters.js';
-import { icon } from './icons.js';
+import { icon, ICON_ART } from './icons.js';
 import * as B from '../game/balance.js';
 
 function el(tag, className, text) {
@@ -14,22 +14,6 @@ function el(tag, className, text) {
 }
 
 // 统一的图标格子：颜色由 data-tone 决定，具体映射在 app.css
-const ICON_ART = {
-  hand: './assets/art/icons/hand.webp',
-  bricks: './assets/art/icons/bricks.webp',
-  dagger: './assets/art/icons/dagger.webp',
-  robot: './assets/art/icons/robot.webp',
-  laurel: './assets/art/icons/laurel.webp',
-  moon: './assets/art/icons/moon.webp',
-  gear: './assets/art/icons/gear.webp',
-  tower: './assets/art/icons/tower.webp',
-  skull: './assets/art/icons/skull.webp',
-  coin: './assets/art/icons/coin.webp',
-  upgrade: './assets/art/icons/upgrade.webp',
-  rebirth: './assets/art/icons/rebirth.webp',
-  shard: './assets/art/icons/shard.webp',
-};
-
 function iconTile(name, tone, className = 'ico', art = ICON_ART[name] || '') {
   const node = el('div', className);
   node.dataset.tone = String(tone);

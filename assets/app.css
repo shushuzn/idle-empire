@@ -1170,6 +1170,68 @@ button {
 
 .boss-ico { border-radius: 8px; }
 
+/* 常驻界面图标：标签栏、资源栏、点击条、标题、设置与离线弹窗 */
+.tab-icon.has-art,
+.res-ico.has-art,
+.tap-ico.has-art,
+.brand-ico.has-art,
+.welcome-ico.has-art,
+.icon-btn.has-art { position: relative; }
+
+.tab-icon.has-art {
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
+}
+
+.tab-icon.has-art > .ico-art {
+  border-radius: 7px;
+  opacity: 0.86;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.tab.on .tab-icon.has-art > .ico-art {
+  opacity: 1;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 0 10px -2px rgba(242, 189, 77, 0.55);
+}
+
+.res-ico.has-art {
+  width: 15px;
+  height: 15px;
+  font-size: 15px;
+  vertical-align: -3px;
+}
+
+.tap-ico.has-art { font-size: 22px; }
+
+.brand-ico.has-art { font-size: 19px; }
+
+.welcome-ico.has-art { font-size: 38px; }
+
+.res-ico.has-art > .ico-art,
+.tap-ico.has-art > .ico-art,
+.brand-ico.has-art > .ico-art {
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.welcome-ico.has-art > .ico-art {
+  border-radius: 12px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 6px 18px -10px rgba(0, 0, 0, 0.8);
+}
+
+.icon-btn.has-art > .ico-art {
+  inset: 9px;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
 .ico.has-art,
 .arena-icon.has-art {
   border-color: color-mix(in srgb, var(--tone, var(--line)) 34%, transparent);

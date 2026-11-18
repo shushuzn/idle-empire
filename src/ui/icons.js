@@ -67,6 +67,30 @@ export const ICONS = {
   tower: '<path d="M8.6 20.4V9.3h6.8v11.1"/><path d="M7.1 20.4h9.8"/><path d="m12 3.3 5.6 6H6.4z"/><path d="M10.3 20.4v-3.1a1.7 1.7 0 0 1 3.4 0v3.1"/>',
 };
 
+// 生成式插画：同一套图标名字对一张图，界面和卡片共用
+export const ICON_ART = {
+  /* 标签栏 / 资源栏 */
+  castle: './assets/art/icons/castle.webp',
+  upgrade: './assets/art/icons/upgrade.webp',
+  skull: './assets/art/icons/skull.webp',
+  trophy: './assets/art/icons/trophy.webp',
+  rebirth: './assets/art/icons/rebirth.webp',
+  book: './assets/art/icons/book.webp',
+  coin: './assets/art/icons/coin.webp',
+  bolt: './assets/art/icons/bolt.webp',
+  shard: './assets/art/icons/shard.webp',
+  gear: './assets/art/icons/gear.webp',
+  mine: './assets/art/icons/mine.webp',
+  moon: './assets/art/icons/moon.webp',
+  /* 卡片 / 商店 */
+  hand: './assets/art/icons/hand.webp',
+  bricks: './assets/art/icons/bricks.webp',
+  dagger: './assets/art/icons/dagger.webp',
+  robot: './assets/art/icons/robot.webp',
+  laurel: './assets/art/icons/laurel.webp',
+  tower: './assets/art/icons/tower.webp',
+};
+
 const CACHE = new Map();
 
 // 返回一个可直接 append 的 <svg> 节点
@@ -85,10 +109,33 @@ export function iconMarkup(name, className = '') {
   return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="ico-svg ${className}">${CACHE.get(name)}</svg>`;
 }
 
+// 给图标节点铺一张生成插画；加载失败就移除，露出下面的线条图标
+export function attachIconArt(node, name) {
+  const src = ICON_ART[name];
+  if (!src || node.querySelector('.ico-art')) return null;
+  const img = document.createElement('img');
+  img.className = 'ico-art';
+  img.src = src;
+  img.alt = '';
+  img.width = 96;
+  img.height = 96;
+  img.decoding = 'async';
+  img.addEventListener('error', () => {
+    img.remove();
+    node.classList.remove('has-art');
+  }, { once: true });
+  node.classList.add('has-art');
+  node.append(img);
+  return img;
+}
+
 // 把页面里所有 data-icon="名字" 的占位元素换成对应图标，静态 HTML 就不必手写 SVG
 export function hydrateIcons(root = document) {
   for (const node of root.querySelectorAll('[data-icon]')) {
     const name = node.getAttribute('data-icon');
-    if (name) node.replaceChildren(icon(name));
+    if (name) {
+      node.replaceChildren(icon(name));
+      attachIconArt(node, name);
+    }
   }
 }

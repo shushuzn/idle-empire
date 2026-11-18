@@ -10,7 +10,7 @@ import { VIEWS } from './ui/views.js';
 import { buzz, hapticsEnabled, setHaptics } from './ui/haptics.js';
 import { readPref, resolveTheme, systemPrefersLight, writePref } from './ui/theme.js';
 import { centerOf, floatText } from './ui/floaters.js';
-import { hydrateIcons, iconMarkup } from './ui/icons.js';
+import { attachIconArt, hydrateIcons, iconMarkup } from './ui/icons.js';
 import { buildDiagnostics } from './ui/feedback.js';
 import * as B from './game/balance.js';
 
@@ -233,6 +233,7 @@ for (const [id, iconName, label] of TABS) {
   btn.setAttribute('aria-selected', 'false');
   btn.setAttribute('aria-controls', 'view');
   btn.innerHTML = `<span class="tab-icon" aria-hidden="true">${iconMarkup(iconName)}</span><span class="tab-label">${label}</span>`;
+  attachIconArt(btn.querySelector('.tab-icon'), iconName);
   const badge = document.createElement('span');
   badge.className = 'tab-badge';
   badge.hidden = true;
