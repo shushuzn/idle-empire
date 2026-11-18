@@ -114,6 +114,7 @@ tests/                    node:test 用例（数值、存档、引擎、主题�
 ## 版本与文档
 
 - [VERSIONING.md](VERSIONING.md)：版本号规则（第一位只在用户要求时改，`MINOR` / `PATCH` 怎么判定，同日 `MINOR` 最多 +1）与发布流程
+- [ROADMAP.md](ROADMAP.md)：更新计划（短期 `0.2.0` 与长期五个 `MINOR` 的游戏内容）
 - [CHANGELOG.md](CHANGELOG.md)：完整版本记录（当前 v0.1.0）
 - [CONTRIBUTING.md](CONTRIBUTING.md)：目录约定、代码风格、提交与 PR 流程
 - [SECURITY.md](SECURITY.md)：漏洞报告渠道与攻击面说明
