@@ -793,6 +793,10 @@ button {
   margin: 6px 0 10px;
 }
 
+.install-block { margin: 4px 0 2px; }
+.install-block[hidden] { display: none; }
+.install-block .ghost { width: 100%; margin-top: 8px; }
+
 .ghost, .danger {
   min-height: 46px;
   border-radius: 12px;

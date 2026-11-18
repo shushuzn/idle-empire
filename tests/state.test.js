@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalize, defaultState, load, save, exportSave, importSave, SAVE_KEY } from '../src/game/state.js';
+import { normalize, defaultState, load, save, exportSave, exportSaveText, importSave, SAVE_KEY } from '../src/game/state.js';
 
 test('旧版存档能迁到新结构', () => {
   const now = Date.now();
@@ -76,6 +76,29 @@ test('存档读写与导出导入往返一致', () => {
   const round = importSave(text);
   assert.equal(round.gold, 12345);
   assert.equal(round.shards, 4);
+});
+
+test('JSON 存档文件与旧版 base64 存档码都能导入', () => {
+  const s = defaultState();
+  s.gold = 9876;
+  s.story = { unlocked: ['prologue'], read: ['prologue'] };
+
+  const json = exportSaveText(s);
+  assert.ok(json.trimStart().startsWith('{'));
+  assert.equal(JSON.parse(json).gold, 9876);
+
+  const fromJson = importSave(`\n  ${json}\n`);
+  assert.equal(fromJson.gold, 9876);
+  assert.deepEqual(fromJson.story.unlocked, ['prologue']);
+  // 有些编辑器保存的 JSON 带 BOM
+  assert.equal(importSave(`\uFEFF${json}`).gold, 9876);
+
+  // 上一版导出的 base64 存档码仍要能读
+  const fromBase64 = importSave(exportSave(s));
+  assert.equal(fromBase64.gold, 9876);
+  assert.equal(fromBase64.version, 4);
+
+  assert.throws(() => importSave('not a save'));
 });
 
 test('离线收益：超过 60 秒才结算，且有上限', () => {

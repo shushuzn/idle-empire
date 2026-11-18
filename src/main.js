@@ -1,5 +1,5 @@
 import { Game } from './game/engine.js';
-import { load, save, reset, exportSave, importSave, defaultState } from './game/state.js';
+import { load, save, reset, exportSave, exportSaveText, importSave, defaultState } from './game/state.js';
 import { ACHIEVEMENTS, UPGRADES } from './game/data.js';
 import { CHAPTERS } from './game/story.js';
 import { fmt, fmtInt, fmtTime } from './ui/format.js';
@@ -351,6 +351,61 @@ welcome.addEventListener('close', () => {
   flushAchievements();
 });
 
+/* ---------- 安装到桌面 ---------- */
+
+let installPrompt = null;
+
+const isStandalone = () =>
+  window.matchMedia?.('(display-mode: standalone)')?.matches || navigator.standalone === true;
+
+function syncInstall() {
+  const block = $('#install-block');
+  const note = $('#install-note');
+  const button = $('#s-install');
+  if (!block || !note || !button) return;
+  if (isStandalone()) {
+    block.hidden = true;
+    return;
+  }
+  if (installPrompt) {
+    block.hidden = false;
+    note.textContent = '装到主屏幕后可全屏打开，断网也能继续经营。';
+    button.hidden = false;
+    return;
+  }
+  // iOS 不支持安装提示，只能给出手动步骤（iPadOS 默认伪装成 Macintosh UA）
+  const ua = navigator.userAgent;
+  const ios = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  if (ios) {
+    block.hidden = false;
+    note.textContent = '在 Safari 里点「分享」→「添加到主屏幕」，就能像 App 一样全屏打开。';
+    button.hidden = true;
+    return;
+  }
+  block.hidden = true;
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installPrompt = e;
+  syncInstall();
+});
+
+window.addEventListener('appinstalled', () => {
+  installPrompt = null;
+  syncInstall();
+  toast('已安装到桌面', 'good');
+});
+
+$('#s-install').addEventListener('click', async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  const { outcome } = await installPrompt.userChoice;
+  installPrompt = null;
+  syncInstall();
+  if (outcome === 'accepted') toast('正在安装…', 'good');
+});
+
 /* ---------- 设置面板 ---------- */
 
 const dialog = $('#settings');
@@ -373,6 +428,7 @@ function syncSettings() {
   $('#s-story').textContent = `${game.s.story.unlocked.length} / ${CHAPTERS.length}`;
   $('#s-vibrate').checked = hapticsEnabled();
   syncThemePicker();
+  syncInstall();
 }
 
 $('#s-vibrate').addEventListener('change', (e) => {
@@ -384,15 +440,29 @@ $('#s-save').addEventListener('click', () => {
   toast(persist() ? '已存档' : '存档失败', 'good');
 });
 $('#s-export').addEventListener('click', () => {
-  const text = exportSave(game.s);
-  navigator.clipboard?.writeText(text).then(
-    () => toast('存档已复制到剪贴板', 'good'),
-    () => window.prompt('复制下面的存档文本：', text),
-  );
+  try {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([exportSaveText(game.s)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `idle-empire-${stamp}.json`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('存档已导出为 JSON 文件', 'good');
+  } catch {
+    // 极老的浏览器不支持 Blob 下载时退回复制存档码
+    const text = exportSave(game.s);
+    navigator.clipboard?.writeText(text).then(
+      () => toast('存档已复制到剪贴板', 'good'),
+      () => window.prompt('复制下面的存档文本：', text),
+    );
+  }
 });
-$('#s-import').addEventListener('click', () => {
-  const text = window.prompt('粘贴存档文本：');
-  if (!text) return;
+
+function applyImport(text, fileName = '') {
   try {
     const imported = importSave(text);
     Object.keys(game.s).forEach((k) => delete game.s[k]);
@@ -400,9 +470,23 @@ $('#s-import').addEventListener('click', () => {
     game.checkAchievements();
     persist();
     switchTab(activeTab);
-    toast('存档已导入', 'good');
+    syncSettings();
+    toast(fileName ? `已导入 ${fileName}` : '存档已导入', 'good');
   } catch {
     toast('存档格式不对，没能导入', 'bad');
+  }
+}
+
+$('#s-import').addEventListener('click', () => $('#save-file').click());
+$('#save-file').addEventListener('change', async (e) => {
+  const input = e.target;
+  const file = input.files?.[0];
+  input.value = ''; // 清空后可以连续导入同一个文件
+  if (!file) return;
+  try {
+    applyImport(await file.text(), file.name);
+  } catch {
+    toast('文件读不出来，换一个试试', 'bad');
   }
 });
 $('#s-reset').addEventListener('click', () => {
@@ -450,6 +534,10 @@ if (offline) {
 
 // 页面关闭前再存一次，避免丢最后 15 秒
 window.addEventListener('beforeunload', () => persist());
+
+// 断网不影响本地游戏，只给个轻提示
+window.addEventListener('offline', () => toast('网络已断开，游戏照常运行', ''));
+window.addEventListener('online', () => toast('网络已恢复', 'good'));
 
 /* ---------- PWA ---------- */
 

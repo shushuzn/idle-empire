@@ -114,6 +114,12 @@
         <input id="s-vibrate" type="checkbox" checked />
       </label>
 
+      <div class="pref install-block" id="install-block" hidden>
+        <div class="pref-title">安装到桌面</div>
+        <p class="note" id="install-note"></p>
+        <button id="s-install" class="ghost" type="button" hidden>添加到主屏幕</button>
+      </div>
+
       <div class="settings-actions">
         <button id="s-save" class="ghost" type="button">立即存档</button>
         <button id="s-export" class="ghost" type="button">导出存档</button>
@@ -121,10 +127,12 @@
         <button id="s-reset" class="danger" type="button">重置进度</button>
       </div>
 
-      <p class="note">进度存在本机 localStorage，换设备或清浏览器数据会丢；想带走请用「导出存档」。</p>
-      <p class="about">放置帝国 v3.5.0 · <a href="https://github.com/shushuzn/idle-empire" target="_blank" rel="noopener noreferrer">MIT 许可与源码</a></p>
+      <p class="note">进度存在本机 localStorage，换设备或清浏览器数据会丢。「导出存档」会下载一个 JSON 文件，换设备后用「导入存档」选它即可。</p>
+      <p class="about">放置帝国 v3.6.0 · <a href="https://github.com/shushuzn/idle-empire" target="_blank" rel="noopener noreferrer">MIT 许可与源码</a></p>
     </form>
   </dialog>
+
+  <input id="save-file" type="file" accept=".json,.txt,.save,application/json,text/plain" hidden />
 
   <noscript>
     <p style="padding: 24px; font-family: system-ui, sans-serif">这个游戏需要开启 JavaScript 才能玩。</p>

@@ -146,7 +146,13 @@ export function exportSave(state) {
   return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
 }
 
+// 导出成可读的 JSON 文件；导入时同时兼容 JSON 文本与旧的 base64 存档码
+export function exportSaveText(state) {
+  return JSON.stringify(state, null, 2);
+}
+
 export function importSave(text, now = Date.now()) {
-  const raw = JSON.parse(decodeURIComponent(escape(atob(text.trim()))));
+  const trimmed = String(text).replace(/^\uFEFF/, '').trim();
+  const raw = JSON.parse(trimmed.startsWith('{') ? trimmed : decodeURIComponent(escape(atob(trimmed))));
   return normalize(raw, now);
 }

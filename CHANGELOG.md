@@ -3,6 +3,25 @@
 本项目的版本记录，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [3.6.0] - 2026-11-18
+
+### Added
+
+- 设置面板新增「安装到桌面」：支持 `beforeinstallprompt` 的浏览器可一键安装，iOS 给出手动添加到主屏幕的步骤。
+- 存档导出现在会下载 `idle-empire-YYYY-MM-DD.json` 文件；导入支持选择 JSON 文件，也兼容上一版的 base64 存档码。
+- 断网 / 恢复网络时给出轻提示，断网期间游戏照常运行。
+- 应用清单补充 `lang`、`dir`、`categories`、`display_override` 等字段。
+- 存档测试新增 JSON 与 base64 双格式导入用例（总计 44 项）。
+
+### Changed
+
+- 设置里「导出存档 / 导入存档」从剪贴板与 `prompt` 改为文件下载与文件选择。
+- Service Worker 缓存版本升到 `idle-empire-v3.6.0`。
+
+### Fixed
+
+- 存档文件换设备后无法直接导入的问题；JSON 文本即使带首尾空白也能识别。
+
 ## [3.5.0] - 2026-11-18
 
 ### Added
