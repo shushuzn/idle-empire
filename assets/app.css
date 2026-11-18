@@ -842,6 +842,9 @@ button {
 .save-safety-actions .ghost { flex: 1; }
 .ghost:disabled { opacity: 0.45; }
 
+.cache-block { padding: 6px 2px 4px; }
+.cache-block .ghost { width: 100%; margin-top: 8px; }
+
 .feedback-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

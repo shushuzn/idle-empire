@@ -37,7 +37,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      // 只清理本作的旧缓存，同一域名下的其他项目不受影响
+      .then((keys) => Promise.all(keys.filter((key) => key.startsWith('idle-empire-') && key !== CACHE).map((key) => caches.delete(key))))
       .then(() => self.clients.claim()),
   );
 });

@@ -653,6 +653,42 @@ $('#s-reset').addEventListener('click', () => {
   toast('已重置，可在设置里恢复上一份', 'good', 5000);
 });
 
+/* ---------- 清除缓存 ---------- */
+
+const appRoot = new URL('./', location.href).href;
+const canClearCache = 'caches' in window;
+const clearCacheBtn = $('#s-clear-cache');
+if (!canClearCache) {
+  clearCacheBtn.disabled = true;
+  clearCacheBtn.textContent = '当前环境不支持清除缓存';
+}
+clearCacheBtn.addEventListener('click', async () => {
+  if (!canClearCache) return;
+  if (!confirm('清除离线缓存并注销后台脚本？清除后会联网重新加载页面，存档不会被删除。')) return;
+  clearCacheBtn.disabled = true;
+  clearCacheBtn.textContent = '正在清除…';
+  try {
+    // 只删本作的缓存，避免动到同一域名下的其他项目
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((key) => key.startsWith('idle-empire-')).map((key) => caches.delete(key)));
+  } catch {
+    clearCacheBtn.disabled = false;
+    clearCacheBtn.textContent = '清除缓存';
+    showSettingsStatus('清除失败，可以改用浏览器的清理功能', 'bad');
+    return;
+  }
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.filter((reg) => reg.scope.startsWith(appRoot)).map((reg) => reg.unregister()));
+    }
+  } catch {
+    // 注销失败也不影响重新联网加载
+  }
+  showSettingsStatus('缓存已清除，正在重新加载…', 'good');
+  setTimeout(() => location.reload(), 600);
+});
+
 /* ---------- 键盘快捷键 ---------- */
 
 window.addEventListener('keydown', (e) => {
