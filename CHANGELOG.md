@@ -3,6 +3,15 @@
 本项目的版本记录，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+> 历史说明：`v3.0.0`–`v3.9.0` 都在 2026-11-18 发布，早于“同日 `MINOR` 最多 +1”的规则（见 [VERSIONING.md](VERSIONING.md)）。这些编号已经公开，按“已发布版本不回退”保留原号，不做回溯重编；如果按新规重排，`v3.1.0` 之后的同日版本都会落在 `3.1.x`。规则从 `v3.9.0` 起执行，之后同日发布只能用 `PATCH`。
+
+## [Unreleased]
+
+### Docs
+
+- 版本规范新增“同日发布 `MINOR` 每天最多 +1”，并补充第三个常见坑。
+- 修正版本历史：补齐 `v3.0.0`–`v3.2.0` 的发布日期，修正 `v3.3.0`、`v3.5.0` 中 `idle_empire-` 缓存名笔误，并新增历史条目完整性与同日 `MINOR` 上限测试（总计 56 项）。
+
 ## [3.9.0] - 2026-11-18
 
 ### Added
@@ -83,7 +92,7 @@
 
 - 底部标签栏扩为 6 个标签，快捷键增加 `6` 打开剧情。
 - 存档结构升到 v4，新增 `story.unlocked` / `story.read`，旧档自动补默认值。
-- Service Worker 缓存版本升到 `idle_empire-v3.5.0`，预缓存加入 `story.js`。
+- Service Worker 缓存版本升到 `idle-empire-v3.5.0`，预缓存加入 `story.js`。
 
 ## [3.4.0] - 2026-11-18
 
@@ -120,13 +129,13 @@
 ### Changed
 
 - 重画 favicon / PWA 图标（金色城堡），192/512/maskable 三张 PNG 由同一份 SVG 渲染。
-- Service Worker 缓存版本升到 `idle_empire-v3.3.0`，预缓存加入 `icons.js`。
+- Service Worker 缓存版本升到 `idle-empire-v3.3.0`，预缓存加入 `icons.js`。
 
 ### Fixed
 
 - 已购买的升级仍显示购买按钮（`.buy[hidden]` 被 `display: grid` 覆盖）。
 
-## [3.2.0]
+## [3.2.0] - 2026-11-18
 
 ### Added
 
@@ -138,7 +147,7 @@
 - 浅色主题由 `<head>` 内联脚本在样式表之前确定，刷新不闪黑屏。
 - `theme-color` 随主题切换。
 
-## [3.1.0]
+## [3.1.0] - 2026-11-18
 
 ### Added
 
@@ -154,7 +163,7 @@
 
 - 视图派发的 `toast` 事件没人接，Boss 击杀、转生、商店升级没有提示。
 
-## [3.0.0]
+## [3.0.0] - 2026-11-18
 
 ### Added
 

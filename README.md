@@ -31,7 +31,7 @@ npm run dev          # python3 -m http.server 5173
 打开 http://127.0.0.1:5173 。也可以直接双击 `index.html`，但 ES module 在部分浏览器的 `file://` 下会被拦截，建议用本地服务。
 
 ```bash
-npm test             # node --test tests/*.test.js，54 项
+npm test             # node --test tests/*.test.js，56 项
 ```
 
 需要 Node.js 20+（CI 使用 22）。
@@ -113,7 +113,7 @@ tests/                    node:test 用例（数值、存档、引擎、主题�
 
 ## 版本与文档
 
-- [VERSIONING.md](VERSIONING.md)：版本号规则（什么时候升 `MAJOR` / `MINOR` / `PATCH`）与发布流程
+- [VERSIONING.md](VERSIONING.md)：版本号规则（什么时候升 `MAJOR` / `MINOR` / `PATCH`，同日 `MINOR` 最多 +1）与发布流程
 - [CHANGELOG.md](CHANGELOG.md)：完整版本记录（当前 v3.9.0）
 - [CONTRIBUTING.md](CONTRIBUTING.md)：目录约定、代码风格、提交与 PR 流程
 - [SECURITY.md](SECURITY.md)：漏洞报告渠道与攻击面说明
