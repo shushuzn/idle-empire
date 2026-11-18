@@ -225,7 +225,7 @@ test('JSON 存档文件与旧版 base64 存档码都能导入', () => {
 
 test('不是存档的 JSON 会被拒绝', () => {
   // 选错文件时不能当成空存档把进度清掉
-  const wrong = JSON.stringify({ name: 'idle-empire', version: '3.7.0' });
+  const wrong = JSON.stringify({ name: 'idle-empire', version: '3.1.6' });
   assert.throws(() => importSave(wrong), (error) => error.code === 'not-a-save');
   assert.throws(() => importSave('[1, 2, 3]'), (error) => error.code === 'not-a-save');
 

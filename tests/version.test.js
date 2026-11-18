@@ -43,8 +43,6 @@ test('版本历史条目完整，缓存名书写一致', () => {
 // 规范见 VERSIONING.md：同一天最多只有一个 MINOR 版本（MAJOR 不受限）
 test('同一天最多一个 MINOR 版本', () => {
   const policyDate = '2026-11-18';
-  const baseline = [3, 9, 0];
-  const cmp = (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
   const entries = [...read('CHANGELOG.md').matchAll(/^## \[(\d+)\.(\d+)\.(\d+)\] - (\d{4}-\d{2}-\d{2})$/gm)]
     .map(([, major, minor, patch, date]) => ({ version: [+major, +minor, +patch], date }));
 
@@ -52,7 +50,6 @@ test('同一天最多一个 MINOR 版本', () => {
   for (const { version, date } of entries) {
     if (date < policyDate) continue;
     if (version[1] === 0 && version[2] === 0) continue; // MAJOR
-    if (date === policyDate && cmp(version, baseline) < 0) continue; // 规则建立前
     if (version[2] !== 0) continue;
     counts.set(date, (counts.get(date) || 0) + 1);
   }
