@@ -74,6 +74,7 @@ const ASSETS = [
   './src/ui/theme.js',
   './src/ui/floaters.js',
   './src/ui/icons.js',
+  './src/ui/feedback.js',
   './src/game/balance.js',
   './src/game/data.js',
   './src/game/engine.js',
