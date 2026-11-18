@@ -4,6 +4,26 @@
   "private": true,
   "type": "module",
   "description": "放置/增量游戏：建筑、升级、Boss、成就、转生。纯静态，无构建步骤。",
+  "license": "MIT",
+  "author": "shushuzn",
+  "homepage": "https://shushuzn.github.io/idle-empire/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shushuzn/idle-empire.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shushuzn/idle-empire/issues"
+  },
+  "keywords": [
+    "idle-game",
+    "incremental-game",
+    "vanilla-js",
+    "pwa",
+    "github-pages"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "python3 -m http.server 5173",
     "start": "python3 -m http.server 5173",

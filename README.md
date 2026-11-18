@@ -99,3 +99,17 @@ npm test        # node --test tests/*.test.js，29 项
 - **应用图标重画**：favicon / PWA 图标改成金色城堡线性标志，192/512/maskable 三张 PNG 由同一份 SVG 渲染，maskable 版留足安全区。
 - **静态占位**：HTML 里用 `data-icon` 占位，启动时统一换成 SVG，后续改图标不用动结构。
 - **缓存升级**：Service Worker 缓存版本提到 `v3.3.0`，并把 `icons.js` 加进预缓存清单。
+- **工程文件**：补了 LICENSE（MIT）、CHANGELOG、CONTRIBUTING、SECURITY、CODE_OF_CONDUCT、`.editorconfig`、`.gitattributes`、`.nvmrc` 和 GitHub issue/PR 模板。
+
+## 相关文档
+
+- [CHANGELOG.md](CHANGELOG.md)：版本记录
+- [CONTRIBUTING.md](CONTRIBUTING.md)：目录约定、代码风格、提交与 PR 流程
+- [SECURITY.md](SECURITY.md)：漏洞报告渠道与项目攻击面说明
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)：协作行为准则
+
+## 许可证
+
+[MIT](LICENSE) © 2026 shushuzn
+
+游戏代码、自绘图标和样式都可以自由使用、修改、分发，保留版权声明即可。
