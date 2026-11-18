@@ -811,7 +811,7 @@ if ('serviceWorker' in navigator && swCapable) {
     };
 
     try {
-      const reg = await navigator.serviceWorker.register('./sw.js');
+      const reg = await navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
       if (reg.waiting) notifyUpdate();
       reg.addEventListener('updatefound', () => {
         const installing = reg.installing;

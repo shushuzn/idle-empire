@@ -104,7 +104,8 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    fetch(request)
+    // no-cache：每次都向服务器确认，避免浏览器 HTTP 缓存把上一版 CSS/JS 当成新的
+    fetch(request, { cache: 'no-cache' })
       .then((response) => {
         if (response.ok) {
           const copy = response.clone();
