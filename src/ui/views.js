@@ -282,6 +282,8 @@ export function upgradesView(game) {
     btn.addEventListener('click', () => {
       selectedId = node.u.id;
       update();
+      // 小屏上详情面板可能在折叠区外，点节点后把它带进视野
+      detail.scrollIntoView({ block: 'nearest' });
     });
     return { ...node, btn };
   });

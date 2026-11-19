@@ -190,6 +190,12 @@ const goldEl = $('#gold');
 const gpsEl = $('#gps');
 const shardsEl = $('#shards');
 const tapGainEl = $('#tap-gain');
+
+// 数字没变就别碰 DOM：产能、碎片、点击收益大部分时间都是同一个值
+const setText = (node, text) => {
+  if (node.textContent !== text) node.textContent = text;
+};
+
 const tapBtn = $('#tap');
 
 tapBtn.addEventListener('click', (e) => {
@@ -389,11 +395,10 @@ function frame(now) {
     persist(true);
   }
 
-  goldEl.textContent = fmt(game.s.gold);
-  gpsEl.textContent = `+${fmt(B.totalPerSecond(game.s))}/秒`;
-  shardsEl.textContent = fmtInt(game.s.shards);
-  tapGainEl.textContent = fmt(B.clickPower(game.s).perClick);
-
+  setText(goldEl, fmt(game.s.gold));
+  setText(gpsEl, `+${fmt(B.totalPerSecond(game.s))}/秒`);
+  setText(shardsEl, fmtInt(game.s.shards));
+  setText(tapGainEl, fmt(B.clickPower(game.s).perClick));
   viewTimer += dt;
   if (viewTimer >= VIEW_INTERVAL) {
     viewTimer = 0;
