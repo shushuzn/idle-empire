@@ -23,6 +23,8 @@ test('主内容用 main 地标，标签面板与标签列表结构合法', () =>
   assert.equal((html.match(/<main\b/g) || []).length, 1);
   assert.match(html, /<main class="view-wrap">\s*<div id="view" class="view" role="tabpanel"[^>]*tabindex="0"><\/div>\s*<\/main>/);
   assert.match(html, /<nav class="tabbar" aria-label="主导航">\s*<div id="tabbar" class="tablist" role="tablist"><\/div>\s*<\/nav>/);
+  // 标签列表排在面板之前，键盘用户可以先用方向键切页，再进入内容
+  assert.ok(html.indexOf('<nav class="tabbar"') < html.indexOf('<main class="view-wrap">'));
   // tabpanel 不能再套在 main 上，否则 axe 会报 aria-allowed-role
   assert.doesNotMatch(html, /<main[^>]*role="tabpanel"/);
 });

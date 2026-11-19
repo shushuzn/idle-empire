@@ -248,11 +248,13 @@ for (const [id, iconName, label] of TABS) {
   btn.setAttribute('role', 'tab');
   btn.setAttribute('aria-selected', 'false');
   btn.setAttribute('aria-controls', 'view');
+  btn.setAttribute('aria-label', label);
   btn.innerHTML = `<span class="tab-icon" aria-hidden="true">${iconMarkup(iconName)}</span><span class="tab-label">${label}</span>`;
   attachIconArt(btn.querySelector('.tab-icon'), iconName);
   const badge = document.createElement('span');
   badge.className = 'tab-badge';
   badge.hidden = true;
+  badge.setAttribute('aria-hidden', 'true');
   btn.append(badge);
   badges[id] = badge;
   btn.addEventListener('click', () => switchTab(id));
@@ -312,11 +314,15 @@ tabbar.addEventListener('keydown', (e) => {
   if (btn) btn.focus();
 });
 
-function setBadge(id, text) {
+function setBadge(id, text, label = '') {
   const node = badges[id];
   if (!node) return;
   node.textContent = text;
   node.hidden = !text;
+  const btn = node.closest('.tab');
+  if (!btn) return;
+  const name = label ? `${TAB_LABELS[id]}，${label}` : TAB_LABELS[id];
+  if (btn.getAttribute('aria-label') !== name) btn.setAttribute('aria-label', name);
 }
 
 function updateBadges() {
@@ -324,10 +330,19 @@ function updateBadges() {
   for (const u of UPGRADES) {
     if (game.upgradeAvailable(u) === 'ok' && game.s.gold >= u.cost) affordable++;
   }
-  setBadge('upgrades', affordable > 0 ? (affordable > 9 ? '9+' : String(affordable)) : '');
-  setBadge('prestige', game.prestigeGain() > 0 ? '!' : '');
+  setBadge(
+    'upgrades',
+    affordable > 0 ? (affordable > 9 ? '9+' : String(affordable)) : '',
+    affordable > 0 ? `${affordable} 项升级可购买` : '',
+  );
+  const canPrestige = game.prestigeGain() > 0;
+  setBadge('prestige', canPrestige ? '!' : '', canPrestige ? '现在可以转生' : '');
   const unread = game.unreadStory().length;
-  setBadge('story', unread > 0 ? (unread > 9 ? '9+' : String(unread)) : '');
+  setBadge(
+    'story',
+    unread > 0 ? (unread > 9 ? '9+' : String(unread)) : '',
+    unread > 0 ? `${unread} 篇剧情未读` : '',
+  );
 }
 
 /* ---------- 开始页 ---------- */

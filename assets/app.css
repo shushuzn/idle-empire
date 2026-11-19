@@ -144,6 +144,8 @@ button {
   position: relative;
   z-index: 1;
   display: grid;
+  /* 标签栏在 DOM 里排在内容前，键盘可以更快到达；视觉顺序仍靠 grid 区域固定在底部 */
+  grid-template-areas: 'hud' 'tap' 'view' 'nav';
   grid-template-rows: auto auto 1fr auto;
   height: 100dvh;
   max-width: 640px;
@@ -151,6 +153,11 @@ button {
   padding-top: env(safe-area-inset-top);
   background: linear-gradient(180deg, color-mix(in srgb, var(--bg-2) 55%, transparent), transparent 40%);
 }
+
+.app > .hud { grid-area: hud; }
+.app > .tap { grid-area: tap; }
+.app > .view-wrap { grid-area: view; }
+.app > .tabbar { grid-area: nav; }
 
 /* ---------- 顶部 ---------- */
 
@@ -312,6 +319,11 @@ button {
 [data-theme='light'] .first-hint {
   background: color-mix(in srgb, var(--gold) 9%, #fffdf7);
   color: var(--ink-2);
+}
+
+/* 浅色下金色小字压在浅底上不够 4.5:1，压深一点 */
+[data-theme='light'] .first-hint b {
+  color: color-mix(in srgb, var(--gold) 78%, var(--ink));
 }
 
 .row { display: flex; align-items: center; gap: 10px; }
@@ -1166,6 +1178,24 @@ button {
 
 .pref { padding: 10px 2px 4px; }
 .pref-title { font-size: 14px; margin-bottom: 8px; }
+
+/* 键盘说明只在有鼠标/触控板的设备出现，手机上不占位置 */
+.shortcuts { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .shortcuts { display: block; }
+}
+
+kbd {
+  font: inherit;
+  font-size: 10.5px;
+  line-height: 1.4;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--card-2);
+  color: var(--ink-2);
+}
 
 .theme-picker {
   display: grid;
