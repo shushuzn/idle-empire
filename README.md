@@ -33,7 +33,7 @@ npm run dev          # python3 -m http.server 5173
 打开 http://127.0.0.1:5173 。也可以直接双击 `index.html`，但 ES module 在部分浏览器的 `file://` 下会被拦截，建议用本地服务。
 
 ```bash
-npm test             # node --test tests/*.test.js，95 项
+npm test             # node --test tests/*.test.js，97 项
 ```
 
 需要 Node.js 20+（CI 使用 22）；`npm run dev` 会用 Python 3 起一个静态文件服务。
@@ -66,7 +66,7 @@ npm test             # node --test tests/*.test.js，95 项
 项目刻意保持小而直白，没有框架和状态库：
 
 - **数值层是纯函数**（`src/game/balance.js`）：成本、产能、点击收益、回响、Boss 伤害与护盾/二阶段、离线结算、碎片计算都只依赖传入参数，公式由单元测试锁死。
-- **单一状态对象 + 一个 rAF 循环**（`src/main.js`）：顶部金币、产能与点击收益逐帧刷新，整页视图按 10Hz 增量更新，只改需要变的节点，不重建 DOM，切页和连点不掉帧，滚动位置也不会跳。
+- **单一状态对象 + 一个 rAF 循环**（`src/main.js`）：模拟逐帧推进，顶部数字与整页视图都按 10Hz 增量更新，写入前先比对旧值，只改真正变化的节点；切页和连点不掉帧，滚动位置也不会跳。
 - **加成分类计算**：building / click / boss / global / offline 五类各自只乘一次，避免旧版重复相乘导致的数值虚高。
 - **剧情是数据**（`src/game/story.js`）：每篇档案自带解锁条件，只读状态；解锁结果写进存档，转生清空进度也不会回退。
 - **存档集中处理**（`src/game/state.js`）：`normalize()` 负责旧字段迁移、越界值夹取和坏档兜底；导出为带版本号的 JSON 文件，导入同时接受 JSON 与旧的 base64 存档码。覆盖类操作前把上一份写进独立备份键，解析失败的原档也会原样保留。

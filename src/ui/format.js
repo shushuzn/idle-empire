@@ -12,8 +12,9 @@ export function fmt(value, digits = 2) {
   if (n < 0) return '-' + fmt(-n, digits);
   if (n < 1000) {
     const rounded = Math.floor(n * 100) / 100;
-    if (Number.isInteger(rounded)) return String(rounded);
-    return trimZeros(rounded.toFixed(n < 10 ? digits : 0));
+    const text = trimZeros(rounded.toFixed(n < 10 ? digits : 0));
+    // 999.99 四舍五入后会变成没有单位的 1000，直接进位成 1K
+    return text === '1000' ? '1K' : text;
   }
   let tier = 0;
   let v = n;
@@ -21,7 +22,13 @@ export function fmt(value, digits = 2) {
     v /= 1000;
     tier++;
   }
-  return `${trimZeros(v.toFixed(v < 10 ? digits : 1))}${UNITS[tier]}`;
+  let rounded = Number(v.toFixed(v < 10 ? digits : 1));
+  // 999.96K 这类值四舍五入后到 1000，要再升一级单位，避免出现 1000K
+  if (rounded >= 1000 && tier < UNITS.length - 1) {
+    rounded /= 1000;
+    tier++;
+  }
+  return `${trimZeros(rounded.toFixed(rounded < 10 ? digits : 1))}${UNITS[tier]}`;
 }
 
 export function fmtInt(n) {

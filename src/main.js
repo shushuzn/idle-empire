@@ -1,6 +1,6 @@
 import { Game } from './game/engine.js';
 import {
-  load, save, reset, exportSave, exportSaveText, importSave, defaultState,
+  load, save, reset, exportSave, exportSaveText, importSave, defaultState, normalize,
   hasProgress, saveBackup, loadBackup, loadBrokenSave, SAVE_KEY,
 } from './game/state.js';
 import { ACHIEVEMENTS, UPGRADES } from './game/data.js';
@@ -37,7 +37,8 @@ const { state, offline, migrated, corrupt, hasSave } = load();
 
 // 新档立刻建立存档，领过离线收益也马上写回，避免刷新一次重复领取。
 // 已有存档且没有新收益时不在启动阶段写：第二个标签页可能拿着旧快照，一进来就覆盖正在玩的那份。
-if (!hasSave || offline || migrated) save(state);
+let storageFailed = false;
+if (!hasSave || offline || migrated) storageFailed = !save(state);
 
 // 离线结算弹窗打开时先把成就提示攒起来，关掉再一次性弹，避免被遮挡
 const pendingAchievements = [];
@@ -214,6 +215,7 @@ const tapBtn = $('#tap');
 tapBtn.addEventListener('click', (e) => {
   const { perClick } = B.clickPower(game.s);
   game.tap();
+  updateHud();
   tapBtn.classList.remove('pressed');
   void tapBtn.offsetWidth;
   tapBtn.classList.add('pressed');
@@ -221,6 +223,14 @@ tapBtn.addEventListener('click', (e) => {
   const at = e.clientX || e.clientY ? { x: e.clientX, y: e.clientY } : centerOf(tapBtn);
   floatText(`+${fmt(perClick)}`, at.x, at.y - 10, 'gold');
 });
+
+// 顶部数字跟着 10Hz 主界面一起刷新；高收入时每帧重写金币文本只会白烧电
+function updateHud() {
+  setText(goldEl, fmt(game.s.gold));
+  setText(gpsEl, `+${fmt(B.totalPerSecond(game.s))}/秒`);
+  setText(shardsEl, fmtInt(game.s.shards));
+  setText(tapGainEl, fmt(B.clickPower(game.s).perClick));
+}
 
 /* ---------- 标签页 ---------- */
 
@@ -251,6 +261,12 @@ function writeTabHash(id) {
 // 视图内部派发的 toast 事件（Boss 击杀、转生、商店升级）在这里统一接住
 viewHost.addEventListener('toast', (e) => {
   if (e.detail?.text) toast(e.detail.text, e.detail.kind || '', e.detail.ms);
+});
+
+// 购买、攻击这类点击会立刻改变金币与列表状态，不用等下一个 100ms 节拍
+viewHost.addEventListener('click', () => {
+  updateHud();
+  if (currentView) currentView.update();
 });
 
 for (const [id, iconName, label] of TABS) {
@@ -363,10 +379,11 @@ const startBtn = $('#start-btn');
 const appEl = $('.app');
 
 // 有存档就说「继续」，上次的成绩也一并写出来；没进度的旧档也算继续
-if (hasSave) {
+function updateStartMeta() {
   startBtn.textContent = '继续帝国';
-  $('#start-meta').textContent = `上次：${fmt(state.gold)} 金币 · 转生 ${fmtInt(state.rebirths)} 次 · v0.2.0`;
+  $('#start-meta').textContent = `上次：${fmt(game.s.gold)} 金币 · 转生 ${fmtInt(game.s.rebirths)} 次 · v0.2.0`;
 }
+if (hasSave) updateStartMeta();
 // 开始页盖着时，底下的界面不参与键盘焦点
 appEl.inert = true;
 
@@ -377,6 +394,7 @@ function enterGame() {
   // 用户点开始后申请持久化，浏览器更容易批准，也能减少被清理的概率
   requestPersistentStorage();
   appEl.inert = false;
+  updateHud();
   startScreen?.classList.add('gone');
   setTimeout(() => startScreen?.remove(), 520);
   if (pendingWelcome) {
@@ -430,13 +448,10 @@ function frame(now) {
     persist(true);
   }
 
-  setText(goldEl, fmt(game.s.gold));
-  setText(gpsEl, `+${fmt(B.totalPerSecond(game.s))}/秒`);
-  setText(shardsEl, fmtInt(game.s.shards));
-  setText(tapGainEl, fmt(B.clickPower(game.s).perClick));
   viewTimer += dt;
   if (viewTimer >= VIEW_INTERVAL) {
     viewTimer = 0;
+    updateHud();
     if (currentView) currentView.update();
   }
 
@@ -493,8 +508,18 @@ function notifyOtherTab() {
 
 window.addEventListener('storage', (e) => {
   if (e.key !== SAVE_KEY || !e.newValue) return;
-  // 还没进游戏也要记下来：这个标签页手里的状态可能已经旧了
-  if (!entered || document.visibilityState === 'hidden') otherTabPending = true;
+  // 还停在开始页：直接用另一个标签页刚写下的存档，避免点「继续」后拿旧快照覆盖它
+  if (!entered) {
+    try {
+      applyState(normalize(JSON.parse(e.newValue)));
+      updateStartMeta();
+    } catch {
+      /* 对方写坏了也轮不到这里处理，保留手里的状态 */
+    }
+    otherTabPending = true;
+    return;
+  }
+  if (document.visibilityState === 'hidden') otherTabPending = true;
   else notifyOtherTab();
 });
 
@@ -508,6 +533,8 @@ document.addEventListener('visibilitychange', () => {
 let hiddenAt = 0;
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
+    // 还停在开始页的标签页拿着的是旧快照，关闭/切走时不要写回去覆盖正在玩的那份
+    if (!entered) return;
     hiddenAt = Date.now();
     persist();
   } else if (hiddenAt) {
@@ -516,8 +543,8 @@ document.addEventListener('visibilitychange', () => {
     if (seconds > 1) settle(seconds, '离开');
   }
 });
-window.addEventListener('pagehide', () => persist());
-document.addEventListener('freeze', () => persist());
+window.addEventListener('pagehide', () => { if (entered) persist(); });
+document.addEventListener('freeze', () => { if (entered) persist(); });
 
 // 切到后台期间 rAF 不跑，回到前台时补算这段时间的产出
 function settle(seconds, label) {
@@ -675,13 +702,18 @@ function snapshotProgress() {
 }
 
 function adoptState(next) {
-  Object.keys(game.s).forEach((k) => delete game.s[k]);
-  Object.assign(game.s, next);
+  applyState(next);
   game.checkAchievements();
   game.checkStory();
   persist();
   switchTab(activeTab);
   syncSettings();
+  updateHud();
+}
+
+function applyState(next) {
+  Object.keys(game.s).forEach((k) => delete game.s[k]);
+  Object.assign(game.s, next);
 }
 
 function downloadText(text, filename, type = 'application/json') {
@@ -806,6 +838,7 @@ $('#s-reset').addEventListener('click', () => {
   Object.assign(game.s, defaultState());
   persist();
   switchTab('buildings');
+  updateHud();
   dialog.close();
   toast('已重置，可在设置里恢复上一份', 'good', 5000);
 });
@@ -869,6 +902,9 @@ window.addEventListener('keydown', (e) => {
 
 /* ---------- 离线 / 迁移 / 首次进入 ---------- */
 
+if (storageFailed) {
+  toast('浏览器存储不可用，进度无法保存；可先用「导出存档」留一份备份', 'bad', 12000);
+}
 if (corrupt) {
   toast('上次的存档读不出来，原始内容已保留', 'bad', 10000, { label: '导出', onClick: exportBrokenSave });
 } else if (offline) {
@@ -883,7 +919,7 @@ if (corrupt) {
 }
 
 // 页面关闭前再存一次，避免丢最后 15 秒
-window.addEventListener('beforeunload', () => persist());
+window.addEventListener('beforeunload', () => { if (entered) persist(); });
 
 // 断网不影响本地游戏，只给个轻提示
 window.addEventListener('offline', () => toast('网络已断开，游戏照常运行', ''));

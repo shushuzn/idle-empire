@@ -1,5 +1,5 @@
 // 存档：创建、迁移、读写、离线结算
-import { BUILDINGS, UPGRADES, SHOP, BOSSES } from './data.js';
+import { BUILDINGS, UPGRADES, SHOP, BOSSES, ACHIEVEMENTS } from './data.js';
 import { CHAPTERS } from './story.js';
 import { offlineEarnings } from './balance.js';
 
@@ -13,6 +13,7 @@ const LEGACY_BOSS_IDS = [
   'goblin', 'troll', 'dragon', 'demon', 'titan', 'void', 'guardian', 'god',
   'chaos', 'eye', 'darklord', 'wraith', 'shatterer', 'tyrant', 'emperor',
 ];
+const ACHIEVEMENT_IDS = new Set(ACHIEVEMENTS.map((a) => a.id));
 
 export function defaultState(now = Date.now()) {
   return {
@@ -86,7 +87,7 @@ export function normalize(raw, now = Date.now()) {
   s.upgrades = [...new Set(owned.filter((id) => valid.has(id)))];
 
   s.achievements = Array.isArray(raw.achievements)
-    ? [...new Set(raw.achievements.filter((id) => typeof id === 'string'))]
+    ? [...new Set(raw.achievements.filter((id) => typeof id === 'string' && ACHIEVEMENT_IDS.has(id)))]
     : [];
 
   // 剧情：只保留已知章节，已读必须是已解锁的子集

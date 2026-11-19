@@ -24,6 +24,34 @@ test('最大可买数量不会超支', () => {
   assert.equal(maxAffordable(mine, 0, 9).count, 0);
 });
 
+test('封闭式最大购买与逐座试算结果一致', () => {
+  const loop = (building, owned, gold, limit = 500) => {
+    let count = 0;
+    let total = 0;
+    while (count < limit) {
+      const next = costOf(building, owned + count);
+      if (total + next > gold) break;
+      total += next;
+      count++;
+    }
+    return { count, cost: total };
+  };
+  const golds = [0, 9, 10, 21, 1e3, 1e6, 1e9, 1e12, 1e18, 1e30];
+  for (const building of [BUILDINGS[0], BUILDINGS[3], BUILDINGS.at(-1)]) {
+    for (const owned of [0, 1, 10, 50, 120, 300]) {
+      for (const gold of golds) {
+        for (const limit of [1, 3, 500]) {
+          assert.deepEqual(
+            maxAffordable(building, owned, gold, limit),
+            loop(building, owned, gold, limit),
+            `${building.name} owned=${owned} gold=${gold} limit=${limit}`,
+          );
+        }
+      }
+    }
+  }
+});
+
 test('升级只影响对应类型，全局升级额外叠加', () => {
   const s = defaultState();
   s.upgrades = ['click1', 'speed1', 'global1'];

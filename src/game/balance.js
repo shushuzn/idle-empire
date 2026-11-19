@@ -29,26 +29,33 @@ export function bulkCost(building, owned, count) {
 }
 
 export function maxAffordable(building, owned, gold, limit = 500) {
-  let count = 0;
-  let total = 0;
+  const first = costOf(building, owned);
+  if (limit < 1 || !(gold >= first)) return { count: 0, cost: 0 };
+  // 等比数列求和反解一个估计值，避免高价建筑在「最大」模式下逐座试算
+  const estimate = Math.log1p((gold * (GROWTH - 1)) / first) / Math.log(GROWTH);
+  let count = Math.min(limit, Math.max(1, Math.floor(estimate)));
+  let total = bulkCost(building, owned, count);
+  while (count > 1 && total > gold) {
+    count--;
+    total -= costOf(building, owned + count);
+  }
   while (count < limit) {
-    const next = costOf(building, owned + count);
-    if (total + next > gold) break;
-    total += next;
+    const next = total + costOf(building, owned + count);
+    if (next > gold) break;
+    total = next;
     count++;
   }
   return { count, cost: total };
 }
 
-function ownedUpgrades(state) {
-  return new Set(state.upgrades);
+function hasUpgrade(state, id) {
+  return state.upgrades.includes(id);
 }
 
 export function upgradeBonus(state, type) {
   let total = 0;
-  const owned = ownedUpgrades(state);
   for (const u of UPGRADES) {
-    if (owned.has(u.id) && u.effect[0] === type) total += u.effect[1];
+    if (u.effect[0] === type && hasUpgrade(state, u.id)) total += u.effect[1];
   }
   return total;
 }

@@ -22,6 +22,14 @@ test('fmt 用 K/M/B 等后缀缩写大数', () => {
   assert.equal(fmt(1e12), '1T');
 });
 
+test('fmt 在四舍五入进位时换到更大的单位', () => {
+  assert.equal(fmt(999.99), '1K');
+  assert.equal(fmt(999_999), '1M');
+  assert.equal(fmt(999_999_999), '1B');
+  assert.equal(fmt(999_999_999_999), '1T');
+  assert.equal(fmt(9.999e6), '10M');
+});
+
 test('fmt 处理负数、无穷与非法值', () => {
   assert.equal(fmt(-1234), '-1.23K');
   assert.equal(fmt(Infinity), '∞');

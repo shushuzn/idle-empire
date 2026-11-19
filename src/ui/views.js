@@ -13,6 +13,33 @@ function el(tag, className, text) {
   return node;
 }
 
+// 10Hz 刷新时大部分数字并没有变；先比对再写，避免整页反复产生 DOM 变更
+function setText(node, value) {
+  const text = String(value);
+  if (node.textContent !== text) node.textContent = text;
+}
+
+function setWidth(node, ratio) {
+  const width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
+  if (node.style.width !== width) node.style.width = width;
+}
+
+function setAttr(node, name, value) {
+  if (node.getAttribute(name) !== value) node.setAttribute(name, value);
+}
+
+function setHidden(node, hidden) {
+  if (node.hidden !== hidden) node.hidden = hidden;
+}
+
+function setDisabled(node, disabled) {
+  if (node.disabled !== disabled) node.disabled = disabled;
+}
+
+function setClass(node, name) {
+  if (node.className !== name) node.className = name;
+}
+
 // 统一的图标格子：颜色由 data-tone 决定，具体映射在 app.css
 function iconTile(name, tone, className = 'ico', art = ICON_ART[name] || '') {
   const node = el('div', className);
@@ -199,17 +226,17 @@ export function buildingsView(game) {
     let ownedTotal = 0;
     for (const c of cards) {
       const unlocked = game.buildingUnlocked(c.b);
-      c.card.hidden = !unlocked;
+      setHidden(c.card, !unlocked);
       if (!unlocked) continue;
       visible++;
       const count = game.owned(c.b.id);
       ownedTotal += count;
       const { count: buyCount, cost } = game.bulk(c.b, game.s.buyMode);
-      c.owned.textContent = `×${fmtInt(count)}`;
-      c.prod.textContent = `每个 +${fmt(B.buildingRate(c.b, game.s))}/秒`;
-      c.buyLabel.textContent = buyCount > 0 ? `购买 ×${buyCount}` : '金币不足';
-      c.buyCost.textContent = `${fmt(cost)} 金币`;
-      c.buy.disabled = buyCount < 1 || game.s.gold < cost;
+      setText(c.owned, `×${fmtInt(count)}`);
+      setText(c.prod, `每个 +${fmt(B.buildingRate(c.b, game.s))}/秒`);
+      setText(c.buyLabel, buyCount > 0 ? `购买 ×${buyCount}` : '金币不足');
+      setText(c.buyCost, `${fmt(cost)} 金币`);
+      setDisabled(c.buy, buyCount < 1 || game.s.gold < cost);
       c.card.classList.toggle('affordable', game.s.gold >= cost && buyCount > 0);
 
       const tier = B.resonanceTier(game.s, c.b.id);
@@ -224,16 +251,16 @@ export function buildingsView(game) {
           ? `回响 ${B.RESONANCE_LABELS[tier - 1]} +${bonus}% · 再买 ${fmtInt(next.need)} 座到 ${next.label}`
           : `再买 ${fmtInt(next.need)} 座解锁回响 I`
         : `回响 IV +${bonus}%`;
-      if (c.resoText.textContent !== label) c.resoText.textContent = label;
-      c.reso.title = label;
-      c.reso.setAttribute('aria-label', label);
+      setText(c.resoText, label);
+      setAttr(c.reso, 'title', label);
+      setAttr(c.reso, 'aria-label', label);
       c.reso.classList.toggle('has-echo', tier > 0);
     }
     const layers = B.resonanceLayers(game.s);
     const globalBonus = Math.round(B.resonanceGlobalBonus(game.s) * 100);
-    summary.textContent = `${visible} 种建筑 · 总产出 ${fmt(B.production(game.s))} /秒 · 点击 +${fmt(B.clickPower(game.s).perClick)}${layers ? ` · 回响 ${layers} 层${globalBonus ? `（全局 +${globalBonus}%）` : ''}` : ''}`;
-    hint.hidden = ownedTotal > 0;
-    resoHint.hidden = ownedTotal === 0 || Boolean(game.s.tutorialSeen);
+    setText(summary, `${visible} 种建筑 · 总产出 ${fmt(B.production(game.s))} /秒 · 点击 +${fmt(B.clickPower(game.s).perClick)}${layers ? ` · 回响 ${layers} 层${globalBonus ? `（全局 +${globalBonus}%）` : ''}` : ''}`);
+    setHidden(hint, ownedTotal > 0);
+    setHidden(resoHint, ownedTotal === 0 || Boolean(game.s.tutorialSeen));
   }
 
   return { el: root, update };
@@ -371,10 +398,10 @@ export function upgradesView(game) {
     const prev = u.req ? UPGRADES.find((x) => x.id === u.req) : null;
     const prevMissing = Boolean(u.req && prev && !game.s.upgrades.includes(u.req));
     const locked = state === 'locked';
-    detailName.textContent = u.name;
-    detailDesc.textContent = u.desc;
-    detailState.className = `utree-state ${state}`;
-    detailState.textContent = state === 'owned' ? '已购买' : locked ? '未解锁' : `${fmt(u.cost)} 金币`;
+    setText(detailName, u.name);
+    setText(detailDesc, u.desc);
+    setClass(detailState, `utree-state ${state}`);
+    setText(detailState, state === 'owned' ? '已购买' : locked ? '未解锁' : `${fmt(u.cost)} 金币`);
 
     let needText = '';
     if (locked) {
@@ -388,15 +415,15 @@ export function upgradesView(game) {
         needText = `需要拥有 ${count} 座${building?.name || bid}`;
       }
     }
-    detailNeed.textContent = needText;
-    detailNeed.hidden = !needText;
+    setText(detailNeed, needText);
+    setHidden(detailNeed, !needText);
     // 锁定：能跳前置就跳；按建筑或回响解锁的只能给出条件
-    detailJump.hidden = !(locked && prevMissing);
-    detailJump.textContent = locked && prevMissing ? `先点亮「${prev.name}」` : '';
-    detailBuy.hidden = state === 'owned' || locked;
-    detailBuy.disabled = state !== 'ok' || game.s.gold < u.cost;
-    detailBuyLabel.textContent = '购买';
-    detailBuyCost.textContent = `${fmt(u.cost)} 金币`;
+    setHidden(detailJump, !(locked && prevMissing));
+    setText(detailJump, locked && prevMissing ? `先点亮「${prev.name}」` : '');
+    setHidden(detailBuy, state === 'owned' || locked);
+    setDisabled(detailBuy, state !== 'ok' || game.s.gold < u.cost);
+    setText(detailBuyLabel, '购买');
+    setText(detailBuyCost, `${fmt(u.cost)} 金币`);
   }
 
   detailJump.addEventListener('click', () => {
@@ -438,7 +465,8 @@ export function upgradesView(game) {
       n.btn.classList.toggle('is-ready', state === 'ok');
       n.btn.classList.toggle('is-affordable', affordable);
       n.btn.classList.toggle('is-locked', state === 'locked');
-      n.btn.setAttribute(
+      setAttr(
+        n.btn,
         'aria-label',
         `${n.u.name}：${state === 'owned' ? '已购买' : state === 'locked' ? '未解锁' : `${fmt(n.u.cost)} 金币`}`,
       );
@@ -448,7 +476,7 @@ export function upgradesView(game) {
     // 每条流派点亮了几级；整条点满时数字变金色
     for (const x of laneEls) {
       const text = `${ownedByLane.get(x.lane.type) || 0}/${x.total}`;
-      if (x.count.textContent !== text) x.count.textContent = text;
+      setText(x.count, text);
       x.wrap.classList.toggle('done', text === `${x.total}/${x.total}`);
     }
     if (firstUpdate) {
@@ -509,6 +537,7 @@ export function bossesView(game) {
   shieldbar.append(shieldfill);
   const attack = el('button', 'attack');
   attack.append(el('b', 'attack-label', '攻击'), el('span', 'attack-dmg', '0 伤害'));
+  const attackDmg = attack.querySelector('.attack-dmg');
   arena.append(top, bar, shieldbar, attack);
   root.append(arena);
 
@@ -557,43 +586,52 @@ export function bossesView(game) {
       addArt(arenaIcon, bossArt(info.boss.id), 192);
     }
     const twoPhase = info.boss.phases === 2;
-    name.textContent = info.unlocked && twoPhase ? `${info.boss.name} · 第 ${info.phase} 阶段` : info.boss.name;
-    hpText.textContent = info.unlocked
-      ? `${fmt(info.hp)} / ${fmt(info.maxHp)} HP${info.phase === 2 ? ' · 第二阶段' : info.shielded ? ` · 护盾 ${fmt(info.shieldLeft)}` : ''}`
-      : '尚未解锁';
-    fill.style.width = `${Math.max(0, Math.min(1, info.hp / info.maxHp)) * 100}%`;
+    setText(name, info.unlocked && twoPhase ? `${info.boss.name} · 第 ${info.phase} 阶段` : info.boss.name);
+    setText(
+      hpText,
+      info.unlocked
+        ? `${fmt(info.hp)} / ${fmt(info.maxHp)} HP${info.phase === 2 ? ' · 第二阶段' : info.shielded ? ` · 护盾 ${fmt(info.shieldLeft)}` : ''}`
+        : '尚未解锁',
+    );
+    setWidth(fill, info.hp / info.maxHp);
     const showShield = info.unlocked && info.phase === 1 && info.shieldPct > 0 && info.shieldLeft > 0;
-    shieldbar.hidden = !showShield;
-    shieldfill.style.width = `${showShield ? Math.max(0, Math.min(1, info.shieldLeft / info.maxHp)) * 100 : 0}%`;
-    attack.disabled = !info.unlocked;
+    setHidden(shieldbar, !showShield);
+    setWidth(shieldfill, showShield ? info.shieldLeft / info.maxHp : 0);
+    setDisabled(attack, !info.unlocked);
     const damage = B.bossDamage(game.s, { shielded: info.shielded, phase2: info.phase === 2 });
-    attack.querySelector('.attack-dmg').textContent = `${fmt(damage)} 伤害${info.shielded ? ' · 破盾中' : ''}`;
+    setText(attackDmg, `${fmt(damage)} 伤害${info.shielded ? ' · 破盾中' : ''}`);
     if (!info.unlocked) {
-      nextInfo.textContent = `「${info.boss.name}」需要累计收益 ${fmt(info.boss.unlockAt)}${info.boss.rebirthRequired ? ' 且至少转生 1 次' : ''}，现在 ${fmt(game.s.lifetimeEarned)}。`;
+      setText(nextInfo, `「${info.boss.name}」需要累计收益 ${fmt(info.boss.unlockAt)}${info.boss.rebirthRequired ? ' 且至少转生 1 次' : ''}，现在 ${fmt(game.s.lifetimeEarned)}。`);
     } else {
       const next = BOSSES[game.s.bossIndex + 1];
-      nextInfo.textContent = next
-        ? game.bossUnlocked(next)
-          ? `下一个：${next.name}`
-          : `下一个 Boss「${next.name}」需要累计收益 ${fmt(next.unlockAt)}${next.rebirthRequired ? ' 且至少转生 1 次' : ''}`
-        : '已通关全部 Boss，继续刷当前 Boss 吧。';
+      setText(
+        nextInfo,
+        next
+          ? game.bossUnlocked(next)
+            ? `下一个：${next.name}`
+            : `下一个 Boss「${next.name}」需要累计收益 ${fmt(next.unlockAt)}${next.rebirthRequired ? ' 且至少转生 1 次' : ''}`
+          : '已通关全部 Boss，继续刷当前 Boss 吧。',
+      );
     }
     rows.forEach((r, i) => {
       const unlocked = game.bossUnlocked(r.b);
       const current = i === game.s.bossIndex;
       r.row.classList.toggle('current', current);
       r.row.classList.toggle('locked', !unlocked);
-      r.st.textContent = current
-        ? info.phase === 2
-          ? '第二阶段'
-          : info.shielded
-            ? '护盾中'
-            : '挑战中'
-        : unlocked
-          ? i < game.s.bossIndex
-            ? '已击败'
-            : '可挑战'
-          : `需 ${fmt(r.b.unlockAt)}`;
+      setText(
+        r.st,
+        current
+          ? info.phase === 2
+            ? '第二阶段'
+            : info.shielded
+              ? '护盾中'
+              : '挑战中'
+          : unlocked
+            ? i < game.s.bossIndex
+              ? '已击败'
+              : '可挑战'
+            : `需 ${fmt(r.b.unlockAt)}`,
+      );
     });
   }
 
@@ -636,10 +674,10 @@ export function achievementsView(game) {
       const p = game.achievementProgress(c.a);
       if (p.done) done++;
       c.card.classList.toggle('done', p.done);
-      c.bar.style.width = `${p.ratio * 100}%`;
-      c.count.textContent = p.done ? '已达成' : `${fmt(p.value)} / ${fmt(p.target)}`;
+      setWidth(c.bar, p.ratio);
+      setText(c.count, p.done ? '已达成' : `${fmt(p.value)} / ${fmt(p.target)}`);
     }
-    sub.textContent = `已达成 ${done} / ${ACHIEVEMENTS.length}，成就给的碎片不会因转生消失。`;
+    setText(sub, `已达成 ${done} / ${ACHIEVEMENTS.length}，成就给的碎片不会因转生消失。`);
   }
 
   return { el: root, update };
@@ -707,21 +745,23 @@ export function prestigeView(game) {
 
   function update() {
     const gain = game.prestigeGain();
-    gainValue.textContent = fmt(gain);
-    const ratio = Math.min(1, game.s.totalEarned / B.PRESTIGE_THRESHOLD);
-    progressFill.style.width = `${ratio * 100}%`;
-    hint.textContent = gain > 0
-      ? `本轮累计收益 ${fmt(game.s.totalEarned)}，现在转生可得 ${fmt(gain)} 个碎片。`
-      : `本轮累计收益 ${fmt(game.s.totalEarned)}，距 ${fmt(B.PRESTIGE_THRESHOLD)} 还差 ${fmt(Math.max(0, B.PRESTIGE_THRESHOLD - game.s.totalEarned))}。`;
-    button.disabled = gain < 1;
-    button.textContent = gain > 0 ? `转生（+${fmt(gain)} 碎片）` : '还不够转生';
+    setText(gainValue, fmt(gain));
+    setWidth(progressFill, game.s.totalEarned / B.PRESTIGE_THRESHOLD);
+    setText(
+      hint,
+      gain > 0
+        ? `本轮累计收益 ${fmt(game.s.totalEarned)}，现在转生可得 ${fmt(gain)} 个碎片。`
+        : `本轮累计收益 ${fmt(game.s.totalEarned)}，距 ${fmt(B.PRESTIGE_THRESHOLD)} 还差 ${fmt(Math.max(0, B.PRESTIGE_THRESHOLD - game.s.totalEarned))}。`,
+    );
+    setDisabled(button, gain < 1);
+    setText(button, gain > 0 ? `转生（+${fmt(gain)} 碎片）` : '还不够转生');
     for (const c of shopCards) {
       const level = game.s.shop[c.item.id] || 0;
       const maxed = level >= c.item.max;
       const cost = B.shopCost(c.item, level);
-      c.lv.textContent = `Lv.${level} / ${c.item.max}`;
-      c.cost.textContent = maxed ? '已满级' : `${cost} 碎片`;
-      c.buy.disabled = maxed || game.s.shards < cost;
+      setText(c.lv, `Lv.${level} / ${c.item.max}`);
+      setText(c.cost, maxed ? '已满级' : `${cost} 碎片`);
+      setDisabled(c.buy, maxed || game.s.shards < cost);
       c.card.classList.toggle('affordable', !maxed && game.s.shards >= cost);
     }
   }
@@ -792,21 +832,24 @@ export function storyView(game) {
       } else {
         lockedLeft += 1;
         // 只露出最早一篇未解锁的档案作为线索，其余先藏起来
-        c.card.hidden = lockedShown;
+        setHidden(c.card, lockedShown);
         lockedShown = true;
       }
-      if (on) c.card.hidden = false;
+      if (on) setHidden(c.card, false);
       c.card.classList.toggle('locked', !on);
-      c.title.textContent = on ? c.chapter.title : '这一页还是空白';
-      c.text.textContent = on ? c.chapter.text : `解锁条件：${c.chapter.need}`;
-      c.source.textContent = on ? c.chapter.source : '未解锁';
-      c.freshTag.hidden = !(on && fresh.has(c.chapter.id));
-      if (c.echo) c.echo.hidden = !on || game.s.rebirths < 1;
+      setText(c.title, on ? c.chapter.title : '这一页还是空白');
+      setText(c.text, on ? c.chapter.text : `解锁条件：${c.chapter.need}`);
+      setText(c.source, on ? c.chapter.source : '未解锁');
+      setHidden(c.freshTag, !(on && fresh.has(c.chapter.id)));
+      if (c.echo) setHidden(c.echo, !on || game.s.rebirths < 1);
     }
 
-    sub.textContent = `已收集 ${shown} / ${CHAPTERS.length} 篇。每完成一个里程碑，缝隙里就会多出一页记录${game.s.rebirths > 0 ? '；转生之后，读过的档案会多出一段「回响」' : ''}。`;
-    foot.hidden = lockedLeft < 2;
-    foot.textContent = lockedLeft > 1 ? `还有 ${lockedLeft - 1} 篇档案没有找到。` : '';
+    setText(
+      sub,
+      `已收集 ${shown} / ${CHAPTERS.length} 篇。每完成一个里程碑，缝隙里就会多出一页记录${game.s.rebirths > 0 ? '；转生之后，读过的档案会多出一段「回响」' : ''}。`,
+    );
+    setHidden(foot, lockedLeft < 2);
+    setText(foot, lockedLeft > 1 ? `还有 ${lockedLeft - 1} 篇档案没有找到。` : '');
   }
 
   return { el: root, update };

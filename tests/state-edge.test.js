@@ -85,7 +85,7 @@ test('升级、成就、剧情：去重并剔除未知条目', () => {
   const s = normalize(
     {
       upgrades: ['click1', 'click1', 'no_such_upgrade', 42],
-      achievements: ['c100', 'c100', 7, null],
+      achievements: ['c100', 'c100', 'no_such_achievement', 7, null],
       story: {
         unlocked: ['prologue', 'prologue', 'first_strike', 'ghost'],
         read: ['first_strike', 'first_strike', 'ghost'],
