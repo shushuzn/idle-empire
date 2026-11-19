@@ -1,5 +1,5 @@
 // 离线缓存：网络优先，断网时回落缓存。改版本号即可让旧缓存失效。
-const CACHE = 'idle-empire-v0.1.0';
+const CACHE = 'idle-empire-v0.2.0';
 
 const ASSETS = [
   './',
@@ -31,6 +31,10 @@ const ASSETS = [
   './assets/art/buildings/rift.webp',
   './assets/art/buildings/warp.webp',
   './assets/art/buildings/infinity.webp',
+  './assets/art/buildings/deepmine.webp',
+  './assets/art/buildings/tidal.webp',
+  './assets/art/buildings/antimatter.webp',
+  './assets/art/buildings/archive.webp',
   './assets/art/bosses/goblin.webp',
   './assets/art/bosses/troll.webp',
   './assets/art/bosses/dragon.webp',
@@ -46,6 +50,9 @@ const ASSETS = [
   './assets/art/bosses/shatterer.webp',
   './assets/art/bosses/tyrant.webp',
   './assets/art/bosses/emperor.webp',
+  './assets/art/bosses/worm.webp',
+  './assets/art/bosses/bishop.webp',
+  './assets/art/bosses/devourer.webp',
   './assets/art/icons/hand.webp',
   './assets/art/icons/bricks.webp',
   './assets/art/icons/dagger.webp',

@@ -48,12 +48,27 @@ const UPGRADE_LOOK = {
   auto: { name: 'robot', tone: 3 },
   global: { name: 'laurel', tone: 6 },
   offline: { name: 'moon', tone: 4 },
+  echo: { name: 'swirl', tone: 3 },
+  breaker: { name: 'guardian', tone: 5 },
+  phase: { name: 'hourglass', tone: 5 },
+  tide: { name: 'sunring', tone: 2 },
+  archive: { name: 'book', tone: 3 },
+};
+
+// 新效果不新开一列（360px 放不下 9 列），并进现有的流派里
+const UPGRADE_LANE = {
+  echo: 'global',
+  breaker: 'boss',
+  phase: 'boss',
+  tide: 'building',
+  archive: 'building',
 };
 
 const BUILDING_TONE = {
   mine: 1, lumber: 4, farm: 6, factory: 2, bank: 1, castle: 2, temple: 3,
   station: 2, quantum: 3, dyson: 1, time: 4, multiverse: 3, research: 5,
   stargate: 4, dark: 5, rift: 4, warp: 3, infinity: 6,
+  deepmine: 1, tidal: 4, antimatter: 3, archive: 2,
 };
 
 const ACHIEVEMENT_TONE = {
@@ -71,6 +86,8 @@ const SHOP_LOOK = {
   click: { name: 'hand', tone: 1 },
   boss: { name: 'dagger', tone: 5 },
   offline: { name: 'moon', tone: 4 },
+  echo: { name: 'swirl', tone: 3 },
+  archive: { name: 'book', tone: 3 },
 };
 
 const toneOf = (index) => (index % 6) + 1;
@@ -100,6 +117,17 @@ export function buildingsView(game) {
   hint.innerHTML = '<b>第一次来？</b>点上面那条金色按钮攒金币，攒到 10 枚就能买下第一座金矿。';
   root.append(hint);
 
+  // 回响的一次性说明：买过建筑后出现，点「知道了」永久收起
+  const resoHint = el('div', 'first-hint reso-hint');
+  resoHint.innerHTML = '<b>回响怎么用？</b>同一种建筑买到 25 / 50 / 100 / 200 座会升到 I–IV 级，该建筑产出最多 +80%；长按卡片上的四格刻度，能看到还差多少座；所有建筑每累计 10 层回响，全局产出再 +2%。';
+  const resoHintClose = el('button', 'hint-close', '知道了');
+  resoHint.append(resoHintClose);
+  root.append(resoHint);
+  resoHintClose.addEventListener('click', () => {
+    game.s.tutorialSeen = true;
+    resoHint.hidden = true;
+  });
+
   const list = el('div', 'cards');
   root.append(list);
 
@@ -114,13 +142,40 @@ export function buildingsView(game) {
     nameRow.append(name, owned);
     const desc = el('div', 'desc', b.desc);
     const prod = el('div', 'prod');
-    body.append(nameRow, desc, prod);
+    // 回响刻度：四格代表 I–IV，长按或在桌面悬停可以看到还差多少座
+    const reso = el('div', 'reso');
+    const pips = el('div', 'reso-pips');
+    const pipEls = B.RESONANCE_LABELS.map(() => {
+      const pip = el('i', 'reso-pip');
+      pips.append(pip);
+      return pip;
+    });
+    const resoText = el('span', 'reso-text', '');
+    reso.append(pips, resoText);
+    body.append(nameRow, desc, prod, reso);
     const buy = el('button', 'buy');
     const buyLabel = el('b', 'buy-label', '购买');
     const buyCost = el('span', 'buy-cost', '0');
     buy.append(buyLabel, buyCost);
     card.append(ico, body, buy);
     list.append(card);
+    let pressTimer = 0;
+    const showResonanceDetail = () => {
+      const tier = B.resonanceTier(game.s, b.id);
+      const next = B.nextResonance(game.s, b.id);
+      const bonus = Math.round(B.buildingResonanceBonus(game.s, b.id) * 100);
+      const text = next
+        ? `「${b.name}」现有 ${fmtInt(game.owned(b.id))} 座，回响 ${tier ? B.RESONANCE_LABELS[tier - 1] : '0'}${tier ? `（+${bonus}%）` : ''}，再买 ${fmtInt(next.need)} 座到 ${next.label}。`
+        : `「${b.name}」已满回响 IV，产出 +${bonus}%。`;
+      root.dispatchEvent(new CustomEvent('toast', { bubbles: true, detail: { text, kind: '', ms: 5000 } }));
+    };
+    reso.addEventListener('pointerdown', () => {
+      clearTimeout(pressTimer);
+      pressTimer = setTimeout(showResonanceDetail, 400);
+    });
+    for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) {
+      reso.addEventListener(ev, () => clearTimeout(pressTimer));
+    }
     buy.addEventListener('click', () => {
       if (game.buyBuilding(b.id)) {
         buzz(5);
@@ -129,7 +184,7 @@ export function buildingsView(game) {
         card.classList.add('pulse');
       }
     });
-    return { b, card, owned, prod, buy, buyLabel, buyCost };
+    return { b, card, owned, prod, reso, pipEls, resoText, buy, buyLabel, buyCost };
   });
 
   modes.addEventListener('click', (e) => {
@@ -142,7 +197,6 @@ export function buildingsView(game) {
   function update() {
     let visible = 0;
     let ownedTotal = 0;
-    const mult = B.productionMultiplier(game.s);
     for (const c of cards) {
       const unlocked = game.buildingUnlocked(c.b);
       c.card.hidden = !unlocked;
@@ -152,14 +206,34 @@ export function buildingsView(game) {
       ownedTotal += count;
       const { count: buyCount, cost } = game.bulk(c.b, game.s.buyMode);
       c.owned.textContent = `×${fmtInt(count)}`;
-      c.prod.textContent = `每个 +${fmt(c.b.baseProduction * mult)}/秒`;
+      c.prod.textContent = `每个 +${fmt(B.buildingRate(c.b, game.s))}/秒`;
       c.buyLabel.textContent = buyCount > 0 ? `购买 ×${buyCount}` : '金币不足';
       c.buyCost.textContent = `${fmt(cost)} 金币`;
       c.buy.disabled = buyCount < 1 || game.s.gold < cost;
       c.card.classList.toggle('affordable', game.s.gold >= cost && buyCount > 0);
+
+      const tier = B.resonanceTier(game.s, c.b.id);
+      const next = B.nextResonance(game.s, c.b.id);
+      const bonus = Math.round(B.buildingResonanceBonus(game.s, c.b.id) * 100);
+      for (let i = 0; i < c.pipEls.length; i++) {
+        c.pipEls[i].classList.toggle('on', i < tier);
+        c.pipEls[i].classList.toggle('next', i === tier);
+      }
+      const label = next
+        ? tier
+          ? `回响 ${B.RESONANCE_LABELS[tier - 1]} +${bonus}% · 再买 ${fmtInt(next.need)} 座到 ${next.label}`
+          : `再买 ${fmtInt(next.need)} 座解锁回响 I`
+        : `回响 IV +${bonus}%`;
+      if (c.resoText.textContent !== label) c.resoText.textContent = label;
+      c.reso.title = label;
+      c.reso.setAttribute('aria-label', label);
+      c.reso.classList.toggle('has-echo', tier > 0);
     }
-    summary.textContent = `${visible} 种建筑 · 总产出 ${fmt(B.production(game.s))} /秒 · 点击 +${fmt(B.clickPower(game.s).perClick)}`;
+    const layers = B.resonanceLayers(game.s);
+    const globalBonus = Math.round(B.resonanceGlobalBonus(game.s) * 100);
+    summary.textContent = `${visible} 种建筑 · 总产出 ${fmt(B.production(game.s))} /秒 · 点击 +${fmt(B.clickPower(game.s).perClick)}${layers ? ` · 回响 ${layers} 层${globalBonus ? `（全局 +${globalBonus}%）` : ''}` : ''}`;
     hint.hidden = ownedTotal > 0;
+    resoHint.hidden = ownedTotal === 0 || Boolean(game.s.tutorialSeen);
   }
 
   return { el: root, update };
@@ -182,7 +256,7 @@ const TREE_NODES = (() => {
   const depth = new Map();
   return UPGRADES.map((u) => {
     const type = u.effect[0];
-    const lane = laneOf.get(type) ?? 0;
+    const lane = laneOf.get(UPGRADE_LANE[type] || type) ?? 0;
     const row = depth.get(lane) || 0;
     depth.set(lane, row + 1);
     return { u, lane, row, look: UPGRADE_LOOK[type] || UPGRADE_LOOK.global };
@@ -256,6 +330,7 @@ export function upgradesView(game) {
   const detailState = el('span', 'utree-state', '');
   detailHead.append(detailName, detailState);
   const detailDesc = el('p', 'utree-desc', '');
+  const detailNeed = el('p', 'utree-need', '');
   const detailBuy = el('button', 'buy utree-buy');
   const detailBuyLabel = el('b', 'buy-label', '购买');
   const detailBuyCost = el('span', 'buy-cost', '');
@@ -264,7 +339,7 @@ export function upgradesView(game) {
   const detailJump = el('button', 'ghost utree-jump');
   detailJump.type = 'button';
   detailJump.hidden = true;
-  detail.append(detailHead, detailDesc, detailJump, detailBuy);
+  detail.append(detailHead, detailDesc, detailNeed, detailJump, detailBuy);
   root.append(detail);
 
   const nodes = TREE_NODES.map((node) => {
@@ -294,18 +369,34 @@ export function upgradesView(game) {
     const u = node.u;
     const state = game.upgradeAvailable(u);
     const prev = u.req ? UPGRADES.find((x) => x.id === u.req) : null;
+    const prevMissing = Boolean(u.req && prev && !game.s.upgrades.includes(u.req));
     const locked = state === 'locked';
     detailName.textContent = u.name;
     detailDesc.textContent = u.desc;
     detailState.className = `utree-state ${state}`;
     detailState.textContent = state === 'owned' ? '已购买' : locked ? '未解锁' : `${fmt(u.cost)} 金币`;
-    // 锁定：把购买键换成「先点亮前置」，点一下就选中前置节点
-    detailJump.hidden = !(locked && prev);
-    detailJump.textContent = locked && prev ? `先点亮「${prev.name}」` : '';
-    detailBuy.hidden = state === 'owned' || (locked && !!prev);
+
+    let needText = '';
+    if (locked) {
+      if (prevMissing) {
+        needText = `先点亮「${prev.name}」`;
+      } else if (u.reqResonance) {
+        needText = `需要任一建筑达到回响 ${B.RESONANCE_LABELS[u.reqResonance - 1]}`;
+      } else if (u.reqBuilding) {
+        const [bid, count] = Object.entries(u.reqBuilding)[0];
+        const building = BUILDINGS.find((b) => b.id === bid);
+        needText = `需要拥有 ${count} 座${building?.name || bid}`;
+      }
+    }
+    detailNeed.textContent = needText;
+    detailNeed.hidden = !needText;
+    // 锁定：能跳前置就跳；按建筑或回响解锁的只能给出条件
+    detailJump.hidden = !(locked && prevMissing);
+    detailJump.textContent = locked && prevMissing ? `先点亮「${prev.name}」` : '';
+    detailBuy.hidden = state === 'owned' || locked;
     detailBuy.disabled = state !== 'ok' || game.s.gold < u.cost;
-    detailBuyLabel.textContent = locked ? '未解锁' : '购买';
-    detailBuyCost.textContent = locked ? '' : `${fmt(u.cost)} 金币`;
+    detailBuyLabel.textContent = '购买';
+    detailBuyCost.textContent = `${fmt(u.cost)} 金币`;
   }
 
   detailJump.addEventListener('click', () => {
@@ -398,7 +489,7 @@ export function upgradesView(game) {
 export function bossesView(game) {
   const root = el('div', 'view-bosses');
   root.append(el('h2', 'view-title', 'Boss 挑战'));
-  const sub = el('p', 'view-sub', '点击攻击当前 Boss，击杀后按最大生命值重来，可以一直刷奖励。');
+  const sub = el('p', 'view-sub', '点击攻击当前 Boss；护盾期间点击伤害翻倍、建筑伤害减半，二阶段 Boss 要打两段。击杀后按最大生命值重来，可以一直刷奖励。');
   root.append(sub);
 
   const arena = el('section', 'arena');
@@ -413,9 +504,12 @@ export function bossesView(game) {
   const bar = el('div', 'hpbar');
   const fill = el('div', 'hpfill');
   bar.append(fill);
+  const shieldbar = el('div', 'shieldbar');
+  const shieldfill = el('div', 'shieldfill');
+  shieldbar.append(shieldfill);
   const attack = el('button', 'attack');
   attack.append(el('b', 'attack-label', '攻击'), el('span', 'attack-dmg', '0 伤害'));
-  arena.append(top, bar, attack);
+  arena.append(top, bar, shieldbar, attack);
   root.append(arena);
 
   const nextInfo = el('p', 'next-boss');
@@ -443,9 +537,14 @@ export function bossesView(game) {
     attack.classList.add('hit');
     const at = centerOf(attack);
     floatText(`-${fmt(result.damage)}`, at.x, at.y - 6, 'hit');
+    if (result.phase === 2) {
+      root.dispatchEvent(new CustomEvent('toast', { bubbles: true, detail: { text: `${result.brokeShield ? '护盾破碎，' : ''}${game.bossState().boss.name} 进入第二阶段`, kind: 'bad', ms: 5000 } }));
+    } else if (result.brokeShield) {
+      root.dispatchEvent(new CustomEvent('toast', { bubbles: true, detail: { text: '护盾破碎', kind: 'good' } }));
+    }
     if (result.killed) {
-      floatText(`+${fmt(result.killed.reward)}`, at.x, at.y - 34, 'gold');
-      root.dispatchEvent(new CustomEvent('toast', { bubbles: true, detail: { text: `击败 ${result.killed.name}，获得 ${fmt(result.killed.reward)} 金币`, kind: 'good' } }));
+      floatText(`+${fmt(result.reward)}`, at.x, at.y - 34, 'gold');
+      root.dispatchEvent(new CustomEvent('toast', { bubbles: true, detail: { text: `击败 ${result.killed.name}，获得 ${fmt(result.reward)} 金币`, kind: 'good' } }));
     }
   });
 
@@ -457,11 +556,18 @@ export function bossesView(game) {
       arenaIcon.replaceChildren(icon(info.boss.icon));
       addArt(arenaIcon, bossArt(info.boss.id), 192);
     }
-    name.textContent = info.boss.name;
-    hpText.textContent = info.unlocked ? `${fmt(info.hp)} / ${fmt(info.maxHp)} HP` : '尚未解锁';
+    const twoPhase = info.boss.phases === 2;
+    name.textContent = info.unlocked && twoPhase ? `${info.boss.name} · 第 ${info.phase} 阶段` : info.boss.name;
+    hpText.textContent = info.unlocked
+      ? `${fmt(info.hp)} / ${fmt(info.maxHp)} HP${info.phase === 2 ? ' · 第二阶段' : info.shielded ? ` · 护盾 ${fmt(info.shieldLeft)}` : ''}`
+      : '尚未解锁';
     fill.style.width = `${Math.max(0, Math.min(1, info.hp / info.maxHp)) * 100}%`;
+    const showShield = info.unlocked && info.phase === 1 && info.shieldPct > 0 && info.shieldLeft > 0;
+    shieldbar.hidden = !showShield;
+    shieldfill.style.width = `${showShield ? Math.max(0, Math.min(1, info.shieldLeft / info.maxHp)) * 100 : 0}%`;
     attack.disabled = !info.unlocked;
-    attack.querySelector('.attack-dmg').textContent = `${fmt(B.bossDamage(game.s))} 伤害`;
+    const damage = B.bossDamage(game.s, { shielded: info.shielded, phase2: info.phase === 2 });
+    attack.querySelector('.attack-dmg').textContent = `${fmt(damage)} 伤害${info.shielded ? ' · 破盾中' : ''}`;
     if (!info.unlocked) {
       nextInfo.textContent = `「${info.boss.name}」需要累计收益 ${fmt(info.boss.unlockAt)}${info.boss.rebirthRequired ? ' 且至少转生 1 次' : ''}，现在 ${fmt(game.s.lifetimeEarned)}。`;
     } else {
@@ -477,7 +583,17 @@ export function bossesView(game) {
       const current = i === game.s.bossIndex;
       r.row.classList.toggle('current', current);
       r.row.classList.toggle('locked', !unlocked);
-      r.st.textContent = current ? '挑战中' : unlocked ? (i < game.s.bossIndex ? '已击败' : '可挑战') : `需 ${fmt(r.b.unlockAt)}`;
+      r.st.textContent = current
+        ? info.phase === 2
+          ? '第二阶段'
+          : info.shielded
+            ? '护盾中'
+            : '挑战中'
+        : unlocked
+          ? i < game.s.bossIndex
+            ? '已击败'
+            : '可挑战'
+          : `需 ${fmt(r.b.unlockAt)}`;
     });
   }
 

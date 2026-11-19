@@ -316,6 +316,24 @@ button {
 
 .first-hint b { color: var(--gold); }
 
+.first-hint .hint-close {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+}
+
+.first-hint .hint-close:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
 [data-theme='light'] .first-hint {
   background: color-mix(in srgb, var(--gold) 9%, #fffdf7);
   color: var(--ink-2);
@@ -644,6 +662,15 @@ button {
   color: var(--ink-2);
 }
 
+.utree-need {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.utree-need[hidden] { display: none; }
+
 .utree-buy {
   width: 100%;
   min-height: 44px;
@@ -709,6 +736,35 @@ button {
   margin-top: 4px;
   font-variant-numeric: tabular-nums;
 }
+
+/* 回响刻度：四格 I–IV，长按或悬停看下一层还差多少座 */
+.reso {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--ink-2);
+  min-width: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.reso-pips { display: flex; gap: 2px; flex: none; }
+
+.reso-pip {
+  width: 5px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+}
+
+.reso-pip.on { background: var(--gold); border-color: transparent; }
+.reso-pip.next { border-color: color-mix(in srgb, var(--gold) 58%, var(--line)); }
+.reso-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reso.has-echo .reso-text { color: color-mix(in srgb, var(--gold) 72%, var(--ink-2)); }
 
 .buy {
   min-width: 96px;
@@ -807,6 +863,24 @@ button {
   height: 100%;
   width: 100%;
   background: linear-gradient(90deg, #ff7b7b, #ffb36b);
+  transition: width 0.15s linear;
+}
+
+/* 护盾条压在血条下面，破盾后整条收起 */
+.shieldbar {
+  height: 6px;
+  margin: -6px 0 12px;
+  background: var(--card-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.shieldbar[hidden] { display: none; }
+
+.shieldfill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #6f8bff, #a9c1ff);
   transition: width 0.15s linear;
 }
 
@@ -1961,6 +2035,9 @@ kbd {
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   box-shadow: 0 -12px 28px -24px rgba(74, 58, 32, 0.4);
 }
+
+/* 浅色金底配深字只有 3.9:1，改用浅字达到 4.6:1 */
+[data-theme='light'] .tab-badge { color: #fffdf7; }
 
 [data-theme='light'] .seg.on {
   background: linear-gradient(180deg, rgba(154, 106, 18, 0.14), rgba(154, 106, 18, 0.06));

@@ -38,7 +38,13 @@ export class Game {
   }
 
   buildingUnlocked(building) {
+    if (this.owned(building.id) > 0) return true;
     if (building.rebirthRequired && this.s.rebirths < 1) return false;
+    if (building.unlockOwned) {
+      for (const [id, need] of Object.entries(building.unlockOwned)) {
+        if (this.owned(id) < need) return false;
+      }
+    }
     const i = BUILDINGS.indexOf(building);
     const prev = BUILDINGS[i - 1];
     if (!prev) return true;
@@ -64,12 +70,19 @@ export class Game {
     this.s.gold -= cost;
     this.s.buildings[buildingId] = this.owned(buildingId) + count;
     this.checkAchievements();
+    this.checkResonance();
     return true;
   }
 
   upgradeAvailable(upgrade) {
     if (this.s.upgrades.includes(upgrade.id)) return 'owned';
     if (upgrade.req && !this.s.upgrades.includes(upgrade.req)) return 'locked';
+    if (upgrade.reqResonance && B.maxResonanceTier(this.s) < upgrade.reqResonance) return 'locked';
+    if (upgrade.reqBuilding) {
+      for (const [id, need] of Object.entries(upgrade.reqBuilding)) {
+        if (this.owned(id) < need) return 'locked';
+      }
+    }
     return 'ok';
   }
 
@@ -113,35 +126,77 @@ export class Game {
 
   bossState() {
     const boss = this.currentBoss();
-    if (!this.bossUnlocked(boss)) return { boss, hp: boss.hp, maxHp: boss.hp, unlocked: false, next: BOSSES[this.s.bossIndex + 1] };
-    if (this.s.bossHp === null || !Number.isFinite(this.s.bossHp)) this.s.bossHp = boss.hp;
+    const phase = boss.phases === 2 && this.s.bossPhase === 2 ? 2 : 1;
+    const maxHp = phase === 2 ? boss.hp * 0.6 : boss.hp;
+    if (!this.bossUnlocked(boss)) {
+      return { boss, hp: maxHp, maxHp, unlocked: false, phase, shielded: false, shieldPct: 0, shieldHp: 0, next: BOSSES[this.s.bossIndex + 1] };
+    }
+    if (this.s.bossHp === null || !Number.isFinite(this.s.bossHp)) this.s.bossHp = maxHp;
+    const hp = Math.min(Math.max(0, this.s.bossHp), maxHp);
+    const shieldPct = phase === 1 ? boss.shield || 0 : 0;
+    const shieldHp = maxHp * shieldPct;
+    const shielded = shieldHp > 0 && hp > maxHp - shieldHp;
     const next = BOSSES[this.s.bossIndex + 1];
-    return { boss, hp: Math.max(0, this.s.bossHp), maxHp: boss.hp, unlocked: true, next };
+    return {
+      boss,
+      hp,
+      maxHp,
+      unlocked: true,
+      phase,
+      shielded,
+      shieldPct,
+      shieldHp,
+      shieldLeft: Math.max(0, hp - (maxHp - shieldHp)),
+      next,
+    };
   }
 
   attack() {
     const info = this.bossState();
     if (!info.unlocked) return null;
-    const damage = B.bossDamage(this.s);
-    this.s.bossHp = info.hp - damage;
-    let killed = null;
-    if (this.s.bossHp <= 0) {
-      killed = info.boss;
-      this.s.kills += 1;
-      this.addGold(info.boss.reward);
-      const nextIndex = this.s.bossIndex + 1;
-      const next = BOSSES[nextIndex];
-      if (next && this.bossUnlocked(next)) {
-        this.s.bossIndex = nextIndex;
-        this.s.bossHp = next.hp;
-      } else {
-        // 已是当前能打的最后一个 Boss：原地满血重来，可以继续刷击杀数
-        this.s.bossHp = info.boss.hp;
-      }
-      this.checkAchievements();
-      this.checkStory();
+    const damage = B.bossDamage(this.s, { shielded: info.shielded, phase2: info.phase === 2 });
+    let hp = info.hp - damage;
+    let brokeShield = false;
+    if (info.shielded && hp <= info.maxHp - info.shieldHp) {
+      this.s.shieldsBroken += 1;
+      brokeShield = true;
     }
-    return { damage, killed };
+    const result = { damage, brokeShield, phase: 0, killed: null, reward: 0 };
+    if (hp > 0) {
+      this.s.bossHp = hp;
+      if (brokeShield) this.checkAchievements();
+      return result;
+    }
+
+    // 二阶段 Boss 第一段血空后不回奖励，直接进入 60% 血的第二段
+    if (info.boss.phases === 2 && info.phase === 1) {
+      this.s.bossPhase = 2;
+      this.s.bossHp = info.boss.hp * 0.6;
+      result.phase = 2;
+      this.checkAchievements();
+      return result;
+    }
+
+    const killed = info.boss;
+    const reward = B.bossReward(killed);
+    this.s.kills += 1;
+    if (killed.phases === 2) this.s.phaseKills += 1;
+    this.addGold(reward);
+    const nextIndex = this.s.bossIndex + 1;
+    const next = BOSSES[nextIndex];
+    this.s.bossPhase = 1;
+    if (next && this.bossUnlocked(next)) {
+      this.s.bossIndex = nextIndex;
+      this.s.bossHp = next.hp;
+    } else {
+      // 已是当前能打的最后一个 Boss：原地满血重来，可以继续刷击杀数
+      this.s.bossHp = killed.hp;
+    }
+    result.killed = killed;
+    result.reward = reward;
+    this.checkAchievements();
+    this.checkStory();
+    return result;
   }
 
   canPrestige() {
@@ -164,6 +219,7 @@ export class Game {
     this.s.upgrades = [];
     this.s.bossIndex = 0;
     this.s.bossHp = null;
+    this.s.bossPhase = 1;
     this.checkAchievements();
     this.checkStory();
     return gain;
@@ -181,6 +237,12 @@ export class Game {
       case 'upgrades': value = s.upgrades.length; break;
       case 'rebirths': value = s.rebirths; break;
       case 'shards': value = s.shards; break;
+      case 'resonance': value = B.maxResonanceTier(s); break;
+      case 'resonanceCount': value = B.resonanceCount(s); break;
+      case 'story': value = s.story.unlocked.length; break;
+      case 'shields': value = s.shieldsBroken; break;
+      case 'phases': value = s.phaseKills; break;
+      case 'building': value = s.buildings[achievement.cond[2]] || 0; break;
       default: value = 0;
     }
     return { value, target, done: s.achievements.includes(achievement.id), ratio: Math.min(1, target ? value / target : 0) };
@@ -200,6 +262,24 @@ export class Game {
     }
     if (unlocked.length && this.hooks.onAchievement) this.hooks.onAchievement(unlocked);
     return unlocked;
+  }
+
+  // 回响等级只升不降，记下已经提示过的等级，避免每次买建筑都弹一遍
+  checkResonance() {
+    const seen = new Set(this.s.resonanceSeen || []);
+    const gained = [];
+    for (const building of BUILDINGS) {
+      const tier = B.resonanceTier(this.s, building.id);
+      if (!tier) continue;
+      const key = `${building.id}:${tier}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      gained.push({ building, tier });
+    }
+    if (!gained.length) return gained;
+    this.s.resonanceSeen = [...seen];
+    if (this.hooks.onResonance) this.hooks.onResonance(gained);
+    return gained;
   }
 
   // 剧情章节一经解锁就永久保留，转生清空进度也不会丢

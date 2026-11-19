@@ -5,14 +5,18 @@ export const BUILDINGS = [
   { id: 'lumber', name: '伐木场', desc: '砍伐木材出售', baseCost: 100, baseProduction: 6, icon: 'lumber' },
   { id: 'farm', name: '农场', desc: '种植并出售农作物', baseCost: 500, baseProduction: 22, icon: 'farm' },
   { id: 'factory', name: '工厂', desc: '批量生产商品', baseCost: 3000, baseProduction: 100, icon: 'factory' },
+  { id: 'deepmine', name: '深井矿道', desc: '向缝隙更深处开采', baseCost: 18000, baseProduction: 380, icon: 'mine', unlockOwned: { factory: 15 } },
   { id: 'bank', name: '银行', desc: '让钱自己生钱', baseCost: 50000, baseProduction: 500, icon: 'bank' },
   { id: 'castle', name: '城堡', desc: '帝国的心脏', baseCost: 500000, baseProduction: 2500, icon: 'castle' },
   { id: 'temple', name: '神殿', desc: '祈福带来财富', baseCost: 5000000, baseProduction: 15000, icon: 'temple' },
+  { id: 'tidal', name: '潮汐电站', desc: '借潮水起落发电', baseCost: 28000000, baseProduction: 68000, icon: 'sunring', unlockOwned: { temple: 10 } },
   { id: 'station', name: '太空站', desc: '做星际贸易', baseCost: 50000000, baseProduction: 100000, icon: 'rocket' },
   { id: 'quantum', name: '量子实验室', desc: '量子技术放大收益', baseCost: 800000000, baseProduction: 1200000, icon: 'atom' },
+  { id: 'antimatter', name: '反物质熔炉', desc: '把反物质烧成收益', baseCost: 3600000000, baseProduction: 4800000, icon: 'atom', unlockOwned: { quantum: 8 } },
   { id: 'dyson', name: '戴森环', desc: '围住恒星收集能量', baseCost: 12000000000, baseProduction: 15000000, icon: 'sunring' },
   { id: 'time', name: '时间机器', desc: '穿越时空搬财富', baseCost: 200000000000, baseProduction: 200000000, icon: 'clock' },
   { id: 'multiverse', name: '多元宇宙门户', desc: '跨维度收割能量', baseCost: 3000000000000, baseProduction: 2700000000, icon: 'portal' },
+  { id: 'archive', name: '记忆档案馆', desc: '每解锁 3 篇剧情，产出 +5%', baseCost: 18000000000000, baseProduction: 17000000000, icon: 'book', unlockOwned: { multiverse: 5 } },
   { id: 'research', name: '研究院', desc: '用前沿科技提效', baseCost: 50000000000000, baseProduction: 42000000000, icon: 'flask' },
   { id: 'stargate', name: '星际之门', desc: '直通遥远星系', baseCost: 500000000000000, baseProduction: 400000000000, icon: 'gate' },
   { id: 'dark', name: '暗能量采集器', desc: '收集宇宙暗能量', baseCost: 800000000000000, baseProduction: 600000000000, icon: 'eclipse' },
@@ -27,37 +31,53 @@ export const UPGRADES = [
   { id: 'click3', name: '点击强化 III', desc: '点击收益 +40%', cost: 50000, effect: ['click', 0.4], req: 'click2' },
   { id: 'click4', name: '点击强化 IV', desc: '点击收益 +50%', cost: 500000, effect: ['click', 0.5], req: 'click3' },
   { id: 'click5', name: '点击强化 V', desc: '点击收益 +100%', cost: 5000000, effect: ['click', 1.0], req: 'click4' },
+  { id: 'click6', name: '点击强化 VI', desc: '点击收益 +150%', cost: 50000000, effect: ['click', 1.5], req: 'click5' },
 
   { id: 'speed1', name: '建筑加速 I', desc: '建筑产出 +15%', cost: 1000, effect: ['building', 0.15] },
   { id: 'speed2', name: '建筑加速 II', desc: '建筑产出 +25%', cost: 10000, effect: ['building', 0.25], req: 'speed1' },
   { id: 'speed3', name: '建筑加速 III', desc: '建筑产出 +35%', cost: 100000, effect: ['building', 0.35], req: 'speed2' },
   { id: 'speed4', name: '建筑加速 IV', desc: '建筑产出 +50%', cost: 1000000, effect: ['building', 0.5], req: 'speed3' },
   { id: 'speed5', name: '建筑加速 V', desc: '建筑产出 +100%', cost: 10000000, effect: ['building', 1.0], req: 'speed4' },
+  { id: 'speed6', name: '建筑加速 VI', desc: '建筑产出 +150%', cost: 100000000, effect: ['building', 1.5], req: 'speed5' },
 
   { id: 'boss1', name: '屠戮者 I', desc: '对 Boss 伤害 +25%', cost: 2000, effect: ['boss', 0.25] },
   { id: 'boss2', name: '屠戮者 II', desc: '对 Boss 伤害 +40%', cost: 20000, effect: ['boss', 0.4], req: 'boss1' },
   { id: 'boss3', name: '屠戮者 III', desc: '对 Boss 伤害 +60%', cost: 200000, effect: ['boss', 0.6], req: 'boss2' },
   { id: 'boss4', name: '屠戮者 IV', desc: '对 Boss 伤害 +100%', cost: 2000000, effect: ['boss', 1.0], req: 'boss3' },
+  { id: 'boss5', name: '屠戮者 V', desc: '对 Boss 伤害 +150%', cost: 20000000, effect: ['boss', 1.5], req: 'boss4' },
+  { id: 'breaker1', name: '破盾者 I', desc: '对护盾伤害 +50%', cost: 500000, effect: ['breaker', 0.5], req: 'boss2' },
+  { id: 'phase1', name: '相位刀锋 I', desc: '二阶段 Boss 伤害 +50%', cost: 20000000, effect: ['phase', 0.5], req: 'breaker1' },
 
   { id: 'auto1', name: '自动开采 I', desc: '每秒额外获得点击收益的 50%', cost: 25000, effect: ['auto', 0.5] },
   { id: 'auto2', name: '自动开采 II', desc: '每秒额外获得点击收益的 100%', cost: 300000, effect: ['auto', 1.0], req: 'auto1' },
+  { id: 'auto3', name: '自动开采 III', desc: '自动点击 +150%', cost: 3000000, effect: ['auto', 1.5], req: 'auto2' },
 
   { id: 'global1', name: '帝国荣耀 I', desc: '全局收益 +10%', cost: 5000000, effect: ['global', 0.1], req: 'speed5' },
   { id: 'global2', name: '帝国荣耀 II', desc: '全局收益 +20%', cost: 50000000, effect: ['global', 0.2], req: 'global1' },
   { id: 'global3', name: '帝国荣耀 III', desc: '全局收益 +30%', cost: 500000000, effect: ['global', 0.3], req: 'global2' },
+  { id: 'global4', name: '帝国荣耀 IV', desc: '全局收益 +50%', cost: 5000000000, effect: ['global', 0.5], req: 'global3' },
+  { id: 'echo1', name: '回声共鸣 I', desc: '回响加成 ×1.25', cost: 1000000, effect: ['echo', 0.25], reqResonance: 1 },
+  { id: 'echo2', name: '回声共鸣 II', desc: '回响加成 ×1.5', cost: 1000000000, effect: ['echo', 0.5], req: 'echo1' },
 
   { id: 'offline1', name: '离线契约 I', desc: '离线收益从 50% 提到 70%', cost: 750000, effect: ['offline', 0.2] },
   { id: 'offline2', name: '离线契约 II', desc: '离线收益再 +20%（90%）', cost: 20000000, effect: ['offline', 0.2], req: 'offline1' },
+  { id: 'offline3', name: '离线契约 III', desc: '离线收益再 +10%（100%）', cost: 200000000, effect: ['offline', 0.1], req: 'offline2' },
+
+  { id: 'tide', name: '潮汐调度', desc: '潮汐电站 +40%', cost: 100000000, effect: ['tide', 0.4], reqBuilding: { tidal: 10 } },
+  { id: 'archive', name: '档案索引', desc: '剧情加成上限 +20%', cost: 10000000000000, effect: ['archive', 0.2], reqBuilding: { archive: 5 } },
 ];
 
 export const BOSSES = [
   { id: 'goblin', name: '哥布林首领', icon: 'goblin', hp: 80, reward: 550, unlockAt: 1000 },
   { id: 'troll', name: '洞穴巨魔', icon: 'troll', hp: 800, reward: 5500, unlockAt: 10000 },
   { id: 'dragon', name: '远古巨龙', icon: 'flame', hp: 8000, reward: 55000, unlockAt: 100000 },
+  { id: 'worm', name: '深井蠕虫', icon: 'troll', hp: 30000, reward: 180000, unlockAt: 300000, shield: 0.3 },
   { id: 'demon', name: '深渊恶魔', icon: 'trident', hp: 80000, reward: 550000, unlockAt: 1000000 },
   { id: 'titan', name: '泰坦巨人', icon: 'titan', hp: 800000, reward: 5500000, unlockAt: 10000000 },
+  { id: 'bishop', name: '潮汐主教', icon: 'god', hp: 2400000, reward: 18000000, unlockAt: 30000000, shield: 0.45 },
   { id: 'void', name: '虚空领主', icon: 'void', hp: 8000000, reward: 55000000, unlockAt: 100000000 },
   { id: 'guardian', name: '永恒守护者', icon: 'guardian', hp: 80000000, reward: 550000000, unlockAt: 1000000000 },
+  { id: 'devourer', name: '记忆吞噬者', icon: 'chaos', hp: 240000000, reward: 1800000000, unlockAt: 3000000000, shield: 0.35, phases: 2 },
   { id: 'god', name: '多元宇宙之神', icon: 'god', hp: 800000000, reward: 5500000000, unlockAt: 10000000000 },
   { id: 'chaos', name: '混沌魔神', icon: 'chaos', hp: 10000000000, reward: 50000000000, unlockAt: 100000000000 },
   { id: 'eye', name: '全知之眼', icon: 'eye', hp: 100000000000, reward: 500000000000, unlockAt: 1000000000000, rebirthRequired: true },
@@ -95,14 +115,29 @@ export const ACHIEVEMENTS = [
   { id: 'r10', name: '永恒轮回', desc: '转生 10 次', icon: 'rebirth', cond: ['rebirths', 10], reward: ['shards', 10] },
 
   { id: 's10', name: '碎片收藏家', desc: '持有 10 个碎片', icon: 'shard', cond: ['shards', 10], reward: ['gold', 1000000] },
+
+  { id: 'echo1', name: '第一声回响', desc: '任一建筑达到回响 I', icon: 'rebirth', cond: ['resonance', 1], reward: ['gold', 50000] },
+  { id: 'echo4', name: '回响深处', desc: '任一建筑达到回响 IV', icon: 'rebirth', cond: ['resonance', 4], reward: ['shards', 2] },
+  { id: 'echo10', name: '共鸣谱', desc: '10 座建筑达到回响 I', icon: 'shard', cond: ['resonanceCount', 10], reward: ['shards', 3] },
+  { id: 'deep30', name: '深井工人', desc: '拥有 30 座深井矿道', icon: 'tower', cond: ['building', 30, 'deepmine'], reward: ['gold', 5000000] },
+  { id: 'stories12', name: '档案管理员', desc: '解锁 12 篇剧情', icon: 'upgrade', cond: ['story', 12], reward: ['shards', 1] },
+  { id: 'stories24', name: '全部档案', desc: '解锁全部 24 篇剧情', icon: 'upgrade', cond: ['story', 24], reward: ['shards', 5] },
+  { id: 'shields10', name: '破盾者', desc: '击破 10 次护盾', icon: 'skull', cond: ['shields', 10], reward: ['gold', 20000000] },
+  { id: 'phases1', name: '两段都要打', desc: '击败一个二阶段 Boss', icon: 'skull', cond: ['phases', 1], reward: ['shards', 2] },
+  { id: 'b500', name: '建筑巨匠', desc: '拥有 500 座建筑', icon: 'tower', cond: ['buildings', 500], reward: ['shards', 5] },
+  { id: 'g1q', name: '万亿俱乐部', desc: '累计获得 1e15 金币', icon: 'coin', cond: ['earned', 1e15], reward: ['shards', 5] },
+  { id: 'r20', name: '轮回二十次', desc: '转生 20 次', icon: 'rebirth', cond: ['rebirths', 20], reward: ['shards', 10] },
+  { id: 'c25000', name: '手速不退', desc: '点击 25,000 次', icon: 'hand', cond: ['clicks', 25000], reward: ['gold', 100000000] },
 ];
 
 // 转生商店：用碎片买永久加成
 export const SHOP = [
-  { id: 'idle', name: '产能核心', desc: '每级建筑产出 +8%', max: 15, base: 2 },
-  { id: 'click', name: '点击核心', desc: '每级点击收益 +12%', max: 15, base: 2 },
-  { id: 'boss', name: '战斗核心', desc: '每级 Boss 伤害 +10%', max: 15, base: 2 },
+  { id: 'idle', name: '产能核心', desc: '每级建筑产出 +8%', max: 20, base: 2 },
+  { id: 'click', name: '点击核心', desc: '每级点击收益 +12%', max: 20, base: 2 },
+  { id: 'boss', name: '战斗核心', desc: '每级 Boss 伤害 +10%', max: 20, base: 2 },
   { id: 'offline', name: '离线核心', desc: '每级离线收益 +6%', max: 10, base: 3 },
+  { id: 'echo', name: '回响核心', desc: '每级回响加成 +5%', max: 20, base: 3 },
+  { id: 'archive', name: '档案核心', desc: '每级剧情加成上限 +2%', max: 20, base: 3 },
 ];
 
 export const OFFLINE_CAP_HOURS = 8;

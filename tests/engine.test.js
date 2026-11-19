@@ -123,6 +123,6 @@ test('商店升级扣碎片、受等级上限约束', () => {
   assert.equal(g.s.shards, 0);
   g.s.shards = 1e6;
   for (let i = 0; i < 20; i++) g.buyShop('idle');
-  assert.equal(g.s.shop.idle, 15);
+  assert.equal(g.s.shop.idle, 20);
   assert.equal(g.buyShop('idle'), false); // 满级后不再扣碎片
 });

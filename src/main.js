@@ -86,6 +86,18 @@ const game = new Game(state, {
       showStories(list);
     }
   },
+  onResonance(list) {
+    if (welcome.open) return;
+    const first = list[0];
+    const pct = Math.round(B.buildingResonanceBonus(game.s, first.building.id) * 100);
+    let text;
+    if (list.length === 1) {
+      text = `「${first.building.name}」达到回响 ${B.RESONANCE_LABELS[first.tier - 1]}，单座产出 +${pct}%`;
+    } else {
+      text = `${list.length} 座建筑达到新的回响：${first.building.name} 等`;
+    }
+    toast(text, 'good', 5000);
+  },
 });
 
 /* ---------- 主题（默认跟随系统） ---------- */
@@ -353,7 +365,7 @@ const appEl = $('.app');
 // 有存档就说「继续」，上次的成绩也一并写出来；没进度的旧档也算继续
 if (hasSave) {
   startBtn.textContent = '继续帝国';
-  $('#start-meta').textContent = `上次：${fmt(state.gold)} 金币 · 转生 ${fmtInt(state.rebirths)} 次 · v0.1.0`;
+  $('#start-meta').textContent = `上次：${fmt(state.gold)} 金币 · 转生 ${fmtInt(state.rebirths)} 次 · v0.2.0`;
 }
 // 开始页盖着时，底下的界面不参与键盘焦点
 appEl.inert = true;

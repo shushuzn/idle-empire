@@ -1,6 +1,6 @@
 {
   "name": "idle-empire",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "放置/增量游戏：建筑、升级、Boss、成就、转生与剧情档案，可安装到桌面、存档可导出为文件。纯静态，无构建步骤。",

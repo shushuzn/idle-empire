@@ -1,7 +1,13 @@
 // 剧情档案：每完成一个里程碑，缝隙里就多留下一页记录
 // check(state) 只读状态，用来判断条件；解锁状态由引擎写进 state.story
 
+import { BOSSES } from './data.js';
+import { maxResonanceTier } from './balance.js';
+
 const count = (s, id) => s.buildings?.[id] || 0;
+const bossIndex = (id) => BOSSES.findIndex((b) => b.id === id);
+const EMPEROR_INDEX = bossIndex('emperor');
+const WORM_INDEX = bossIndex('worm');
 
 export const CHAPTERS = [
   {
@@ -139,8 +145,8 @@ export const CHAPTERS = [
     id: 'emperor',
     title: '第十八位',
     source: '帝王之言',
-    need: '抵达第 15 个 Boss「虚空帝王」',
-    check: (s) => s.bossIndex >= 14,
+    need: `抵达第 ${EMPEROR_INDEX + 1} 个 Boss「虚空帝王」`,
+    check: (s) => s.bossIndex >= EMPEROR_INDEX,
     text: '虚空帝王坐在王冠堆成的山上。他没有脸，只有一道和你一模一样的缝。「你终于来了，」他说，「我数过，你是第十八位。」他摘下面具，里面是空的——不是黑暗，是等待。',
     echo: '面具后面空无一物。你忽然明白：那个位置一直留着，等的是下一个肯坐下的人。',
   },
@@ -152,6 +158,56 @@ export const CHAPTERS = [
     check: (s) => s.rebirths >= 5,
     text: '第五次轮回结束时，缝隙第一次开口，用你的声音说：「我一直在等你把我关掉。」你没有关。你在勘测站的墙上写下最后一行字，留给下一位醒来的人——「这里有一个帝国，它靠你点一下活着。你也可以只是看着它发光。」',
     echo: '写完你退后一步，墙上的字亮了一瞬，像有人在另一侧读它。',
+  },
+  {
+    id: 'well_light',
+    title: '井口的灯',
+    source: '深井勘测记录',
+    need: '拥有 10 座深井矿道',
+    check: (s) => count(s, 'deepmine') >= 10,
+    text: '深井矿道的井口挂着一盏灯。灯油早就干了，灯芯也换了三次，可它一直亮着。勘测队的人说，这盏灯不是照路的，是给井下的人报平安用的——只要它还亮，上面就还有人等着。',
+  },
+  {
+    id: 'tide_names',
+    title: '潮声里的名字',
+    source: '礁石拓片',
+    need: '拥有 10 座潮汐电站',
+    check: (s) => count(s, 'tidal') >= 10,
+    text: '退潮时，潮汐电站下的礁石露出一排名字。刻痕很旧，笔画却和你签在勘测报告上的习惯一模一样，只差最后一个字。你伸手去摸，海水刚好漫回来，把那行字盖住了。',
+  },
+  {
+    id: 'antimatter_words',
+    title: '反物质的第一句话',
+    source: '熔炉输出日志',
+    need: '拥有 8 座反物质熔炉',
+    check: (s) => count(s, 'antimatter') >= 8,
+    text: '反物质熔炉并网那天，输出曲线自动拼出一行摩尔斯码。译码员核对了三遍，脸色发白：你们又来了。没有人输入过这串信号，它像是从燃料里自己长出来的。',
+  },
+  {
+    id: 'blank_card',
+    title: '空白卡',
+    source: '档案馆索引',
+    need: '拥有 5 座记忆档案馆',
+    check: (s) => count(s, 'archive') >= 5,
+    text: '档案馆的索引卡按编号排到最后一格，后面多出一张空白卡。卡片没有标题，只有编号，排在你自己之后。管理员说别动它。你还是翻了过来，背面写着一个日期：明天。',
+  },
+  {
+    id: 'second_station',
+    title: '第二个勘测站',
+    source: '井底目击',
+    need: '击败深井蠕虫',
+    check: (s) => s.bossIndex > WORM_INDEX,
+    text: '深井蠕虫倒下后，井底没有岩层，是另一座勘测站。桌上摊着同一份报告，咖啡还是热的。墙上的钟也停在 03:17。你退出来时，身后的灯自己亮了，像有人刚刚坐下。',
+    echo: '第二次走到井底，咖啡换成了你常喝的浓度。',
+  },
+  {
+    id: 'echo_truth',
+    title: '回响不是回声',
+    source: '深井录音',
+    need: '任意建筑达到回响 IV',
+    check: (s) => maxResonanceTier(s) >= 4,
+    text: '你把耳朵贴在井壁上，想听清那道回响。它比你慢半拍，一声接一声，规律得不像回声。你数到第一百下才明白：那不是井在回应你，是井在数你。它数得很慢，但从来没有数错过。',
+    echo: '这一次你也在数它。你们数到同一个数字时，井停了半拍。',
   },
 ];
 

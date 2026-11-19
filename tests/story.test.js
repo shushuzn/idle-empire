@@ -35,7 +35,7 @@ test('达成里程碑会按进度一次解锁多篇', () => {
   g.s.buildings = { mine: 10, lumber: 10, farm: 10, factory: 5, bank: 1, castle: 1, temple: 1, station: 1 };
   g.s.totalEarned = 6e6;
   g.s.rebirths = 2;
-  g.s.bossIndex = 14;
+  g.s.bossIndex = 17;
   g.checkStory();
   for (const id of ['mine_breath', 'lumber_echo', 'farm_letter', 'factory_log', 'bank_ledger', 'throne', 'temple', 'orbit', 'first_loop', 'emperor']) {
     assert.ok(g.s.story.unlocked.includes(id), `应解锁 ${id}`);
@@ -81,7 +81,7 @@ test('存档迁移只保留已知章节，已读必须是已解锁的子集', ()
 test('旧存档没有 story 字段时补默认值', () => {
   const s = normalize({ gold: 10 });
   assert.deepEqual(s.story, { unlocked: [], read: [] });
-  assert.equal(s.version, 4);
+  assert.equal(s.version, 5);
 });
 
 test('章节 id 唯一且都有文案与解锁条件', () => {

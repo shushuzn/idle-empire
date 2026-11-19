@@ -6,7 +6,13 @@ import { offlineEarnings } from './balance.js';
 export const SAVE_KEY = 'idle_empire_save';
 export const BACKUP_KEY = 'idle_empire_backup';
 export const BROKEN_KEY = 'idle_empire_broken';
-export const VERSION = 4;
+export const VERSION = 5;
+
+// 0.1.0 的 Boss 顺序；插入新 Boss 后按 id 重新定位，不能直接沿用旧下标
+const LEGACY_BOSS_IDS = [
+  'goblin', 'troll', 'dragon', 'demon', 'titan', 'void', 'guardian', 'god',
+  'chaos', 'eye', 'darklord', 'wraith', 'shatterer', 'tyrant', 'emperor',
+];
 
 export function defaultState(now = Date.now()) {
   return {
@@ -19,13 +25,19 @@ export function defaultState(now = Date.now()) {
     upgrades: [],
     shards: 0,
     rebirths: 0,
-    shop: { idle: 0, click: 0, boss: 0, offline: 0 },
+    shop: Object.fromEntries(SHOP.map((item) => [item.id, 0])),
     achievements: [],
     bossIndex: 0,
+    bossId: BOSSES[0].id,
     bossHp: null,
+    bossPhase: 1,
     kills: 0,
+    shieldsBroken: 0,
+    phaseKills: 0,
     buyMode: 'x1',
     story: { unlocked: [], read: [] },
+    resonanceSeen: [],
+    tutorialSeen: false,
     startedAt: now,
     lastSeen: now,
   };
@@ -93,22 +105,56 @@ export function normalize(raw, now = Date.now()) {
     click: int(oldShop.click ?? oldShop.clickCore),
     boss: int(oldShop.boss ?? oldShop.bossCore),
     offline: int(oldShop.offline),
+    echo: int(oldShop.echo ?? oldShop.echoCore),
+    archive: int(oldShop.archive ?? oldShop.archiveCore),
   };
-  for (const item of SHOP) s.shop[item.id] = Math.min(s.shop[item.id], item.max);
+  for (const item of SHOP) s.shop[item.id] = Math.min(s.shop[item.id] || 0, item.max);
 
-  const idx = int(raw.bossIndex ?? indexOfBoss(raw.currentBoss));
-  s.bossIndex = Math.min(idx, BOSSES.length - 1);
-  // 血量只认正数且不超过当前 Boss 上限；0、负数、NaN 都当作未开战
+  const version = int(raw.version);
+  s.bossIndex = bossIndexFromRaw(raw, version);
+  const boss = BOSSES[s.bossIndex];
+  s.bossId = boss.id;
+  // 二阶段只对有两段的 Boss 有效，其他 Boss 一律停在第一阶段
+  s.bossPhase = boss.phases === 2 && int(raw.bossPhase) === 2 ? 2 : 1;
+  const maxHp = s.bossPhase === 2 ? boss.hp * 0.6 : boss.hp;
+  // 血量只认正数且不超过当前阶段上限；0、负数、NaN 都当作未开战
   const bossHp = raw.bossHp === null || raw.bossHp === undefined ? NaN : Number(raw.bossHp);
-  s.bossHp =
-    Number.isFinite(bossHp) && bossHp > 0 ? Math.min(bossHp, BOSSES[s.bossIndex].hp) : null;
+  s.bossHp = Number.isFinite(bossHp) && bossHp > 0 ? Math.min(bossHp, maxHp) : null;
+
+  s.shieldsBroken = int(raw.shieldsBroken);
+  s.phaseKills = int(raw.phaseKills);
+  s.tutorialSeen = Boolean(raw.tutorialSeen);
+  const seenBuilding = new Set(BUILDINGS.map((b) => b.id));
+  s.resonanceSeen = Array.isArray(raw.resonanceSeen)
+    ? [...new Set(raw.resonanceSeen.filter((key) => {
+      if (typeof key !== 'string') return false;
+      const [id, tier] = key.split(':');
+      return seenBuilding.has(id) && ['1', '2', '3', '4'].includes(tier);
+    }))]
+    : [];
 
   return s;
 }
 
-function indexOfBoss(id) {
-  const i = BOSSES.findIndex((b) => b.id === id);
-  return i >= 0 ? i : 0;
+// 旧档只有下标时先映射成 id；0.1.0 之后插入了新 Boss，下标会整体后移
+function bossIndexFromRaw(raw, version) {
+  const clamp = (i) => Math.min(Math.max(i, 0), BOSSES.length - 1);
+  if (typeof raw.bossId === 'string') {
+    const found = BOSSES.findIndex((b) => b.id === raw.bossId);
+    if (found >= 0) return found;
+  }
+  if (raw.bossIndex !== undefined && raw.bossIndex !== null) {
+    const index = int(raw.bossIndex);
+    if (version >= 5) return clamp(index);
+    const legacyId = LEGACY_BOSS_IDS[index];
+    const mapped = legacyId ? BOSSES.findIndex((b) => b.id === legacyId) : -1;
+    return mapped >= 0 ? mapped : clamp(index);
+  }
+  if (typeof raw.currentBoss === 'string') {
+    const found = BOSSES.findIndex((b) => b.id === raw.currentBoss);
+    if (found >= 0) return found;
+  }
+  return 0;
 }
 
 export function load(now = Date.now()) {
@@ -152,6 +198,8 @@ export function load(now = Date.now()) {
 export function save(state, now = Date.now()) {
   state.lastSeen = now;
   state.version = VERSION;
+  // 同时写 id 与下标：以后再加 Boss 时，读档可以按 id 找回当前位置
+  state.bossId = BOSSES[state.bossIndex]?.id || BOSSES[0].id;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
     return true;
