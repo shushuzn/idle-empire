@@ -691,7 +691,8 @@ export function bossesView(game) {
       weakness: info.focus,
     });
     const focusText = info.focus === 'click' ? ' · 弱点：点击' : info.focus === 'building' ? ' · 弱点：建筑' : '';
-    const lockText = info.stormLocked ? ' · 等待风暴' : info.shielded ? ' · 破盾中' : '';
+    const stormIn = info.stormLocked ? B.secondsUntilPhase(game.s, 'storm') : 0;
+    const lockText = info.stormLocked ? ` · 等待风暴 ${clockText(stormIn)}` : info.shielded ? ' · 破盾中' : '';
     setText(attackDmg, `${fmt(damage)} 伤害${focusText}${lockText}`);
     if (!info.unlocked) {
       setText(nextInfo, `「${info.boss.name}」需要累计收益 ${fmt(info.boss.unlockAt)}${info.boss.rebirthRequired ? ' 且至少转生 1 次' : ''}，现在 ${fmt(game.s.lifetimeEarned)}。`);

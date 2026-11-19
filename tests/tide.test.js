@@ -78,6 +78,27 @@ test('潮段时长随延长线升级增加', () => {
   assert.equal(B.tideDuration(s), 28 * 60);
 });
 
+test('能算出距离下一次指定潮段的秒数，季风重复也计入', () => {
+  const s = defaultState();
+  assert.equal(B.secondsUntilPhase(s, 'storm'), null);
+  B.startTide(s);
+  assert.equal(B.secondsUntilPhase(s, 'flood'), 0);
+  assert.equal(B.secondsUntilPhase(s, 'ebb'), 1200);
+  // 涨潮还剩 1200 秒，过完退潮就是风暴
+  assert.equal(B.secondsUntilPhase(s, 'storm'), 1200 + 1200);
+
+  B.advanceTide(s, 1200 * 2 + 300);
+  assert.equal(B.tideState(s).phase.id, 'storm');
+  assert.equal(B.secondsUntilPhase(s, 'storm'), 0);
+  // 风暴后是静海，暖流季风让涨潮在下一段重复一次
+  assert.equal(B.secondsUntilPhase(s, 'flood'), 900 + 1200);
+
+  B.advanceTide(s, 900 + 1200 * 2);
+  assert.equal(B.tideState(s).phase.id, 'flood');
+  // 当前是暖流重复的涨潮，风暴要等到下一个季风块
+  assert.equal(B.secondsUntilPhase(s, 'storm'), 1200 + 1200 * 2);
+});
+
 test('开始潮汐只记一次当前潮段', () => {
   const s = defaultState();
   assert.equal(s.tideStarted, false);

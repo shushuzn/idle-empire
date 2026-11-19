@@ -103,6 +103,19 @@ export function tideState(state) {
   };
 }
 
+// 距离下一次指定潮段还有多少秒；当前就在该潮段时为 0，潮汐未开始时为 null
+export function secondsUntilPhase(state, phaseId) {
+  const tide = tideState(state);
+  if (!tide.started) return null;
+  if (tide.phase.id === phaseId) return 0;
+  for (let step = 1; step <= TIDE_MONSOON_PHASES; step += 1) {
+    if (tidePhaseAt(tide.index + step).id === phaseId) {
+      return tide.remaining + tide.duration * (step - 1);
+    }
+  }
+  return tide.duration * TIDE_MONSOON_PHASES;
+}
+
 // 进入当前潮段：累计经历次数、季风图鉴与交替次数；同一段只记一次
 export function markTideEntered(state) {
   if (!state || !state.tideStarted) return false;

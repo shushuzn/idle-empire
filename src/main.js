@@ -42,6 +42,7 @@ if (!hasSave || offline || migrated) storageFailed = !save(state);
 
 // 离线结算弹窗打开时先把成就提示攒起来，关掉再一次性弹，避免被遮挡
 const pendingAchievements = [];
+const pendingTides = [];
 
 function showAchievements(list) {
   if (list.length === 1) {
@@ -57,6 +58,32 @@ function flushAchievements() {
   if (!pendingAchievements.length) return;
   const list = pendingAchievements.splice(0).flat();
   showAchievements(list);
+}
+
+// 潮段每次轮转提示一次；季风换向时换成季风播报
+function tideText(tide) {
+  const phase = tide.phase;
+  if (tide.blockPos === 0 && tide.index > 0) {
+    const favor = B.TIDE_PHASE_BY_ID.get(tide.monsoon.favor)?.name || '';
+    return `${tide.monsoon.name}季风到来（${favor}重复）· 潮段「${phase.name}」：${phase.desc}`;
+  }
+  return `潮段转为「${phase.name}」：${phase.desc} · 下一段「${tide.nextPhase.name}」`;
+}
+
+function announceTide(tide) {
+  const text = tideText(tide);
+  if (welcome.open) {
+    pendingTides.push(text);
+    return;
+  }
+  toast(text, '', 5200);
+  buzz(12);
+}
+
+function flushTides() {
+  if (!pendingTides.length) return;
+  for (const text of pendingTides.splice(0)) toast(text, '', 5200);
+  buzz(12);
 }
 
 function showStories(list) {
@@ -98,6 +125,9 @@ const game = new Game(state, {
       text = `${list.length} 座建筑达到新的回响：${first.building.name} 等`;
     }
     toast(text, 'good', 5000);
+  },
+  onTide(tide) {
+    announceTide(tide);
   },
 });
 
@@ -589,6 +619,7 @@ $('#w-ok').addEventListener('click', () => welcome.close());
 welcome.addEventListener('close', () => {
   flushStories();
   flushAchievements();
+  flushTides();
 });
 
 /* ---------- 安装到桌面 ---------- */

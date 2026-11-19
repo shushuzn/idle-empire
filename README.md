@@ -35,7 +35,7 @@ npm run dev          # python3 -m http.server 5173
 打开 http://127.0.0.1:5173 。也可以直接双击 `index.html`，但 ES module 在部分浏览器的 `file://` 下会被拦截，建议用本地服务。
 
 ```bash
-npm test             # node --test tests/*.test.js，119 项
+npm test             # node --test tests/*.test.js，120 项
 ```
 
 需要 Node.js 20+（CI 使用 22）；`npm run dev` 会用 Python 3 起一个静态文件服务。
