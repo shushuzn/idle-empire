@@ -37,10 +37,16 @@ const num = (v, fallback = 0) => {
 };
 const int = (v, fallback = 0) => Math.floor(num(v, fallback));
 
+// 时间戳：非数值、0、负数和未来时间都不可信，一律回落到当前时间
+const time = (v, now) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 && n <= now ? Math.floor(n) : now;
+};
+
 // 兼容旧版存档（js/save.js 写出来的结构），并把脏数据夹到合法范围
 export function normalize(raw, now = Date.now()) {
   const s = defaultState(now);
-  if (!raw || typeof raw !== 'object') return s;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return s;
 
   s.gold = num(raw.gold);
   s.totalEarned = num(raw.totalEarned, s.gold);
@@ -49,8 +55,8 @@ export function normalize(raw, now = Date.now()) {
   s.shards = int(raw.shards ?? raw.prestigeShards);
   s.rebirths = int(raw.rebirths ?? raw.prestigeResets);
   s.kills = int(raw.kills);
-  s.startedAt = int(raw.startedAt ?? raw.startTime, now);
-  s.lastSeen = int(raw.lastSeen ?? raw.lastSave, now);
+  s.startedAt = time(raw.startedAt ?? raw.startTime, now);
+  s.lastSeen = time(raw.lastSeen ?? raw.lastSave, now);
 
   if (raw.buildings && typeof raw.buildings === 'object') {
     for (const b of BUILDINGS) {
@@ -92,7 +98,10 @@ export function normalize(raw, now = Date.now()) {
 
   const idx = int(raw.bossIndex ?? indexOfBoss(raw.currentBoss));
   s.bossIndex = Math.min(idx, BOSSES.length - 1);
-  s.bossHp = raw.bossHp === null || raw.bossHp === undefined ? null : num(raw.bossHp);
+  // 血量只认正数且不超过当前 Boss 上限；0、负数、NaN 都当作未开战
+  const bossHp = raw.bossHp === null || raw.bossHp === undefined ? NaN : Number(raw.bossHp);
+  s.bossHp =
+    Number.isFinite(bossHp) && bossHp > 0 ? Math.min(bossHp, BOSSES[s.bossIndex].hp) : null;
 
   return s;
 }

@@ -5,7 +5,7 @@
   --card-2: #1d2634;
   --ink: #f0eadd;
   --ink-2: #b6b3a6;
-  --muted: #858a80;
+  --muted: #8f948a;
   --line: #28313f;
   --gold: #f2bd4d;
   --gold-deep: #c98a1f;
@@ -37,7 +37,7 @@
   --card-2: #f4eddf;
   --ink: #241f16;
   --ink-2: #57503f;
-  --muted: #867c69;
+  --muted: #6f6756;
   --line: #e3d8c2;
   --gold: #9a6a12;
   --gold-deep: #7d5510;
@@ -264,11 +264,23 @@ button {
 
 /* ---------- 内容区 ---------- */
 
+.view-wrap {
+  display: flex;
+  min-height: 0;
+}
+
 .view {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 4px 14px 16px;
   scrollbar-width: thin;
+}
+
+.view:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
 }
 
 .view-title {
@@ -914,6 +926,11 @@ button {
 .chapter.locked .chapter-title { color: var(--muted); font-weight: 600; }
 .chapter.locked .chapter-text { color: var(--muted); font-size: 12px; }
 
+/* 浅色下小字号编号要更深的同色系才够 4.5:1 */
+[data-theme='light'] .chapter-no {
+  color: color-mix(in srgb, var(--tone) 78%, var(--ink));
+}
+
 .story-foot { margin: 12px 2px 0; font-size: 11.5px; color: var(--muted); text-align: center; }
 .story-foot[hidden] { display: none; }
 
@@ -966,8 +983,8 @@ button {
   box-shadow: var(--shadow);
 }
 
-.gain-row { display: flex; align-items: baseline; gap: 4px; }
-.gain-value { font-size: 34px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.gain-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
+.gain-value { font-size: 34px; color: var(--accent); font-variant-numeric: tabular-nums; max-width: 100%; overflow-wrap: anywhere; }
 
 .hint { font-size: 12px; color: var(--ink-2); margin: 10px 0 12px; line-height: 1.55; }
 
@@ -986,13 +1003,17 @@ button {
 /* ---------- 底部导航 ---------- */
 
 .tabbar {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
+  display: block;
   padding: 6px 10px calc(6px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(10px);
+}
+
+.tablist {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
 }
 
 .tab {

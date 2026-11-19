@@ -554,9 +554,9 @@ export function prestigeView(game) {
   button.addEventListener('click', () => {
     const gain = game.prestigeGain();
     if (gain < 1) return;
-    if (!confirm(`确定转生？将清空当前金币、建筑和升级，获得 ${gain} 个碎片。`)) return;
+    if (!confirm(`确定转生？将清空当前金币、建筑和升级，获得 ${fmt(gain)} 个碎片。`)) return;
     const got = game.prestige();
-    root.dispatchEvent(new CustomEvent('toast', { bubbles: true, detail: { text: `转生完成，获得 ${got} 个碎片`, kind: 'good' } }));
+    root.dispatchEvent(new CustomEvent('toast', { bubbles: true, detail: { text: `转生完成，获得 ${fmt(got)} 个碎片`, kind: 'good' } }));
   });
 
   const shopTitle = el('h3', 'section-title', '碎片商店（永久）');
@@ -591,14 +591,14 @@ export function prestigeView(game) {
 
   function update() {
     const gain = game.prestigeGain();
-    gainValue.textContent = String(gain);
+    gainValue.textContent = fmt(gain);
     const ratio = Math.min(1, game.s.totalEarned / B.PRESTIGE_THRESHOLD);
     progressFill.style.width = `${ratio * 100}%`;
     hint.textContent = gain > 0
-      ? `本轮累计收益 ${fmt(game.s.totalEarned)}，现在转生可得 ${gain} 个碎片。`
+      ? `本轮累计收益 ${fmt(game.s.totalEarned)}，现在转生可得 ${fmt(gain)} 个碎片。`
       : `本轮累计收益 ${fmt(game.s.totalEarned)}，距 ${fmt(B.PRESTIGE_THRESHOLD)} 还差 ${fmt(Math.max(0, B.PRESTIGE_THRESHOLD - game.s.totalEarned))}。`;
     button.disabled = gain < 1;
-    button.textContent = gain > 0 ? `转生（+${gain} 碎片）` : '还不够转生';
+    button.textContent = gain > 0 ? `转生（+${fmt(gain)} 碎片）` : '还不够转生';
     for (const c of shopCards) {
       const level = game.s.shop[c.item.id] || 0;
       const maxed = level >= c.item.max;

@@ -32,7 +32,7 @@ npm run dev          # python3 -m http.server 5173
 打开 http://127.0.0.1:5173 。也可以直接双击 `index.html`，但 ES module 在部分浏览器的 `file://` 下会被拦截，建议用本地服务。
 
 ```bash
-npm test             # node --test tests/*.test.js，59 项
+npm test             # node --test tests/*.test.js，72 项
 ```
 
 需要 Node.js 20+（CI 使用 22）；`npm run dev` 会用 Python 3 起一个静态文件服务。
@@ -95,7 +95,7 @@ src/ui/icons.js           51 个 24×24 线性 SVG 图标
 src/ui/theme.js           主题偏好（跟随系统 / 浅色 / 深色）
 src/ui/floaters.js        点击 / 攻击飘字
 src/ui/haptics.js         振动反馈开关
-tests/                    node:test 用例（数值、存档、引擎、主题、格式化、剧情、反馈、离线预缓存、版本）
+tests/                    node:test 用例（数值、存档迁移与边界、引擎、主题、格式化、剧情、反馈、页面契约、离线预缓存、版本）
 ```
 
 ## 部署

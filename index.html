@@ -5,6 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>放置帝国 · Idle Empire</title>
   <meta name="description" content="一个纯前端的放置/增量游戏：建筑、升级、Boss、成就、转生与剧情档案。存档保存在本地浏览器。" />
+  <link rel="canonical" href="https://shushuzn.github.io/idle-empire/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="放置帝国 Idle Empire" />
+  <meta property="og:title" content="放置帝国 · Idle Empire" />
+  <meta property="og:description" content="一个纯前端的放置/增量游戏：建筑、升级、Boss、成就、转生与剧情档案。存档保存在本地浏览器，离线也能玩。" />
+  <meta property="og:url" content="https://shushuzn.github.io/idle-empire/" />
+  <meta property="og:image" content="https://shushuzn.github.io/idle-empire/assets/og-cover.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="放置帝国：矿灯下的矿道与紫色裂隙，金色标题压在深色岩壁上" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="放置帝国 · Idle Empire" />
+  <meta name="twitter:description" content="一个纯前端的放置/增量游戏：建筑、升级、Boss、成就、转生与剧情档案。存档保存在本地浏览器，离线也能玩。" />
+  <meta name="twitter:image" content="https://shushuzn.github.io/idle-empire/assets/og-cover.jpg" />
+  <meta name="twitter:image:alt" content="放置帝国：矿灯下的矿道与紫色裂隙，金色标题压在深色岩壁上" />
   <meta name="theme-color" content="#090d13" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -173,7 +190,7 @@
   <div class="app">
     <header class="hud">
       <div class="hud-top">
-        <div class="brand"><span class="brand-ico" data-icon="castle" data-tone="1" aria-hidden="true"></span> 放置帝国</div>
+        <h1 class="brand"><span class="brand-ico" data-icon="castle" data-tone="1" aria-hidden="true"></span> 放置帝国</h1>
         <button id="settings-btn" class="icon-btn" aria-label="设置" data-icon="gear"></button>
       </div>
       <div class="resources">
@@ -197,9 +214,13 @@
       <span class="tap-txt">点击 +<b id="tap-gain">1</b></span>
     </button>
 
-    <main id="view" class="view" role="tabpanel" aria-label="建筑" tabindex="-1"></main>
+    <main class="view-wrap">
+      <div id="view" class="view" role="tabpanel" aria-label="建筑" tabindex="0"></div>
+    </main>
 
-    <nav id="tabbar" class="tabbar" role="tablist" aria-label="主导航"></nav>
+    <nav class="tabbar" aria-label="主导航">
+      <div id="tabbar" class="tablist" role="tablist"></div>
+    </nav>
   </div>
 
   <div id="floaters" class="floaters" aria-hidden="true"></div>
