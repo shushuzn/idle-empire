@@ -50,6 +50,7 @@ export function defaultState(now = Date.now()) {
     calmClicks: 0,
     calmPrestiges: 0,
     tutorialSeen: false,
+    tideSeen: false,
     startedAt: now,
     lastSeen: now,
   };
@@ -136,6 +137,7 @@ export function normalize(raw, now = Date.now()) {
   s.shieldsBroken = int(raw.shieldsBroken);
   s.phaseKills = int(raw.phaseKills);
   s.tutorialSeen = Boolean(raw.tutorialSeen);
+  s.tideSeen = Boolean(raw.tideSeen);
   const seenBuilding = new Set(BUILDINGS.map((b) => b.id));
   s.resonanceSeen = Array.isArray(raw.resonanceSeen)
     ? [...new Set(raw.resonanceSeen.filter((key) => {

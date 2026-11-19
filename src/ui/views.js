@@ -181,6 +181,19 @@ export function buildingsView(game) {
   const tideEffect = el('p', 'tide-effect', '');
   tidePanel.append(tideHead, tideTrack, tideEffect);
   root.append(tidePanel);
+
+  // 潮汐的一次性说明：和回响说明排队出现，避免首次进入时叠两张提示卡
+  const tideHint = el('div', 'first-hint tide-hint');
+  tideHint.dataset.tone = '4';
+  tideHint.hidden = true;
+  tideHint.innerHTML = '<b>潮汐怎么用？</b>潮段每 20 分钟轮转：涨潮抬建筑、退潮抬点击、风暴抬 Boss、静海全项加成。四座潮汐建筑在对应潮段额外 +60%；每 6 段换一次季风，偏爱的潮段会多出现两次。离线时潮段暂停，回来接着走。';
+  const tideHintClose = el('button', 'hint-close', '知道了');
+  tideHint.append(tideHintClose);
+  root.append(tideHint);
+  tideHintClose.addEventListener('click', () => {
+    game.s.tideSeen = true;
+    tideHint.hidden = true;
+  });
   let tidePhaseId = '';
 
   const summary = el('p', 'view-sub');
@@ -215,6 +228,11 @@ export function buildingsView(game) {
     const owned = el('span', 'owned', '×0');
     nameRow.append(name, owned);
     const desc = el('div', 'desc', b.desc);
+    // 潮汐建筑在卡片上直接标出对应潮段与额外产出，不把加成藏在说明里
+    const affinity = b.tideAffinity
+      ? el('span', 'affinity', `${phaseName(b.tideAffinity)}时 +${pct(B.TIDE_AFFINITY_BONUS)} 产出`)
+      : null;
+    if (affinity) affinity.dataset.tone = String(TIDE_TONE[b.tideAffinity] || 2);
     const prod = el('div', 'prod');
     // 回响刻度：四格代表 I–IV，长按或在桌面悬停可以看到还差多少座
     const reso = el('div', 'reso');
@@ -226,7 +244,9 @@ export function buildingsView(game) {
     });
     const resoText = el('span', 'reso-text', '');
     reso.append(pips, resoText);
-    body.append(nameRow, desc, prod, reso);
+    body.append(nameRow, desc);
+    if (affinity) body.append(affinity);
+    body.append(prod, reso);
     const buy = el('button', 'buy');
     const buyLabel = el('b', 'buy-label', '购买');
     const buyCost = el('span', 'buy-cost', '0');
@@ -340,6 +360,7 @@ export function buildingsView(game) {
     setText(summary, `${visible} 种建筑 · 总产出 ${fmt(B.production(game.s))} /秒 · 点击 +${fmt(B.clickPower(game.s).perClick)}${layers ? ` · 回响 ${layers} 层${globalBonus ? `（全局 +${globalBonus}%）` : ''}` : ''}`);
     setHidden(hint, ownedTotal > 0);
     setHidden(resoHint, ownedTotal === 0 || Boolean(game.s.tutorialSeen));
+    setHidden(tideHint, !tide.started || Boolean(game.s.tideSeen) || !game.s.tutorialSeen || ownedTotal === 0);
   }
 
   return { el: root, update };

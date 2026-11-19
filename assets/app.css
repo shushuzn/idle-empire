@@ -431,6 +431,22 @@ button {
   color: color-mix(in srgb, var(--gold) 78%, var(--ink));
 }
 
+/* 潮汐引导沿用提示卡结构，但用青色系与潮段面板呼应 */
+.tide-hint {
+  border-color: color-mix(in srgb, var(--tone, var(--gold)) 36%, transparent);
+  background: color-mix(in srgb, var(--tone, var(--gold)) 7%, transparent);
+}
+
+.tide-hint b { color: var(--tone, var(--gold)); }
+
+[data-theme='light'] .tide-hint {
+  background: color-mix(in srgb, var(--tone, var(--gold)) 8%, #fffdf7);
+}
+
+[data-theme='light'] .tide-hint b {
+  color: color-mix(in srgb, var(--tone, var(--gold)) 78%, var(--ink));
+}
+
 .row { display: flex; align-items: center; gap: 10px; }
 .spread { justify-content: space-between; }
 
@@ -815,6 +831,20 @@ button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 潮汐建筑的对应潮段标签 */
+.affinity {
+  display: flex;
+  width: fit-content;
+  margin-top: 3px;
+  padding: 1px 7px;
+  border: 1px solid color-mix(in srgb, var(--tone, var(--line)) 26%, transparent);
+  border-radius: 999px;
+  background: var(--tone-soft, var(--card-2));
+  color: var(--tone, var(--ink-2));
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .prod {

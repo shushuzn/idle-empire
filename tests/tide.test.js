@@ -218,6 +218,7 @@ test('潮汐存档字段能迁移、夹取并过滤脏数据', () => {
     calmClicks: '7',
     calmPrestiges: 1,
     bossHits: '2',
+    tideSeen: 1,
   }, NOW);
   assert.equal(s.version, 6);
   assert.equal(VERSION, 6);
@@ -231,12 +232,14 @@ test('潮汐存档字段能迁移、夹取并过滤脏数据', () => {
   assert.equal(s.calmClicks, 7);
   assert.equal(s.calmPrestiges, 1);
   assert.equal(s.bossHits, 2);
+  assert.equal(s.tideSeen, true);
 
   const old = normalize({ version: 5, gold: 10 }, NOW);
   assert.equal(old.tideStarted, false);
   assert.equal(old.tideIndex, 0);
   assert.deepEqual(old.tideCounts, { flood: 0, ebb: 0, storm: 0, calm: 0 });
   assert.deepEqual(old.bossKills, {});
+  assert.equal(old.tideSeen, false);
 });
 
 test('保存时写入潮汐字段与存档版本 6', () => {
