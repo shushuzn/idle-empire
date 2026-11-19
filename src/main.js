@@ -394,6 +394,8 @@ function enterGame() {
   // 用户点开始后申请持久化，浏览器更容易批准，也能减少被清理的概率
   requestPersistentStorage();
   appEl.inert = false;
+  // 进入游戏后才启动潮汐：停在开场页时既不推进，也不提前发潮段成就
+  game.startTide();
   updateHud();
   startScreen?.classList.add('gone');
   setTimeout(() => startScreen?.remove(), 520);
@@ -703,6 +705,7 @@ function snapshotProgress() {
 
 function adoptState(next) {
   applyState(next);
+  game.startTide();
   game.checkAchievements();
   game.checkStory();
   persist();
@@ -836,6 +839,7 @@ $('#s-reset').addEventListener('click', () => {
   snapshotProgress();
   reset();
   Object.assign(game.s, defaultState());
+  game.startTide();
   persist();
   switchTab('buildings');
   updateHud();

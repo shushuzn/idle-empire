@@ -1,6 +1,6 @@
 import { BUILDINGS, UPGRADES, BOSSES, ACHIEVEMENTS, SHOP } from '../game/data.js';
 import { CHAPTERS } from '../game/story.js';
-import { fmt, fmtInt } from './format.js';
+import { fmt, fmtInt, pct } from './format.js';
 import { buzz } from './haptics.js';
 import { centerOf, floatText } from './floaters.js';
 import { icon, ICON_ART } from './icons.js';
@@ -51,6 +51,7 @@ function iconTile(name, tone, className = 'ico', art = ICON_ART[name] || '') {
 
 // 生成式插画叠在线条图标上；加载失败就露出下面的图标
 function addArt(node, src, size = 160) {
+  if (!src) return null;
   const img = el('img', 'ico-art');
   img.src = src;
   img.alt = '';
@@ -65,8 +66,11 @@ function addArt(node, src, size = 160) {
   return img;
 }
 
-const buildingArt = (id) => `./assets/art/buildings/${id}.webp`;
-const bossArt = (id) => `./assets/art/bosses/${id}.webp`;
+// 0.3.0 的新建筑与新 Boss 暂时沿用线条图标，没有生成式插画
+const ART_LESS_BUILDINGS = new Set(['mill', 'salt', 'stormtower', 'ranch']);
+const ART_LESS_BOSSES = new Set(['golem', 'whale', 'stormeye']);
+const buildingArt = (id) => (ART_LESS_BUILDINGS.has(id) ? '' : `./assets/art/buildings/${id}.webp`);
+const bossArt = (id) => (ART_LESS_BOSSES.has(id) ? '' : `./assets/art/bosses/${id}.webp`);
 
 const UPGRADE_LOOK = {
   click: { name: 'hand', tone: 1 },
@@ -80,15 +84,29 @@ const UPGRADE_LOOK = {
   phase: { name: 'hourglass', tone: 5 },
   tide: { name: 'sunring', tone: 2 },
   archive: { name: 'book', tone: 3 },
+  mill: { name: 'gear', tone: 2 },
+  salt: { name: 'shard', tone: 4 },
+  stormtower: { name: 'bolt', tone: 5 },
+  ranch: { name: 'moon', tone: 3 },
+  watch: { name: 'eye', tone: 6 },
+  monsoon: { name: 'swirl', tone: 4 },
+  extend: { name: 'clock', tone: 2 },
 };
 
-// 新效果不新开一列（360px 放不下 9 列），并进现有的流派里
+// 流派列：旧的零散效果并进现有列，潮汐线单独成列；7 列在 360px 下仍能放下
 const UPGRADE_LANE = {
   echo: 'global',
   breaker: 'boss',
   phase: 'boss',
   tide: 'building',
   archive: 'building',
+  mill: 'tideflow',
+  salt: 'tideflow',
+  stormtower: 'tideflow',
+  ranch: 'tideflow',
+  watch: 'tideflow',
+  monsoon: 'tideflow',
+  extend: 'tideflow',
 };
 
 const BUILDING_TONE = {
@@ -96,6 +114,7 @@ const BUILDING_TONE = {
   station: 2, quantum: 3, dyson: 1, time: 4, multiverse: 3, research: 5,
   stargate: 4, dark: 5, rift: 4, warp: 3, infinity: 6,
   deepmine: 1, tidal: 4, antimatter: 3, archive: 2,
+  mill: 4, salt: 1, stormtower: 5, ranch: 3,
 };
 
 const ACHIEVEMENT_TONE = {
@@ -106,6 +125,14 @@ const ACHIEVEMENT_TONE = {
   upgrade: 2,
   rebirth: 3,
   shard: 4,
+  sunring: 4,
+  moon: 3,
+  bolt: 5,
+  swirl: 3,
+  clock: 4,
+  hourglass: 4,
+  trident: 4,
+  eye: 5,
 };
 
 const SHOP_LOOK = {
@@ -118,6 +145,13 @@ const SHOP_LOOK = {
 };
 
 const toneOf = (index) => (index % 6) + 1;
+
+const TIDE_TONE = { flood: 4, ebb: 3, storm: 5, calm: 2 };
+const clockText = (seconds) => {
+  const s = Math.max(0, Math.ceil(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
+const phaseName = (id) => B.TIDE_PHASE_BY_ID.get(id)?.name || id;
 
 /* ---------------- 建筑 ---------------- */
 
@@ -135,6 +169,22 @@ export function buildingsView(game) {
   }
   head.append(title, modes);
   root.append(head);
+
+  // 潮段条：只放在建筑页顶部，四种潮段各用图标 + 文案区分，不依赖颜色
+  const tidePanel = el('section', 'tide-panel');
+  const tideHead = el('div', 'tide-head');
+  const tideGlyph = el('span', 'tide-glyph');
+  const tideName = el('b', 'tide-name', '');
+  const tideMonsoon = el('span', 'tide-monsoon', '');
+  const tideTime = el('span', 'tide-time', '');
+  tideHead.append(tideGlyph, tideName, tideMonsoon, tideTime);
+  const tideTrack = el('div', 'tide-track');
+  const tideFill = el('div', 'tide-fill');
+  tideTrack.append(tideFill);
+  const tideEffect = el('p', 'tide-effect', '');
+  tidePanel.append(tideHead, tideTrack, tideEffect);
+  root.append(tidePanel);
+  let tidePhaseId = '';
 
   const summary = el('p', 'view-sub');
   root.append(summary);
@@ -222,6 +272,36 @@ export function buildingsView(game) {
   });
 
   function update() {
+    const tide = B.tideState(game.s);
+    setHidden(tidePanel, !tide.started);
+    if (tide.started) {
+      if (tide.phase.id !== tidePhaseId) {
+        tidePhaseId = tide.phase.id;
+        tideGlyph.dataset.tone = String(TIDE_TONE[tide.phase.id] || 2);
+        tideGlyph.replaceChildren(icon(tide.phase.icon));
+      }
+      setText(tideName, tide.phase.name);
+      setText(tideMonsoon, `${tide.monsoon.name}季风 · ${phaseName(tide.monsoon.favor)}重复`);
+      setText(tideTime, clockText(tide.remaining));
+      setWidth(tideFill, tide.progress);
+      const b = tide.bonuses;
+      const parts = [];
+      if (b.building) parts.push(`建筑 +${pct(b.building)}`);
+      if (b.click) parts.push(`点击 +${pct(b.click)}`);
+      if (b.boss) parts.push(`Boss +${pct(b.boss)}`);
+      if (b.all) parts.push(`全项 +${pct(b.all)}`);
+      if (b.offline) parts.push(`离线 +${pct(b.offline)}`);
+      setText(
+        tideEffect,
+        `${parts.join(' · ')} · 第 ${tide.blockPos + 1}/6 段 · 下一段 ${tide.nextPhase.name}`,
+      );
+      setAttr(
+        tidePanel,
+        'aria-label',
+        `潮段 ${tide.phase.name}，${tide.monsoon.name}季风，剩余 ${Math.ceil(tide.remaining)} 秒，${parts.join('，')}`,
+      );
+    }
+
     let visible = 0;
     let ownedTotal = 0;
     for (const c of cards) {
@@ -275,6 +355,7 @@ const TREE_LANES = [
   { type: 'auto', label: '自动' },
   { type: 'global', label: '全局' },
   { type: 'offline', label: '离线' },
+  { type: 'tideflow', label: '潮汐' },
 ];
 
 // 节点位置：横轴是流派，纵轴是同一条链上的第几级
@@ -517,7 +598,7 @@ export function upgradesView(game) {
 export function bossesView(game) {
   const root = el('div', 'view-bosses');
   root.append(el('h2', 'view-title', 'Boss 挑战'));
-  const sub = el('p', 'view-sub', '点击攻击当前 Boss；护盾期间点击伤害翻倍、建筑伤害减半，二阶段 Boss 要打两段。击杀后按最大生命值重来，可以一直刷奖励。');
+  const sub = el('p', 'view-sub', '点击攻击当前 Boss；护盾期点击伤害翻倍、建筑伤害减半，二阶段要打两段。盐碱傀儡每 3 次攻击切换弱点，季风巨鲸只在风暴破盾，风暴之眼的护盾会自行回复。');
   root.append(sub);
 
   const arena = el('section', 'arena');
@@ -587,10 +668,17 @@ export function bossesView(game) {
     }
     const twoPhase = info.boss.phases === 2;
     setText(name, info.unlocked && twoPhase ? `${info.boss.name} · 第 ${info.phase} 阶段` : info.boss.name);
+    let hpStatus = '';
+    if (info.unlocked) {
+      if (info.phase === 2) hpStatus = ' · 第二阶段';
+      else if (info.stormLocked) hpStatus = ` · 护盾 ${fmt(info.shieldLeft)} · 需风暴破盾`;
+      else if (info.shielded) hpStatus = ` · 护盾 ${fmt(info.shieldLeft)}`;
+      if (info.shieldRegen && info.shielded) hpStatus += ' · 护盾回复中';
+    }
     setText(
       hpText,
       info.unlocked
-        ? `${fmt(info.hp)} / ${fmt(info.maxHp)} HP${info.phase === 2 ? ' · 第二阶段' : info.shielded ? ` · 护盾 ${fmt(info.shieldLeft)}` : ''}`
+        ? `${fmt(info.hp)} / ${fmt(info.maxHp)} HP${hpStatus}`
         : '尚未解锁',
     );
     setWidth(fill, info.hp / info.maxHp);
@@ -598,8 +686,14 @@ export function bossesView(game) {
     setHidden(shieldbar, !showShield);
     setWidth(shieldfill, showShield ? info.shieldLeft / info.maxHp : 0);
     setDisabled(attack, !info.unlocked);
-    const damage = B.bossDamage(game.s, { shielded: info.shielded, phase2: info.phase === 2 });
-    setText(attackDmg, `${fmt(damage)} 伤害${info.shielded ? ' · 破盾中' : ''}`);
+    const damage = B.bossDamage(game.s, {
+      shielded: info.shielded,
+      phase2: info.phase === 2,
+      weakness: info.focus,
+    });
+    const focusText = info.focus === 'click' ? ' · 弱点：点击' : info.focus === 'building' ? ' · 弱点：建筑' : '';
+    const lockText = info.stormLocked ? ' · 等待风暴' : info.shielded ? ' · 破盾中' : '';
+    setText(attackDmg, `${fmt(damage)} 伤害${focusText}${lockText}`);
     if (!info.unlocked) {
       setText(nextInfo, `「${info.boss.name}」需要累计收益 ${fmt(info.boss.unlockAt)}${info.boss.rebirthRequired ? ' 且至少转生 1 次' : ''}，现在 ${fmt(game.s.lifetimeEarned)}。`);
     } else {
@@ -623,9 +717,11 @@ export function bossesView(game) {
         current
           ? info.phase === 2
             ? '第二阶段'
-            : info.shielded
-              ? '护盾中'
-              : '挑战中'
+            : info.stormLocked
+              ? '需风暴破盾'
+              : info.shielded
+                ? '护盾中'
+                : '挑战中'
           : unlocked
             ? i < game.s.bossIndex
               ? '已击败'

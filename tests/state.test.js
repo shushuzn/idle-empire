@@ -142,7 +142,7 @@ test('旧版存档能迁到新结构', () => {
     buyMode: 'x10',
   };
   const s = normalize(legacy, now);
-  assert.equal(s.version, 5);
+  assert.equal(s.version, 6);
   assert.equal(s.gold, 5000);
   assert.deepEqual(s.buildings, { mine: 5, lumber: 2 });
   assert.deepEqual(s.upgrades, ['click1']);
@@ -218,7 +218,7 @@ test('JSON 存档文件与旧版 base64 存档码都能导入', () => {
   // 上一版导出的 base64 存档码仍要能读
   const fromBase64 = importSave(exportSave(s));
   assert.equal(fromBase64.gold, 9876);
-  assert.equal(fromBase64.version, 5);
+  assert.equal(fromBase64.version, 6);
 
   assert.throws(() => importSave('not a save'));
 });

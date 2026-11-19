@@ -1,12 +1,12 @@
 // 存档：创建、迁移、读写、离线结算
 import { BUILDINGS, UPGRADES, SHOP, BOSSES, ACHIEVEMENTS } from './data.js';
 import { CHAPTERS } from './story.js';
-import { offlineEarnings } from './balance.js';
+import { offlineEarnings, tideDuration, TIDE_PHASES, MONSOONS } from './balance.js';
 
 export const SAVE_KEY = 'idle_empire_save';
 export const BACKUP_KEY = 'idle_empire_backup';
 export const BROKEN_KEY = 'idle_empire_broken';
-export const VERSION = 5;
+export const VERSION = 6;
 
 // 0.1.0 的 Boss 顺序；插入新 Boss 后按 id 重新定位，不能直接沿用旧下标
 const LEGACY_BOSS_IDS = [
@@ -38,6 +38,17 @@ export function defaultState(now = Date.now()) {
     buyMode: 'x1',
     story: { unlocked: [], read: [] },
     resonanceSeen: [],
+    tideStarted: false,
+    tideIndex: 0,
+    tideElapsed: 0,
+    tideCountedIndex: -1,
+    tideCounts: { flood: 0, ebb: 0, storm: 0, calm: 0 },
+    monsoonSeen: [],
+    monsoonChanges: 0,
+    bossHits: 0,
+    bossKills: {},
+    calmClicks: 0,
+    calmPrestiges: 0,
     tutorialSeen: false,
     startedAt: now,
     lastSeen: now,
@@ -133,6 +144,30 @@ export function normalize(raw, now = Date.now()) {
       return seenBuilding.has(id) && ['1', '2', '3', '4'].includes(tier);
     }))]
     : [];
+
+  // 潮汐：旧档默认未开始，进入游戏后从涨潮起算；离线不推进潮段
+  s.tideStarted = Boolean(raw.tideStarted);
+  s.tideIndex = Math.min(int(raw.tideIndex), 1e9);
+  s.tideCountedIndex = Number.isInteger(Number(raw.tideCountedIndex)) && Number(raw.tideCountedIndex) >= -1
+    ? Number(raw.tideCountedIndex)
+    : -1;
+  s.tideElapsed = Math.min(num(raw.tideElapsed), tideDuration(s));
+  const tideCountsRaw = raw.tideCounts && typeof raw.tideCounts === 'object' ? raw.tideCounts : {};
+  s.tideCounts = Object.fromEntries(TIDE_PHASES.map((p) => [p.id, int(tideCountsRaw[p.id])]));
+  const monsoonIds = new Set(MONSOONS.map((m) => m.id));
+  s.monsoonSeen = Array.isArray(raw.monsoonSeen)
+    ? [...new Set(raw.monsoonSeen.filter((id) => typeof id === 'string' && monsoonIds.has(id)))]
+    : [];
+  s.monsoonChanges = int(raw.monsoonChanges);
+  s.calmClicks = int(raw.calmClicks);
+  s.calmPrestiges = int(raw.calmPrestiges);
+  s.bossHits = int(raw.bossHits);
+  const killsRaw = raw.bossKills && typeof raw.bossKills === 'object' ? raw.bossKills : {};
+  s.bossKills = {};
+  for (const boss of BOSSES) {
+    const count = int(killsRaw[boss.id]);
+    if (count > 0) s.bossKills[boss.id] = count;
+  }
 
   return s;
 }

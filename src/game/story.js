@@ -2,7 +2,7 @@
 // check(state) 只读状态，用来判断条件；解锁状态由引擎写进 state.story
 
 import { BOSSES } from './data.js';
-import { maxResonanceTier } from './balance.js';
+import { maxResonanceTier, tideTotal } from './balance.js';
 
 const count = (s, id) => s.buildings?.[id] || 0;
 const bossIndex = (id) => BOSSES.findIndex((b) => b.id === id);
@@ -208,6 +208,54 @@ export const CHAPTERS = [
     check: (s) => maxResonanceTier(s) >= 4,
     text: '你把耳朵贴在井壁上，想听清那道回响。它比你慢半拍，一声接一声，规律得不像回声。你数到第一百下才明白：那不是井在回应你，是井在数你。它数得很慢，但从来没有数错过。',
     echo: '这一次你也在数它。你们数到同一个数字时，井停了半拍。',
+  },
+  {
+    id: 'tide_timetable',
+    title: '潮水的时刻表',
+    source: '潮汐日志',
+    need: '经历 4 个潮段',
+    check: (s) => tideTotal(s) >= 4,
+    text: '你在勘测站的墙上画了一张时刻表：涨潮、退潮、风暴、静海，每二十分钟一格。画到第四格时，表自己多出一列，写着「暖流」。你按表去看海，海面真的在第四格后停了半拍，像有人照着同一张表翻页。',
+  },
+  {
+    id: 'salt_letter',
+    title: '盐里的信',
+    source: '盐田结晶',
+    need: '拥有 10 座盐田',
+    check: (s) => count(s, 'salt') >= 10,
+    text: '盐田晒出的盐粒在夜里结成薄片，掰开是一片一片的字。每一片只写半句，拼起来是一封没写完的信：「如果你看到这里，说明退潮已经……」后面被盐封死了。你把盐片含在嘴里，咸得发苦，像把没说完的话咽了回去。',
+  },
+  {
+    id: 'storm_quiet',
+    title: '风暴前的安静',
+    source: '塔顶记录',
+    need: '拥有 10 座风暴塔',
+    check: (s) => count(s, 'stormtower') >= 10,
+    text: '风暴塔的线圈在雷暴前十二秒停止嗡鸣。塔顶的记录员说，那不是故障，是风暴在吸气。你把耳朵贴上去，听见整片海都在屏息，只有自己的心跳在数数。第十二秒，第一道雷落下，塔灯亮得像一场白昼。',
+  },
+  {
+    id: 'whale_song',
+    title: '鲸歌',
+    source: '海底听音',
+    need: '击败季风巨鲸',
+    check: (s) => (s.bossKills?.whale || 0) >= 1,
+    text: '季风巨鲸倒下时没有血，只有一段很长的低鸣从海底升起来。声呐把它画成一条弯折的线，和你的点击节奏完全重合。你忽然想起潮汐主教说过的话：海不记得谁赢过，只记得谁敲过它的骨头。',
+  },
+  {
+    id: 'doldrums',
+    title: '无风带',
+    source: '漂流记录',
+    need: '经历 1 次无风季风',
+    check: (s) => Array.isArray(s.monsoonSeen) && s.monsoonSeen.includes('hush'),
+    text: '无风季风来的那天，海面平得能照出云。帆垂着，浪也停了，盐田和磨坊都安静下来。你在这样的下午点击，声音传得很远。远处有人回了你一下，很轻，但确实回了——那人也停在同一片无风带里。',
+  },
+  {
+    id: 'second_timetable',
+    title: '第二张时刻表',
+    source: '井底墙面',
+    need: '经历 24 个潮段',
+    check: (s) => tideTotal(s) >= 24,
+    text: '第二张时刻表出现在井底，笔迹和你第一张一模一样，只是起始时间早了一年。你按表往下数，最后一个格子写着「关灯」。那天夜里，勘测站的灯自己灭了。你摸黑走到井口，听见潮水正按表的第一格涨起来。',
   },
 ];
 

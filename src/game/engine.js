@@ -15,6 +15,7 @@ export class Game {
     this.saveTimer = 0;
     this.achievementTimer = 0;
     if (!this.state.story) this.state.story = { unlocked: [], read: [] };
+    if (!this.state.bossKills) this.state.bossKills = {};
   }
 
   get s() {
@@ -30,7 +31,15 @@ export class Game {
 
   tap() {
     this.s.clicks += 1;
+    if (this.s.tideStarted && B.tideState(this.s).phase.id === 'calm') {
+      this.s.calmClicks = (this.s.calmClicks || 0) + 1;
+    }
     this.addGold(B.clickPower(this.s).perClick);
+  }
+
+  // 玩家进入游戏后才启动潮汐；重复调用只补记当前潮段，不会重置计时
+  startTide() {
+    return B.startTide(this.s);
   }
 
   owned(buildingId) {
@@ -128,14 +137,25 @@ export class Game {
     const boss = this.currentBoss();
     const phase = boss.phases === 2 && this.s.bossPhase === 2 ? 2 : 1;
     const maxHp = phase === 2 ? boss.hp * 0.6 : boss.hp;
+    const focus = boss.weaknessSwitch
+      ? (Math.floor((this.s.bossHits || 0) / 3) % 2 === 0 ? 'click' : 'building')
+      : null;
     if (!this.bossUnlocked(boss)) {
-      return { boss, hp: maxHp, maxHp, unlocked: false, phase, shielded: false, shieldPct: 0, shieldHp: 0, next: BOSSES[this.s.bossIndex + 1] };
+      return {
+        boss, hp: maxHp, maxHp, unlocked: false, phase, shielded: false, shieldPct: 0,
+        shieldHp: 0, focus, stormLocked: false, shieldRegen: boss.shieldRegen || 0,
+        next: BOSSES[this.s.bossIndex + 1],
+      };
     }
     if (this.s.bossHp === null || !Number.isFinite(this.s.bossHp)) this.s.bossHp = maxHp;
     const hp = Math.min(Math.max(0, this.s.bossHp), maxHp);
     const shieldPct = phase === 1 ? boss.shield || 0 : 0;
     const shieldHp = maxHp * shieldPct;
     const shielded = shieldHp > 0 && hp > maxHp - shieldHp;
+    // 季风巨鲸的护盾只在风暴潮段可以被击破，其余时候最多压到 1 点
+    const stormLocked = Boolean(
+      shielded && boss.stormShield && B.tideState(this.s).phase.id !== 'storm',
+    );
     const next = BOSSES[this.s.bossIndex + 1];
     return {
       boss,
@@ -147,6 +167,9 @@ export class Game {
       shieldPct,
       shieldHp,
       shieldLeft: Math.max(0, hp - (maxHp - shieldHp)),
+      focus,
+      stormLocked,
+      shieldRegen: boss.shieldRegen || 0,
       next,
     };
   }
@@ -154,14 +177,26 @@ export class Game {
   attack() {
     const info = this.bossState();
     if (!info.unlocked) return null;
-    const damage = B.bossDamage(this.s, { shielded: info.shielded, phase2: info.phase === 2 });
+    const damage = B.bossDamage(this.s, {
+      shielded: info.shielded,
+      phase2: info.phase === 2,
+      weakness: info.focus,
+    });
     let hp = info.hp - damage;
+    if (info.stormLocked) {
+      // 护盾锁定时最多压到护盾线之上，不能直接击穿；按最大生命取相对余量，避免大数值下 +1 被浮点吞掉
+      const guard = info.maxHp - info.shieldHp;
+      const lockFloor = guard + Math.max(1, info.maxHp * 1e-9);
+      hp = Math.max(hp, Math.min(info.hp, lockFloor));
+    }
+    const actual = Math.max(0, info.hp - hp);
+    if (info.boss.weaknessSwitch) this.s.bossHits = (this.s.bossHits || 0) + 1;
     let brokeShield = false;
     if (info.shielded && hp <= info.maxHp - info.shieldHp) {
       this.s.shieldsBroken += 1;
       brokeShield = true;
     }
-    const result = { damage, brokeShield, phase: 0, killed: null, reward: 0 };
+    const result = { damage: actual, brokeShield, phase: 0, killed: null, reward: 0, focus: info.focus };
     if (hp > 0) {
       this.s.bossHp = hp;
       if (brokeShield) this.checkAchievements();
@@ -180,6 +215,8 @@ export class Game {
     const killed = info.boss;
     const reward = B.bossReward(killed);
     this.s.kills += 1;
+    this.s.bossKills[killed.id] = (this.s.bossKills[killed.id] || 0) + 1;
+    this.s.bossHits = 0;
     if (killed.phases === 2) this.s.phaseKills += 1;
     this.addGold(reward);
     const nextIndex = this.s.bossIndex + 1;
@@ -211,6 +248,10 @@ export class Game {
     const gain = this.prestigeGain();
     if (gain < 1) return 0;
     this.checkStory(); // 先把本轮达成的章节记下来，再清空进度
+    const tide = B.tideState(this.s);
+    if (tide.started && (tide.phase.id === 'calm' || tide.monsoon.id === 'hush')) {
+      this.s.calmPrestiges = (this.s.calmPrestiges || 0) + 1;
+    }
     this.s.shards += gain;
     this.s.rebirths += 1;
     this.s.gold = 0;
@@ -220,6 +261,7 @@ export class Game {
     this.s.bossIndex = 0;
     this.s.bossHp = null;
     this.s.bossPhase = 1;
+    this.s.bossHits = 0;
     this.checkAchievements();
     this.checkStory();
     return gain;
@@ -243,6 +285,14 @@ export class Game {
       case 'shields': value = s.shieldsBroken; break;
       case 'phases': value = s.phaseKills; break;
       case 'building': value = s.buildings[achievement.cond[2]] || 0; break;
+      case 'tidephase': value = s.tideCounts?.[achievement.cond[2]] || 0; break;
+      case 'tidetotal': value = B.tideTotal(s); break;
+      case 'monsoon': value = s.monsoonSeen?.length || 0; break;
+      case 'monsooncount': value = s.monsoonChanges || 0; break;
+      case 'bosskill': value = s.bossKills?.[achievement.cond[2]] || 0; break;
+      case 'calmprestige': value = s.calmPrestiges || 0; break;
+      case 'calmclicks': value = s.calmClicks || 0; break;
+      case 'newbuildings': value = Math.min(...['mill', 'salt', 'stormtower', 'ranch'].map((id) => s.buildings[id] || 0)); break;
       default: value = 0;
     }
     return { value, target, done: s.achievements.includes(achievement.id), ratio: Math.min(1, target ? value / target : 0) };
@@ -305,6 +355,15 @@ export class Game {
   }
 
   tick(dt, now = performance.now()) {
+    // 潮段先于产出推进：换段当帧就按新潮段的加成结算
+    const tideChanged = B.advanceTide(this.s, dt);
+    if (tideChanged) {
+      this.checkAchievements();
+      this.checkStory();
+      if (this.hooks.onTide) this.hooks.onTide(B.tideState(this.s), tideChanged);
+    }
+    this.regenerateBossShield(dt);
+
     const gain = B.totalPerSecond(this.s) * dt;
     if (gain > 0) this.addGold(gain);
 
@@ -320,5 +379,16 @@ export class Game {
       this.saveTimer = 0;
       save(this.s);
     }
+  }
+
+  // 风暴之眼：护盾未被击破时缓慢回复，逼玩家在破盾窗口里集中输出
+  regenerateBossShield(dt) {
+    const boss = BOSSES[this.s.bossIndex];
+    if (!boss || !boss.shieldRegen || !this.s.tideStarted) return;
+    if (this.s.bossHp === null || !Number.isFinite(this.s.bossHp)) return;
+    const info = this.bossState();
+    if (!info.unlocked || !info.shielded) return;
+    const regen = info.maxHp * boss.shieldRegen * dt;
+    this.s.bossHp = Math.min(info.maxHp, info.hp + regen);
   }
 }

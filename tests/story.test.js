@@ -81,7 +81,7 @@ test('存档迁移只保留已知章节，已读必须是已解锁的子集', ()
 test('旧存档没有 story 字段时补默认值', () => {
   const s = normalize({ gold: 10 });
   assert.deepEqual(s.story, { unlocked: [], read: [] });
-  assert.equal(s.version, 5);
+  assert.equal(s.version, 6);
 });
 
 test('章节 id 唯一且都有文案与解锁条件', () => {

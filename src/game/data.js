@@ -14,10 +14,14 @@ export const BUILDINGS = [
   { id: 'quantum', name: '量子实验室', desc: '量子技术放大收益', baseCost: 800000000, baseProduction: 1200000, icon: 'atom' },
   { id: 'antimatter', name: '反物质熔炉', desc: '把反物质烧成收益', baseCost: 3600000000, baseProduction: 4800000, icon: 'atom', unlockOwned: { quantum: 8 } },
   { id: 'dyson', name: '戴森环', desc: '围住恒星收集能量', baseCost: 12000000000, baseProduction: 15000000, icon: 'sunring' },
+  { id: 'mill', name: '潮汐磨坊', desc: '涨潮时水轮转得最欢', baseCost: 40000000000, baseProduction: 42000000, icon: 'sunring', tideAffinity: 'flood' },
   { id: 'time', name: '时间机器', desc: '穿越时空搬财富', baseCost: 200000000000, baseProduction: 200000000, icon: 'clock' },
+  { id: 'salt', name: '盐田', desc: '退潮后留下白花花的收益', baseCost: 1200000000000, baseProduction: 1100000000, icon: 'shard', tideAffinity: 'ebb' },
   { id: 'multiverse', name: '多元宇宙门户', desc: '跨维度收割能量', baseCost: 3000000000000, baseProduction: 2700000000, icon: 'portal' },
   { id: 'archive', name: '记忆档案馆', desc: '每解锁 3 篇剧情，产出 +5%', baseCost: 18000000000000, baseProduction: 17000000000, icon: 'book', unlockOwned: { multiverse: 5 } },
+  { id: 'stormtower', name: '风暴塔', desc: '把雷暴收进塔顶的线圈', baseCost: 30000000000000, baseProduction: 27000000000, icon: 'bolt', tideAffinity: 'storm' },
   { id: 'research', name: '研究院', desc: '用前沿科技提效', baseCost: 50000000000000, baseProduction: 42000000000, icon: 'flask' },
+  { id: 'ranch', name: '深海牧场', desc: '静海里鲸群自己上门', baseCost: 150000000000000, baseProduction: 120000000000, icon: 'moon', tideAffinity: 'calm' },
   { id: 'stargate', name: '星际之门', desc: '直通遥远星系', baseCost: 500000000000000, baseProduction: 400000000000, icon: 'gate' },
   { id: 'dark', name: '暗能量采集器', desc: '收集宇宙暗能量', baseCost: 800000000000000, baseProduction: 600000000000, icon: 'eclipse' },
   { id: 'rift', name: '时空裂隙', desc: '连接不同时空', baseCost: 5000000000000000, baseProduction: 3500000000000, icon: 'hourglass' },
@@ -65,6 +69,22 @@ export const UPGRADES = [
 
   { id: 'tide', name: '潮汐调度', desc: '潮汐电站 +40%', cost: 100000000, effect: ['tide', 0.4], reqBuilding: { tidal: 10 } },
   { id: 'archive', name: '档案索引', desc: '剧情加成上限 +20%', cost: 10000000000000, effect: ['archive', 0.2], reqBuilding: { archive: 5 } },
+
+  // 0.3.0 潮汐线：四条升级链共用科技树的「潮汐」流派
+  { id: 'watch1', name: '观潮 I', desc: '所有潮段加成 +20%', cost: 50000000, effect: ['watch', 0.2] },
+  { id: 'watch2', name: '观潮 II', desc: '所有潮段加成再 +20%', cost: 5000000000, effect: ['watch', 0.2], req: 'watch1' },
+  { id: 'watch3', name: '观潮 III', desc: '所有潮段加成再 +20%', cost: 500000000000, effect: ['watch', 0.2], req: 'watch2' },
+  { id: 'monsoon1', name: '季风契约 I', desc: '季风加成 +25%', cost: 200000000, effect: ['monsoon', 0.25] },
+  { id: 'monsoon2', name: '季风契约 II', desc: '季风加成再 +25%', cost: 20000000000, effect: ['monsoon', 0.25], req: 'monsoon1' },
+  { id: 'monsoon3', name: '季风契约 III', desc: '季风加成再 +25%', cost: 2000000000000, effect: ['monsoon', 0.25], req: 'monsoon2' },
+  { id: 'extend1', name: '潮汐延长线 I', desc: '每个潮段延长 2 分钟', cost: 500000000, effect: ['extend', 120] },
+  { id: 'extend2', name: '潮汐延长线 II', desc: '每个潮段再延长 2 分钟', cost: 50000000000, effect: ['extend', 120], req: 'extend1' },
+  { id: 'extend3', name: '潮汐延长线 III', desc: '每个潮段再延长 2 分钟', cost: 5000000000000, effect: ['extend', 120], req: 'extend2' },
+  { id: 'extend4', name: '潮汐延长线 IV', desc: '每个潮段再延长 2 分钟', cost: 500000000000000, effect: ['extend', 120], req: 'extend3' },
+  { id: 'mill1', name: '潮磨传动', desc: '潮汐磨坊产出 +50%', cost: 80000000000, effect: ['mill', 0.5], reqBuilding: { mill: 5 } },
+  { id: 'salt1', name: '盐晶提纯', desc: '盐田产出 +50%', cost: 2400000000000, effect: ['salt', 0.5], reqBuilding: { salt: 5 } },
+  { id: 'storm1', name: '引雷尖顶', desc: '风暴塔产出 +50%', cost: 60000000000000, effect: ['stormtower', 0.5], reqBuilding: { stormtower: 5 } },
+  { id: 'ranch1', name: '深海牧铃', desc: '深海牧场产出 +50%', cost: 300000000000000, effect: ['ranch', 0.5], reqBuilding: { ranch: 5 } },
 ];
 
 export const BOSSES = [
@@ -86,6 +106,9 @@ export const BOSSES = [
   { id: 'shatterer', name: '现实碎裂者', icon: 'gem', hp: 100000000000000, reward: 500000000000000, unlockAt: 1000000000000000 },
   { id: 'tyrant', name: '无限暴君', icon: 'tyrant', hp: 1000000000000000, reward: 5000000000000000, unlockAt: 10000000000000000, rebirthRequired: true },
   { id: 'emperor', name: '虚空帝王', icon: 'emperor', hp: 10000000000000000, reward: 50000000000000000, unlockAt: 100000000000000000, rebirthRequired: true },
+  { id: 'golem', name: '盐碱傀儡', icon: 'titan', hp: 60000000000000000, reward: 300000000000000000, unlockAt: 500000000000000000, rebirthRequired: true, weaknessSwitch: true },
+  { id: 'whale', name: '季风巨鲸', icon: 'trident', hp: 400000000000000000, reward: 2000000000000000000, unlockAt: 3000000000000000000, rebirthRequired: true, shield: 0.4, stormShield: true },
+  { id: 'stormeye', name: '风暴之眼', icon: 'eye', hp: 2500000000000000000, reward: 15000000000000000000, unlockAt: 20000000000000000000, rebirthRequired: true, shield: 0.35, shieldRegen: 0.015 },
 ];
 
 export const ACHIEVEMENTS = [
@@ -128,6 +151,21 @@ export const ACHIEVEMENTS = [
   { id: 'g1q', name: '万亿俱乐部', desc: '累计获得 1e15 金币', icon: 'coin', cond: ['earned', 1e15], reward: ['shards', 5] },
   { id: 'r20', name: '轮回二十次', desc: '转生 20 次', icon: 'rebirth', cond: ['rebirths', 20], reward: ['shards', 10] },
   { id: 'c25000', name: '手速不退', desc: '点击 25,000 次', icon: 'hand', cond: ['clicks', 25000], reward: ['gold', 100000000] },
+
+  { id: 'tide_flood', name: '第一波潮', desc: '经历 1 次涨潮', icon: 'sunring', cond: ['tidephase', 1, 'flood'], reward: ['gold', 200000] },
+  { id: 'tide_ebb', name: '潮水退去', desc: '经历 1 次退潮', icon: 'moon', cond: ['tidephase', 1, 'ebb'], reward: ['gold', 500000] },
+  { id: 'tide_storm', name: '迎风而立', desc: '经历 1 次风暴', icon: 'bolt', cond: ['tidephase', 1, 'storm'], reward: ['gold', 1000000] },
+  { id: 'tide_calm', name: '静海一刻', desc: '经历 1 次静海', icon: 'swirl', cond: ['tidephase', 1, 'calm'], reward: ['gold', 2000000] },
+  { id: 'tide_10', name: '潮汐学徒', desc: '经历 10 个潮段', icon: 'clock', cond: ['tidetotal', 10], reward: ['shards', 1] },
+  { id: 'tide_40', name: '观潮者', desc: '经历 40 个潮段', icon: 'hourglass', cond: ['tidetotal', 40], reward: ['shards', 3] },
+  { id: 'monsoon_1', name: '季风来了', desc: '经历 1 次季风交替', icon: 'swirl', cond: ['monsooncount', 1], reward: ['gold', 5000000] },
+  { id: 'monsoon_6', name: '季风契约', desc: '经历 6 次季风交替', icon: 'book', cond: ['monsooncount', 6], reward: ['shards', 3] },
+  { id: 'boss_golem', name: '盐壳之下', desc: '击败盐碱傀儡', icon: 'skull', cond: ['bosskill', 1, 'golem'], reward: ['shards', 2] },
+  { id: 'boss_whale', name: '听见鲸歌', desc: '击败季风巨鲸', icon: 'trident', cond: ['bosskill', 1, 'whale'], reward: ['shards', 3] },
+  { id: 'boss_stormeye', name: '对视风暴', desc: '击败风暴之眼', icon: 'eye', cond: ['bosskill', 1, 'stormeye'], reward: ['shards', 5] },
+  { id: 'calm_prestige', name: '无风转生', desc: '在静海潮段或无风季风中转生', icon: 'rebirth', cond: ['calmprestige', 1], reward: ['shards', 2] },
+  { id: 'calm_clicks', name: '静海点灯', desc: '在静海潮段点击 500 次', icon: 'hand', cond: ['calmclicks', 500], reward: ['gold', 200000000] },
+  { id: 'tide_four', name: '潮汐四业', desc: '四种潮汐建筑各拥有 10 座', icon: 'tower', cond: ['newbuildings', 10], reward: ['shards', 5] },
 ];
 
 // 转生商店：用碎片买永久加成

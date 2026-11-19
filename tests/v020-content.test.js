@@ -25,12 +25,12 @@ function memoryStorage() {
   return memory;
 }
 
-test('0.2.0 内容数量达标且各表 id 唯一', () => {
-  assert.equal(BUILDINGS.length, 22);
-  assert.equal(UPGRADES.length, 33);
-  assert.equal(BOSSES.length, 18);
-  assert.equal(ACHIEVEMENTS.length, 32);
-  assert.equal(CHAPTERS.length, 24);
+test('内容数量达标且各表 id 唯一', () => {
+  assert.equal(BUILDINGS.length, 26);
+  assert.equal(UPGRADES.length, 47);
+  assert.equal(BOSSES.length, 21);
+  assert.equal(ACHIEVEMENTS.length, 46);
+  assert.equal(CHAPTERS.length, 30);
   assert.equal(SHOP.length, 6);
 
   for (const [name, list] of Object.entries({ BUILDINGS, UPGRADES, BOSSES, ACHIEVEMENTS, SHOP, CHAPTERS })) {
@@ -362,7 +362,7 @@ test('存档同时写入 bossId，旧档也能按 id 找回', () => {
 
   const raw = JSON.parse(memory.get(SAVE_KEY));
   assert.equal(raw.bossId, 'bishop');
-  assert.equal(raw.version, 5);
+  assert.equal(raw.version, 6);
   assert.equal(normalize(raw, NOW).bossIndex, bossIndex('bishop'));
 
   // 模拟 0.1.0 的原始存档：只有 version 和 bossIndex
