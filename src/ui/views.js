@@ -260,6 +260,10 @@ export function upgradesView(game) {
     btn.style.gridColumn = String(node.lane + 1);
     btn.style.gridRow = String(node.row + 1);
     btn.append(iconTile(node.look.name, node.look.tone, 'utree-ico', ICON_ART[node.look.name]));
+    // 同一条流派里图标是重复的，右下角标个级数才分得清先后
+    const lvl = el('span', 'utree-lvl', String(node.row + 1));
+    lvl.setAttribute('aria-hidden', 'true');
+    btn.append(lvl);
     grid.append(btn);
     btn.addEventListener('click', () => {
       selectedId = node.u.id;
@@ -286,14 +290,19 @@ export function upgradesView(game) {
   }
 
   detailBuy.addEventListener('click', () => {
-    if (!selectedId || !game.buyUpgrade(selectedId)) return;
+    if (!selectedId) return;
+    const bought = selectedId;
+    if (!game.buyUpgrade(bought)) return;
     buzz(6);
-    const node = nodes.find((n) => n.u.id === selectedId);
+    const node = nodes.find((n) => n.u.id === bought);
     if (node) {
       node.btn.classList.remove('pulse');
       void node.btn.offsetWidth;
       node.btn.classList.add('pulse');
     }
+    // 买完自动跳到这条流派的下一级，方便一路往下点
+    const next = nodes.find((n) => n.u.req === bought);
+    if (next) selectedId = next.u.id;
     update();
   });
 

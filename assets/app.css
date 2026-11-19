@@ -318,8 +318,8 @@ button {
   border-radius: 9px;
   font-size: 12.5px;
   color: var(--ink-2);
-  /* 手指按得准：至少 40px 高，横向再来一点余量 */
-  min-height: 40px;
+  /* 手指按得准：跟其他按钮一样按 44px 一档 */
+  min-height: 44px;
   min-width: 44px;
 }
 
@@ -508,6 +508,33 @@ button {
 .utree-ico > .ico-art { border-radius: 7px; }
 
 .utree-node.is-owned .utree-ico { color: #2f1f06; }
+
+/* 节点级数：同一条流派图标一样，靠这个角标区分第几级 */
+.utree-lvl {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 3px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  background: var(--card-2);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.utree-node.is-owned .utree-lvl {
+  background: #2b1c05;
+  border-color: rgba(60, 38, 0, 0.5);
+  color: #ffe0a0;
+}
 
 .utree-detail {
   margin-top: 10px;
@@ -1238,8 +1265,8 @@ button {
 
 .toast-action {
   flex: none;
-  min-height: 32px;
-  padding: 5px 14px;
+  min-height: 44px;
+  padding: 5px 16px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
