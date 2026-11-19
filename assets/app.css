@@ -823,6 +823,9 @@ button {
   background-image: var(--tex-surface);
 }
 
+/* 浅色底上 0.4 的透明度几乎看不清，锁住的节点也要能辨认路线 */
+[data-theme='light'] .utree-node.is-locked { opacity: 0.62; }
+
 
 .desc {
   font-size: 12px;
@@ -845,6 +848,11 @@ button {
   color: var(--tone, var(--ink-2));
   font-size: 11px;
   white-space: nowrap;
+}
+
+/* 浅色下 11px 的青色标签对比度差一点，往墨色压一档 */
+[data-theme='light'] .affinity {
+  color: color-mix(in srgb, var(--tone, var(--ink)) 78%, var(--ink));
 }
 
 .prod {
@@ -939,6 +947,26 @@ button {
   border-radius: 999px;
   background: linear-gradient(90deg, var(--accent), var(--gold));
   transition: width 0.2s ease;
+}
+
+.achievements-filter {
+  display: flex;
+  width: 100%;
+  margin: 0 0 10px;
+}
+
+.achievements-filter .seg {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 4px;
+  font-size: 12px;
+}
+
+.filter-empty {
+  margin: 18px 4px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
 }
 
 .progress-text { font-size: 11px; color: var(--muted); margin-top: 4px; }

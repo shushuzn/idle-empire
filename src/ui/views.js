@@ -345,14 +345,20 @@ export function buildingsView(game) {
         c.pipEls[i].classList.toggle('on', i < tier);
         c.pipEls[i].classList.toggle('next', i === tier);
       }
-      const label = next
+      const fullLabel = next
         ? tier
           ? `回响 ${B.RESONANCE_LABELS[tier - 1]} +${bonus}% · 再买 ${fmtInt(next.need)} 座到 ${next.label}`
           : `再买 ${fmtInt(next.need)} 座解锁回响 I`
         : `回响 IV +${bonus}%`;
+      // 卡片上只留能放下的部分，完整说明留给长按与读屏
+      const label = next
+        ? tier
+          ? `回响 ${B.RESONANCE_LABELS[tier - 1]} +${bonus}% · 差${fmtInt(next.need)}座`
+          : `差${fmtInt(next.need)}座解锁回响 I`
+        : fullLabel;
       setText(c.resoText, label);
-      setAttr(c.reso, 'title', label);
-      setAttr(c.reso, 'aria-label', label);
+      setAttr(c.reso, 'title', fullLabel);
+      setAttr(c.reso, 'aria-label', fullLabel);
       c.reso.classList.toggle('has-echo', tier > 0);
     }
     const layers = B.resonanceLayers(game.s);
@@ -757,11 +763,45 @@ export function bossesView(game) {
 
 /* ---------------- 成就 ---------------- */
 
+let achievementFilter = 'all';
+
+const ACHIEVEMENT_FILTERS = [
+  ['all', '全部'],
+  ['done', '已达成'],
+  ['todo', '未达成'],
+];
+
 export function achievementsView(game) {
   const root = el('div', 'view-achievements');
   root.append(el('h2', 'view-title', '成就'));
-  const sub = el('p', 'view-sub', '');
+  const sub = el('p', 'view-sub', '成就给的碎片不会因转生消失；点下面的筛选查看进度。');
   root.append(sub);
+
+  // 46 条成就一屏放不下，按达成状态筛选能少翻很多
+  const filterBar = el('div', 'segmented achievements-filter');
+  filterBar.setAttribute('role', 'group');
+  filterBar.setAttribute('aria-label', '筛选成就');
+  const filterButtons = ACHIEVEMENT_FILTERS.map(([id, label]) => {
+    const btn = el('button', 'seg', label);
+    btn.type = 'button';
+    btn.dataset.filter = id;
+    btn.setAttribute('aria-pressed', String(achievementFilter === id));
+    if (achievementFilter === id) btn.classList.add('on');
+    btn.addEventListener('click', () => {
+      achievementFilter = id;
+      for (const b of filterButtons) {
+        b.classList.toggle('on', b === btn);
+        b.setAttribute('aria-pressed', String(b === btn));
+      }
+      update();
+    });
+    filterBar.append(btn);
+    return btn;
+  });
+  root.append(filterBar);
+  const empty = el('p', 'filter-empty', '');
+  empty.hidden = true;
+  root.append(empty);
 
   const list = el('div', 'cards');
   root.append(list);
@@ -787,14 +827,28 @@ export function achievementsView(game) {
 
   function update() {
     let done = 0;
+    let visible = 0;
     for (const c of cards) {
       const p = game.achievementProgress(c.a);
       if (p.done) done++;
+      const show = achievementFilter === 'all'
+        || (achievementFilter === 'done' ? p.done : !p.done);
+      setHidden(c.card, !show);
+      if (show) visible++;
       c.card.classList.toggle('done', p.done);
       setWidth(c.bar, p.ratio);
       setText(c.count, p.done ? '已达成' : `${fmt(p.value)} / ${fmt(p.target)}`);
     }
-    setText(sub, `已达成 ${done} / ${ACHIEVEMENTS.length}，成就给的碎片不会因转生消失。`);
+    const total = ACHIEVEMENTS.length;
+    const counts = { all: total, done, todo: total - done };
+    for (let i = 0; i < filterButtons.length; i++) {
+      const [id, label] = ACHIEVEMENT_FILTERS[i];
+      setText(filterButtons[i], `${label} ${counts[id]}`);
+    }
+    setHidden(empty, visible > 0);
+    if (!visible) {
+      setText(empty, achievementFilter === 'done' ? '还没有达成的成就，继续经营帝国吧。' : '这一栏已经清空，所有成就都达成了。');
+    }
   }
 
   return { el: root, update };
