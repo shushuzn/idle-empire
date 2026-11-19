@@ -66,11 +66,8 @@ function addArt(node, src, size = 160) {
   return img;
 }
 
-// 0.3.0 的新建筑与新 Boss 暂时沿用线条图标，没有生成式插画
-const ART_LESS_BUILDINGS = new Set(['mill', 'salt', 'stormtower', 'ranch']);
-const ART_LESS_BOSSES = new Set(['golem', 'whale', 'stormeye']);
-const buildingArt = (id) => (ART_LESS_BUILDINGS.has(id) ? '' : `./assets/art/buildings/${id}.webp`);
-const bossArt = (id) => (ART_LESS_BOSSES.has(id) ? '' : `./assets/art/bosses/${id}.webp`);
+const buildingArt = (id) => `./assets/art/buildings/${id}.webp`;
+const bossArt = (id) => `./assets/art/bosses/${id}.webp`;
 
 const UPGRADE_LOOK = {
   click: { name: 'hand', tone: 1 },
@@ -278,7 +275,9 @@ export function buildingsView(game) {
       if (tide.phase.id !== tidePhaseId) {
         tidePhaseId = tide.phase.id;
         tideGlyph.dataset.tone = String(TIDE_TONE[tide.phase.id] || 2);
+        tidePanel.dataset.tone = tideGlyph.dataset.tone;
         tideGlyph.replaceChildren(icon(tide.phase.icon));
+        addArt(tideGlyph, ICON_ART[tide.phase.icon] || '', 144);
       }
       setText(tideName, tide.phase.name);
       setText(tideMonsoon, `${tide.monsoon.name}季风 · ${phaseName(tide.monsoon.favor)}重复`);

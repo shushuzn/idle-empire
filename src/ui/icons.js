@@ -89,6 +89,13 @@ export const ICON_ART = {
   robot: './assets/art/icons/robot.webp',
   laurel: './assets/art/icons/laurel.webp',
   tower: './assets/art/icons/tower.webp',
+  /* 潮汐与季风 */
+  sunring: './assets/art/icons/sunring.webp',
+  swirl: './assets/art/icons/swirl.webp',
+  clock: './assets/art/icons/clock.webp',
+  hourglass: './assets/art/icons/hourglass.webp',
+  trident: './assets/art/icons/trident.webp',
+  eye: './assets/art/icons/eye.webp',
 };
 
 const CACHE = new Map();
