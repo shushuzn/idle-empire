@@ -191,6 +191,7 @@ const TREE_NODES = (() => {
 const TREE_ROWS = Math.max(...TREE_NODES.map((n) => n.row)) + 1;
 const TREE_COLS = TREE_LANES.length;
 const TREE_BY_ID = new Map(TREE_NODES.map((n) => [n.u.id, n]));
+const TREE_LANE_TOTALS = TREE_LANES.map((_, i) => TREE_NODES.filter((n) => n.lane === i).length);
 
 // 连线：同流派走竖直的线，跨流派绕到目标那一列的右侧再折回来
 function treeLink(from, to) {
@@ -206,10 +207,17 @@ function treeLink(from, to) {
 export function upgradesView(game) {
   const root = el('div', 'view-upgrades');
   root.append(el('h2', 'view-title', '科技树'));
-  root.append(el('p', 'view-sub', '点亮一个节点才能往下走；一次性买断，转生后清零。'));
+  root.append(el('p', 'view-sub', '点亮一个节点才能往下走；点节点看说明并买断，转生后清零。'));
 
   const labels = el('div', 'utree-labels');
-  for (const lane of TREE_LANES) labels.append(el('span', '', lane.label));
+  const laneEls = TREE_LANES.map((lane, i) => {
+    const wrap = el('span', 'utree-lane');
+    const name = el('b', '', lane.label);
+    const count = el('i', 'utree-lane-count', `0/${TREE_LANE_TOTALS[i]}`);
+    wrap.append(name, count);
+    labels.append(wrap);
+    return { lane, total: TREE_LANE_TOTALS[i], wrap, count };
+  });
   root.append(labels);
 
   const canvas = el('div', 'utree-canvas');
@@ -239,6 +247,8 @@ export function upgradesView(game) {
   root.append(canvas);
 
   let selectedId = null;
+  let firstUpdate = true;
+  let announcedDone = false;
 
   const detail = el('section', 'utree-detail');
   const detailHead = el('div', 'utree-detail-head');
@@ -307,8 +317,15 @@ export function upgradesView(game) {
   });
 
   function update() {
+    const ownedByLane = new Map(laneEls.map((x) => [x.lane.type, 0]));
+    let ownedCount = 0;
     for (const n of nodes) {
       const state = game.upgradeAvailable(n.u);
+      if (state === 'owned') {
+        ownedCount += 1;
+        const type = TREE_LANES[n.lane].type;
+        ownedByLane.set(type, ownedByLane.get(type) + 1);
+      }
       const affordable = state === 'ok' && game.s.gold >= n.u.cost;
       n.btn.classList.toggle('is-owned', state === 'owned');
       n.btn.classList.toggle('is-ready', state === 'ok');
@@ -320,6 +337,23 @@ export function upgradesView(game) {
       );
       const edge = edges.get(n.u.id);
       if (edge) edge.classList.toggle('on', state === 'owned');
+    }
+    // 每条流派点亮了几级；整条点满时数字变金色
+    for (const x of laneEls) {
+      const text = `${ownedByLane.get(x.lane.type) || 0}/${x.total}`;
+      if (x.count.textContent !== text) x.count.textContent = text;
+      x.wrap.classList.toggle('done', text === `${x.total}/${x.total}`);
+    }
+    if (firstUpdate) {
+      firstUpdate = false;
+      announcedDone = ownedCount === TREE_NODES.length;
+    } else if (ownedCount === TREE_NODES.length && !announcedDone) {
+      announcedDone = true;
+      root.dispatchEvent(
+        new CustomEvent('toast', { bubbles: true, detail: { text: '科技树已全部点亮', kind: 'good', ms: 5000 } }),
+      );
+    } else if (ownedCount < TREE_NODES.length) {
+      announcedDone = false;
     }
     // 没选过或选中的节点被买掉后，自动挑一个当下最该看的
     if (!selectedId || !TREE_BY_ID.has(selectedId)) {
