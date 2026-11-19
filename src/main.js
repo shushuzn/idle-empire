@@ -365,7 +365,10 @@ document.addEventListener('keydown', (e) => {
 let last = performance.now();
 let badgeTimer = 0;
 let saveTimer = 0;
+let viewTimer = 0;
 const AUTOSAVE_SECONDS = 20;
+// 界面刷新到 10Hz：数值变化肉眼够用，但每帧重写整页 DOM 会白烧手机电量
+const VIEW_INTERVAL = 0.1;
 
 function frame(now) {
   // 还没点开始：不推进模拟，只等着
@@ -390,7 +393,12 @@ function frame(now) {
   gpsEl.textContent = `+${fmt(B.totalPerSecond(game.s))}/秒`;
   shardsEl.textContent = fmtInt(game.s.shards);
   tapGainEl.textContent = fmt(B.clickPower(game.s).perClick);
-  if (currentView) currentView.update();
+
+  viewTimer += dt;
+  if (viewTimer >= VIEW_INTERVAL) {
+    viewTimer = 0;
+    if (currentView) currentView.update();
+  }
 
   badgeTimer += dt;
   if (badgeTimer >= 0.25) {

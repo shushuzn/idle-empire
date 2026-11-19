@@ -489,6 +489,32 @@ button {
 
 .utree-node.pulse { animation: treePulse 0.36s ease; }
 
+/* 选中未解锁节点时，前置节点和那条连线一起亮起来 */
+.utree-node.is-needed::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 1px dashed color-mix(in srgb, var(--gold) 58%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: needHint 1.6s ease-in-out infinite;
+}
+
+@keyframes needHint {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.35; }
+}
+
+.utree-links path.is-hinting {
+  stroke: color-mix(in srgb, var(--gold) 72%, transparent);
+  stroke-dasharray: 4 5;
+  animation: edgeHint 0.9s linear infinite;
+}
+
+@keyframes edgeHint {
+  to { stroke-dashoffset: -9; }
+}
+
 @keyframes treePulse {
   0% { transform: scale(1); }
   45% { transform: scale(1.16); }

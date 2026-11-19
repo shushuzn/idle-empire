@@ -329,7 +329,14 @@ export function upgradesView(game) {
         nodes[0];
       selectedId = pick.u.id;
     }
-    for (const n of nodes) n.btn.classList.toggle('is-selected', n.u.id === selectedId);
+    // 选中的是未解锁节点时，把前置节点和那条连线点亮，告诉玩家该先买什么
+    const sel = TREE_BY_ID.get(selectedId);
+    const needId = sel && game.upgradeAvailable(sel.u) === 'locked' ? sel.u.req : null;
+    for (const n of nodes) {
+      n.btn.classList.toggle('is-selected', n.u.id === selectedId);
+      n.btn.classList.toggle('is-needed', n.u.id === needId);
+    }
+    for (const [id, path] of edges) path.classList.toggle('is-hinting', id === selectedId && !!needId);
     detailFor(selectedId);
   }
 
