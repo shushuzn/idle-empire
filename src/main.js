@@ -1,7 +1,7 @@
 import { Game } from './game/engine.js';
 import {
   load, save, reset, exportSave, exportSaveText, importSave, defaultState,
-  hasProgress, saveBackup, loadBackup, loadBrokenSave,
+  hasProgress, saveBackup, loadBackup, loadBrokenSave, SAVE_KEY,
 } from './game/state.js';
 import { ACHIEVEMENTS, UPGRADES } from './game/data.js';
 import { CHAPTERS } from './game/story.js';
@@ -33,10 +33,11 @@ let entered = false;
 // 静态 HTML 里的 data-icon 占位统一换成自绘 SVG
 hydrateIcons();
 
-const { state, offline, migrated, corrupt } = load();
+const { state, offline, migrated, corrupt, hasSave } = load();
 
-// 立刻落盘：首次进入就建立存档；离线结算后也避免刷新一次重复领取
-save(state);
+// 新档立刻建立存档，领过离线收益也马上写回，避免刷新一次重复领取。
+// 已有存档且没有新收益时不在启动阶段写：第二个标签页可能拿着旧快照，一进来就覆盖正在玩的那份。
+if (!hasSave || offline || migrated) save(state);
 
 // 离线结算弹窗打开时先把成就提示攒起来，关掉再一次性弹，避免被遮挡
 const pendingAchievements = [];
@@ -334,8 +335,8 @@ function updateBadges() {
 const startBtn = $('#start-btn');
 const appEl = $('.app');
 
-// 有存档就说「继续」，顺手把上次的成绩写在下面
-if (hasProgress(state)) {
+// 有存档就说「继续」，上次的成绩也一并写出来；没进度的旧档也算继续
+if (hasSave) {
   startBtn.textContent = '继续帝国';
   $('#start-meta').textContent = `上次：${fmt(state.gold)} 金币 · 转生 ${fmtInt(state.rebirths)} 次 · v0.1.0`;
 }
@@ -346,6 +347,8 @@ function enterGame() {
   if (entered) return;
   entered = true;
   last = performance.now();
+  // 用户点开始后申请持久化，浏览器更容易批准，也能减少被清理的概率
+  requestPersistentStorage();
   appEl.inert = false;
   startScreen?.classList.add('gone');
   setTimeout(() => startScreen?.remove(), 520);
@@ -355,6 +358,11 @@ function enterGame() {
     showWelcome(next);
   }
   for (const [text, kind, ms, action] of startQueue.splice(0)) toast(text, kind, ms, action);
+  // 开场页期间另一个标签页存过档，进游戏后再提醒，避免刚打开就被旧快照覆盖
+  if (otherTabPending) {
+    otherTabPending = false;
+    notifyOtherTab();
+  }
 }
 
 startBtn.addEventListener('click', enterGame);
@@ -417,11 +425,58 @@ requestAnimationFrame(frame);
 
 /* ---------- 自动存档 ---------- */
 
+let saveFailureNotified = false;
+
 function persist(silent = false) {
-  if (save(game.s)) return true;
+  if (save(game.s)) {
+    saveFailureNotified = false;
+    return true;
+  }
   if (!silent) toast('存档失败：浏览器存储不可用', 'bad');
+  else if (!saveFailureNotified) {
+    // 自动存档每 20 秒一次，失败只提醒一次，成功后再恢复提醒
+    saveFailureNotified = true;
+    toast('自动存档失败：浏览器存储可能已满，先导出存档更保险', 'bad', 8000);
+  }
   return false;
 }
+
+// 被批准后浏览器不会在空间紧张时自动清掉本站数据；不支持或被拒绝都不影响游戏
+async function requestPersistentStorage() {
+  try {
+    if (!navigator.storage?.persist || (await navigator.storage.persisted())) return;
+    await navigator.storage.persist();
+  } catch {
+    /* 忽略 */
+  }
+}
+
+// 两个标签页同时运行时，任何一边的自动存档都会盖住另一边，提醒只留一个
+let otherTabNotified = false;
+let otherTabPending = false;
+
+function notifyOtherTab() {
+  if (otherTabNotified) return;
+  otherTabNotified = true;
+  toast('另一个标签页也在运行，进度可能互相覆盖', 'bad', 12000, {
+    label: '刷新',
+    onClick: () => location.reload(),
+  });
+}
+
+window.addEventListener('storage', (e) => {
+  if (e.key !== SAVE_KEY || !e.newValue) return;
+  // 还没进游戏也要记下来：这个标签页手里的状态可能已经旧了
+  if (!entered || document.visibilityState === 'hidden') otherTabPending = true;
+  else notifyOtherTab();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && otherTabPending) {
+    otherTabPending = false;
+    notifyOtherTab();
+  }
+});
 
 let hiddenAt = 0;
 document.addEventListener('visibilitychange', () => {

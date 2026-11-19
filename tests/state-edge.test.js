@@ -1,7 +1,7 @@
 // 旧档迁移与边界数据：不崩溃、不白给收益、不把脏字段带进游戏
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalize, defaultState, load, SAVE_KEY } from '../src/game/state.js';
+import { normalize, defaultState, load, save, SAVE_KEY } from '../src/game/state.js';
 import { BOSSES } from '../src/game/data.js';
 import { CHAPTERS } from '../src/game/story.js';
 import { OFFLINE_CAP_SECONDS } from '../src/game/balance.js';
@@ -102,6 +102,42 @@ test('升级、成就、剧情：去重并剔除未知条目', () => {
   const [a, b] = CHAPTERS.map((c) => c.id);
   const locked = normalize({ story: { unlocked: [a], read: [a, b] } }, NOW);
   assert.deepEqual(locked.story.read, [a]);
+});
+
+test('有存档才显示「继续」，坏档和第一次进入都不算', () => {
+  const memory = memoryStorage();
+  assert.equal(load(NOW).hasSave, false);
+
+  // 金币很少也算有存档，不该再显示「开始游戏」
+  memory.set(SAVE_KEY, JSON.stringify({ gold: 5, buildings: {} }));
+  const resumed = load(NOW);
+  assert.equal(resumed.hasSave, true);
+  assert.equal(resumed.state.gold, 5);
+
+  memory.set(SAVE_KEY, '{oops');
+  const broken = load(NOW);
+  assert.equal(broken.hasSave, false);
+  assert.equal(broken.corrupt, true);
+});
+
+test('存储不可用时存档返回 false，读档不崩', () => {
+  globalThis.localStorage = {
+    getItem: () => {
+      throw new Error('denied');
+    },
+    setItem: () => {
+      throw new Error('quota');
+    },
+    removeItem: () => {
+      throw new Error('denied');
+    },
+  };
+
+  assert.equal(save(defaultState(NOW), NOW), false);
+  const result = load(NOW);
+  assert.equal(result.state.gold, 0);
+  assert.equal(result.corrupt, false);
+  assert.equal(result.hasSave, false);
 });
 
 test('空、非对象或数组存档回落到默认档', () => {

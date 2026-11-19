@@ -146,7 +146,7 @@ export function load(now = Date.now()) {
     }
   }
   state.lastSeen = now;
-  return { state, offline, migrated: Boolean(raw && raw.version !== VERSION), corrupt };
+  return { state, offline, migrated: Boolean(raw && raw.version !== VERSION), corrupt, hasSave: Boolean(raw) };
 }
 
 export function save(state, now = Date.now()) {
