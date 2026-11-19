@@ -631,6 +631,15 @@ button {
 
 .utree-buy[hidden] { display: none; }
 
+.utree-detail .utree-jump {
+  width: 100%;
+  border-color: color-mix(in srgb, var(--gold) 32%, var(--line));
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.utree-detail .utree-jump[hidden] { display: none; }
+
 /* 买得起时也是一块实心金锭，跟建筑卡的购买键一致 */
 .utree-detail .utree-buy:not(:disabled) {
   background-color: #eab02f;

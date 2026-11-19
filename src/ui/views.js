@@ -260,7 +260,11 @@ export function upgradesView(game) {
   const detailBuyLabel = el('b', 'buy-label', '购买');
   const detailBuyCost = el('span', 'buy-cost', '');
   detailBuy.append(detailBuyLabel, detailBuyCost);
-  detail.append(detailHead, detailDesc, detailBuy);
+  // 未解锁时的替代按钮：直接跳到前置节点，不用自己顺着线找
+  const detailJump = el('button', 'ghost utree-jump');
+  detailJump.type = 'button';
+  detailJump.hidden = true;
+  detail.append(detailHead, detailDesc, detailJump, detailBuy);
   root.append(detail);
 
   const nodes = TREE_NODES.map((node) => {
@@ -288,16 +292,26 @@ export function upgradesView(game) {
     const u = node.u;
     const state = game.upgradeAvailable(u);
     const prev = u.req ? UPGRADES.find((x) => x.id === u.req) : null;
+    const locked = state === 'locked';
     detailName.textContent = u.name;
     detailDesc.textContent = u.desc;
     detailState.className = `utree-state ${state}`;
-    detailState.textContent =
-      state === 'owned' ? '已购买' : state === 'locked' ? `需要「${prev?.name || '前置'}」` : `${fmt(u.cost)} 金币`;
-    detailBuy.hidden = state === 'owned';
+    detailState.textContent = state === 'owned' ? '已购买' : locked ? '未解锁' : `${fmt(u.cost)} 金币`;
+    // 锁定：把购买键换成「先点亮前置」，点一下就选中前置节点
+    detailJump.hidden = !(locked && prev);
+    detailJump.textContent = locked && prev ? `先点亮「${prev.name}」` : '';
+    detailBuy.hidden = state === 'owned' || (locked && !!prev);
     detailBuy.disabled = state !== 'ok' || game.s.gold < u.cost;
-    detailBuyLabel.textContent = state === 'locked' ? '未解锁' : '购买';
-    detailBuyCost.textContent = state === 'locked' ? '' : `${fmt(u.cost)} 金币`;
+    detailBuyLabel.textContent = locked ? '未解锁' : '购买';
+    detailBuyCost.textContent = locked ? '' : `${fmt(u.cost)} 金币`;
   }
+
+  detailJump.addEventListener('click', () => {
+    const cur = TREE_BY_ID.get(selectedId);
+    if (!cur?.u.req) return;
+    selectedId = cur.u.req;
+    update();
+  });
 
   detailBuy.addEventListener('click', () => {
     if (!selectedId) return;
